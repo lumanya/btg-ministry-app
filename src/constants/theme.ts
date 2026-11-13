@@ -1,65 +1,63 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://unistyl.es/), etc.
+ * BTG Ministry brand tokens.
+ * Colours come from the eagle-and-scroll logo; type pairs Cormorant Garamond
+ * (titles) with Instrument Sans (everything else), matching the website.
  */
 
-import '@/global.css';
-
-import { Platform } from 'react-native';
-
 export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
+  ivory: '#FCFAF6', // app background
+  parchment: '#F6EFE3', // soft panels
+  sand: '#EDE1CF', // selected tab pill, quote panel
+  paper: '#FBF3E4', // the devotional scroll and reader
+  white: '#FFFFFF',
+  line: '#E2D5C2', // card borders
+  lineStrong: '#CDBBA0',
+  inputBorder: '#A38660',
+
+  text: '#1F130A',
+  textMuted: '#5C4634',
+  textSubtle: '#6B5038', // inactive tab labels
+  eyebrow: '#7A4E26', // small uppercase labels
+
+  brown: '#704828', // primary
+  brownDark: '#4F3119',
+  deep: '#3A2413', // dark artwork tiles
+  night: '#2A1A0F', // video players
+  cream: '#F8EFE0', // text on brown
+  creamMuted: '#EAD9C0',
+  gold: '#E6C898', // accents on brown
+  goldLine: '#C9A577', // arch outline on brown
+  goldLineDeep: '#A8875C', // arch outline on deep
+
+  live: '#B42318',
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
-
-export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+export const Fonts = {
+  display: 'CormorantGaramond_600SemiBold',
+  displayMedium: 'CormorantGaramond_500Medium',
+  displayItalic: 'CormorantGaramond_500Medium_Italic',
+  sans: 'InstrumentSans_400Regular',
+  sansMedium: 'InstrumentSans_500Medium',
+  sansSemiBold: 'InstrumentSans_600SemiBold',
+  sansBold: 'InstrumentSans_700Bold',
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const Space = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
+} as const;
+
+export const Radius = {
+  sm: 12,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  pill: 999,
+} as const;
+
+/** Horizontal padding for every screen. */
+export const ScreenPadding = 20;

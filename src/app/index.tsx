@@ -1,98 +1,92 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { logoImage } from '@/components/art';
+import { Icon, IconName } from '@/components/icon';
+import { Body, Button, Eyebrow } from '@/components/ui';
+import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+const features: { icon: IconName; label: string }[] = [
+  { icon: 'sermons', label: 'Sermons' },
+  { icon: 'live', label: 'Live' },
+  { icon: 'podcast', label: 'Podcast' },
+  { icon: 'devotional', label: 'Devotional' },
+];
+
+/** Welcome screen shown when the app opens. */
+export default function Welcome() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const start = () => router.replace('/home');
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={[styles.root, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}>
+      <View style={styles.logoWrap}>
+        <View style={styles.logoDisc} />
+        <Image
+          source={logoImage}
+          style={styles.logo}
+          contentFit="contain"
+          accessibilityLabel="The BTG Ministry emblem: an eagle alighting on a bound scroll, with the words Building the Temple of God Ministry"
+        />
+      </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      <View style={{ gap: 14 }}>
+        <Eyebrow>BTG Ministry</Eyebrow>
+        <Text style={styles.headline} accessibilityRole="header">
+          Revealing Christ. <Text style={styles.headlineEm}>Awakening</Text> the spirit of man.
+        </Text>
+        <Body style={{ fontSize: 16 }}>Sermons, livestreams, audio teachings and the daily devotional, together in one place.</Body>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.features}>
+        {features.map((f) => (
+          <View key={f.label} style={styles.feature}>
+            <Icon name={f.icon} color={Colors.brown} />
+            <Text style={styles.featureLabel}>{f.label}</Text>
+          </View>
+        ))}
+      </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={{ gap: 6 }}>
+        <Button label="Get started" icon="arrow" onPress={start} />
+        <Button label="I already have an account" variant="outline" onPress={start} style={{ borderColor: 'transparent' }} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: Colors.ivory,
+    paddingHorizontal: ScreenPadding + 4,
+    justifyContent: 'space-between',
+    gap: 16,
   },
-  safeArea: {
+  logoWrap: { alignSelf: 'center', width: 280, height: 260, alignItems: 'center', justifyContent: 'center' },
+  logoDisc: {
+    position: 'absolute',
+    width: 236,
+    height: 236,
+    borderRadius: 118,
+    backgroundColor: Colors.parchment,
+    borderWidth: 1,
+    borderColor: Colors.line,
+  },
+  logo: { width: 260, height: 260 },
+  headline: { fontFamily: Fonts.display, fontSize: 42, lineHeight: 44, color: Colors.text },
+  headlineEm: { fontFamily: Fonts.displayItalic, color: Colors.brown },
+  features: { flexDirection: 'row', gap: 8 },
+  feature: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.parchment,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  featureLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.brownDark },
 });
