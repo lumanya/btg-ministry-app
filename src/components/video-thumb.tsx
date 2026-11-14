@@ -4,9 +4,10 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { SermonArt } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { LiveBadge } from '@/components/ui';
-import { Colors, Fonts } from '@/constants/theme';
+import { Brand, Fonts, Palette } from '@/constants/theme';
 import type { ArtTone } from '@/content/sample';
 import type { FeedVideo } from '@/lib/video';
+import { useColors, useStyles } from '@/state/theme';
 
 /**
  * A video's YouTube thumbnail, or the BTG arch artwork when there is none.
@@ -29,6 +30,8 @@ export function VideoThumb({
   radius?: number;
   style?: StyleProp<ViewStyle>;
 }) {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const playSize = height >= 160 ? 56 : 40;
   const playButton =
     play === 'none' ? null : (
@@ -38,7 +41,7 @@ export function VideoThumb({
           { width: playSize, height: playSize, borderRadius: playSize / 2 },
           play === 'corner' ? { right: 12, bottom: 12 } : { left: '50%', top: '50%', marginLeft: -playSize / 2, marginTop: -playSize / 2 },
         ]}>
-        <Icon name="play" size={playSize * 0.42} color={Colors.brown} />
+        <Icon name="play" size={playSize * 0.42} color={Brand.brown} />
       </View>
     );
 
@@ -67,7 +70,7 @@ export function VideoThumb({
   }
 
   return (
-    <View style={[{ height, borderRadius: radius, overflow: 'hidden', backgroundColor: Colors.night }, style]}>
+    <View style={[{ height, borderRadius: radius, overflow: 'hidden', backgroundColor: c.night }, style]}>
       <Image source={{ uri: video.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
       {badges}
       {playButton}
@@ -75,10 +78,11 @@ export function VideoThumb({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   play: {
     position: 'absolute',
-    backgroundColor: Colors.cream,
+    backgroundColor: c.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -91,5 +95,5 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: 'rgba(31,19,10,0.8)',
   },
-  durationText: { fontFamily: Fonts.sansSemiBold, fontSize: 11, color: Colors.cream, fontVariant: ['tabular-nums'] },
+  durationText: { fontFamily: Fonts.sansSemiBold, fontSize: 11, color: c.cream, fontVariant: ['tabular-nums'] },
 });

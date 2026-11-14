@@ -14,7 +14,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/icon';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
+import { useColors, useStyles } from '@/state/theme';
 
 /* ---------- Text ---------- */
 
@@ -27,20 +28,24 @@ export function Title({
   size?: number;
   style?: StyleProp<TextStyle>;
 }) {
+  const c = useColors();
   return (
     <Text
       accessibilityRole="header"
-      style={[{ fontFamily: Fonts.display, fontSize: size, lineHeight: size * 1.05, color: Colors.text }, style]}>
+      style={[{ fontFamily: Fonts.display, fontSize: size, lineHeight: size * 1.05, color: c.text }, style]}>
       {children}
     </Text>
   );
 }
 
 export function Eyebrow({ children, onDark = false, style }: { children: ReactNode; onDark?: boolean; style?: StyleProp<TextStyle> }) {
-  return <Text style={[styles.eyebrow, onDark && { color: Colors.gold }, style]}>{children}</Text>;
+  const c = useColors();
+  const styles = useStyles(createStyles);
+  return <Text style={[styles.eyebrow, onDark && { color: c.gold }, style]}>{children}</Text>;
 }
 
 export function Body({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  const styles = useStyles(createStyles);
   return <Text style={[styles.body, style]}>{children}</Text>;
 }
 
@@ -48,6 +53,7 @@ export function Body({ children, style }: { children: ReactNode; style?: StylePr
 
 /** A Pressable that shrinks slightly while pressed. */
 export function Tap({ style, children, ...rest }: PressableProps & { style?: StyleProp<ViewStyle>; children: ReactNode }) {
+  const styles = useStyles(createStyles);
   return (
     <Pressable {...rest} style={({ pressed }) => [style, pressed && styles.pressed]}>
       {children}
@@ -72,7 +78,9 @@ export function Button({
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
-  const v = buttonVariants[variant];
+  const c = useColors();
+  const styles = useStyles(createStyles);
+  const v = buttonVariants(c)[variant];
   return (
     <Tap
       accessibilityRole="button"
@@ -85,11 +93,12 @@ export function Button({
   );
 }
 
-const buttonVariants: Record<ButtonVariant, { bg: string; fg: string; border: string }> = {
-  primary: { bg: Colors.brown, fg: Colors.cream, border: Colors.brown },
-  outline: { bg: 'transparent', fg: Colors.brownDark, border: Colors.brown },
-  cream: { bg: Colors.cream, fg: Colors.brownDark, border: Colors.cream },
-};
+const buttonVariants = (c: Palette): Record<ButtonVariant, { bg: string; fg: string; border: string }> => ({
+  primary: { bg: c.brown, fg: c.cream, border: c.brown },
+  outline: { bg: 'transparent', fg: c.brownDark, border: c.accent },
+  // Cream buttons sit on brown cards, so their text stays dark brown in both modes.
+  cream: { bg: c.cream, fg: Brand.brownDark, border: c.cream },
+});
 
 export function IconButton({
   icon,
@@ -114,11 +123,13 @@ export function IconButton({
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const look = {
-    outline: { bg: Colors.white, border: Colors.line, fg: Colors.brownDark },
-    plain: { bg: 'transparent', border: 'transparent', fg: Colors.brownDark },
-    solid: { bg: Colors.brown, border: Colors.brown, fg: Colors.cream },
-    cream: { bg: Colors.cream, border: Colors.cream, fg: Colors.brown },
+    outline: { bg: c.white, border: c.line, fg: c.brownDark },
+    plain: { bg: 'transparent', border: 'transparent', fg: c.brownDark },
+    solid: { bg: c.brown, border: c.brown, fg: c.cream },
+    cream: { bg: c.cream, border: c.cream, fg: Brand.brown },
   }[variant];
   return (
     <Tap
@@ -143,7 +154,7 @@ export function IconButton({
 export function Screen({
   children,
   gap = 24,
-  background = Colors.ivory,
+  background,
   contentStyle,
   refreshing,
   onRefresh,
@@ -156,14 +167,15 @@ export function Screen({
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
+  const c = useColors();
   const insets = useSafeAreaInsets();
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: background }}
+      style={{ flex: 1, backgroundColor: background ?? c.ivory }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         onRefresh ? (
-          <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={Colors.brown} colors={[Colors.brown]} progressViewOffset={insets.top} />
+          <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={c.accent} colors={[c.accent]} progressViewOffset={insets.top} />
         ) : undefined
       }
       contentContainerStyle={[
@@ -176,6 +188,7 @@ export function Screen({
 }
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+  const styles = useStyles(createStyles);
   return (
     <View style={styles.sectionHeader}>
       <Eyebrow>{title}</Eyebrow>
@@ -189,19 +202,22 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(createStyles);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-export function ProgressBar({ value, track = Colors.sand, fill = Colors.brown }: { value: number; track?: string; fill?: string }) {
+export function ProgressBar({ value, track, fill }: { value: number; track?: string; fill?: string }) {
+  const c = useColors();
   return (
-    <View style={{ height: 4, borderRadius: 2, backgroundColor: track, overflow: 'hidden' }}>
-      <View style={{ width: `${Math.round(value * 100)}%`, height: 4, backgroundColor: fill }} />
+    <View style={{ height: 4, borderRadius: 2, backgroundColor: track ?? c.rail, overflow: 'hidden' }}>
+      <View style={{ width: `${Math.round(value * 100)}%`, height: 4, backgroundColor: fill ?? c.accent }} />
     </View>
   );
 }
 
 /** Red "LIVE" badge used on the livestream. */
 export function LiveBadge() {
+  const styles = useStyles(createStyles);
   return (
     <View style={styles.liveBadge} accessibilityLabel="Live now">
       <View style={styles.liveDot} />
@@ -210,19 +226,20 @@ export function LiveBadge() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   eyebrow: {
     fontFamily: Fonts.sansSemiBold,
     fontSize: 13,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: Colors.eyebrow,
+    color: c.eyebrow,
   },
   body: {
     fontFamily: Fonts.sans,
     fontSize: 15,
     lineHeight: 23,
-    color: Colors.textMuted,
+    color: c.textMuted,
   },
   pressed: { transform: [{ scale: 0.97 }], opacity: 0.92 },
   button: {
@@ -244,10 +261,10 @@ const styles = StyleSheet.create({
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   sectionAction: { minHeight: 44, justifyContent: 'center' },
-  sectionActionText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brown },
+  sectionActionText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
   card: {
-    backgroundColor: Colors.white,
-    borderColor: Colors.line,
+    backgroundColor: c.white,
+    borderColor: c.line,
     borderWidth: 1,
     borderRadius: Radius.lg,
     padding: 16,
@@ -260,8 +277,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.live,
+    backgroundColor: c.live,
   },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.white },
-  liveText: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1.3, color: Colors.white },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.white },
+  liveText: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1.3, color: c.white },
 });

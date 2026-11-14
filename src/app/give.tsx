@@ -6,14 +6,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Fonts, Palette, Radius } from '@/constants/theme';
 import { giving } from '@/content/sample';
+import { useColors, useStyles } from '@/state/theme';
 
 /**
  * Giving details with copy buttons. Payments are made in the M-Pesa or bank
  * app, which keeps the app within the App Store and Play Store donation rules.
  */
 export default function Give() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [copied, setCopied] = useState<string | null>(null);
@@ -36,7 +39,7 @@ export default function Give() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.ivory }}>
+    <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
         <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
       </View>
@@ -58,7 +61,7 @@ export default function Give() {
               <View style={styles.rowFooter}>
                 <Text style={styles.name}>{r.name}</Text>
                 <Tap accessibilityRole="button" accessibilityLabel={`Copy ${r.label}`} onPress={() => copy(r.key, r.number)} style={styles.copy}>
-                  <Icon name={copied === r.key ? 'check' : 'copy'} size={16} color={Colors.cream} />
+                  <Icon name={copied === r.key ? 'check' : 'copy'} size={16} color={c.cream} />
                   <Text style={styles.copyText} accessibilityLiveRegion="polite">{copied === r.key ? 'Copied' : 'Copy'}</Text>
                 </Tap>
               </View>
@@ -75,15 +78,16 @@ export default function Give() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   topBar: { paddingHorizontal: 12, paddingBottom: 4 },
-  card: { padding: 22, borderRadius: Radius.lg, backgroundColor: Colors.brown, gap: 4 },
-  cardTitle: { fontFamily: Fonts.display, fontSize: 32, color: Colors.cream, marginBottom: 8 },
+  card: { padding: 22, borderRadius: Radius.lg, backgroundColor: c.brown, gap: 4 },
+  cardTitle: { fontFamily: Fonts.display, fontSize: 32, color: c.cream, marginBottom: 8 },
   row: { gap: 6, paddingVertical: 18, borderTopWidth: 1, borderTopColor: '#8E6641' },
   rowFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  label: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: Colors.gold },
-  number: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 36, letterSpacing: 1.2, color: Colors.cream, fontVariant: ['lining-nums', 'tabular-nums'] },
-  name: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Colors.creamMuted },
+  label: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.gold },
+  number: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 36, letterSpacing: 1.2, color: c.cream, fontVariant: ['lining-nums', 'tabular-nums'] },
+  name: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: c.creamMuted },
   copy: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -92,9 +96,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.gold,
+    borderColor: c.gold,
   },
-  copyText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.cream },
-  help: { gap: 8, padding: 18, borderRadius: Radius.lg, backgroundColor: Colors.parchment, borderWidth: 1, borderColor: Colors.line },
-  helpText: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: Colors.brownDark },
+  copyText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
+  help: { gap: 8, padding: 18, borderRadius: Radius.lg, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
+  helpText: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.brownDark },
 });

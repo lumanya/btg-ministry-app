@@ -3,18 +3,22 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Arch, Eagle, tones } from '@/components/art';
+import { Arch, Eagle, useTones } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Body, Eyebrow, IconButton, ProgressBar, Screen, Tap, Title } from '@/components/ui';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { ArtTone } from '@/content/sample';
 import { Episode, formatLength } from '@/lib/podcast';
 import { formatDay } from '@/lib/video';
 import { usePlayer } from '@/state/player';
+import { useColors, useStyles } from '@/state/theme';
 
 const SERIES_TONES: ArtTone[] = ['deep', 'sand', 'brown'];
 
 export default function PodcastTab() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
+  const toneSet = useTones();
   const router = useRouter();
   const p = usePlayer();
   const [following, setFollowing] = useState(false);
@@ -30,12 +34,12 @@ export default function PodcastTab() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.ivory }}>
+    <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <Screen gap={24} refreshing={false} onRefresh={p.status === 'sample' ? undefined : p.refresh}>
         <Title>Podcast</Title>
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
-          <View style={[styles.cover, { backgroundColor: Colors.brown }]}>
+          <View style={[styles.cover, { backgroundColor: c.brown }]}>
             {p.podcast.artwork ? (
               <Image source={{ uri: p.podcast.artwork }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
             ) : (
@@ -53,9 +57,9 @@ export default function PodcastTab() {
               accessibilityRole="button"
               accessibilityState={{ selected: following }}
               onPress={() => setFollowing((f) => !f)}
-              style={[styles.follow, following && { backgroundColor: Colors.brown }]}>
-              <Icon name={following ? 'check' : 'plus'} size={16} color={following ? Colors.cream : Colors.brownDark} />
-              <Text style={[styles.followText, following && { color: Colors.cream }]}>{following ? 'Following' : 'Follow'}</Text>
+              style={[styles.follow, following && { backgroundColor: c.brown }]}>
+              <Icon name={following ? 'check' : 'plus'} size={16} color={following ? c.cream : c.brownDark} />
+              <Text style={[styles.followText, following && { color: c.cream }]}>{following ? 'Following' : 'Follow'}</Text>
             </Tap>
           </View>
         </View>
@@ -76,7 +80,7 @@ export default function PodcastTab() {
               contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 12 }}>
               {series.map((name, i) => {
                 const tone = SERIES_TONES[i % SERIES_TONES.length];
-                const t = tones[tone];
+                const t = toneSet[tone];
                 const on = seriesFilter === name;
                 return (
                   <Tap
@@ -86,7 +90,7 @@ export default function PodcastTab() {
                     accessibilityLabel={on ? `Showing ${name}. Tap to show all episodes` : `Show the ${name} series`}
                     onPress={() => setSeriesFilter(on ? null : name)}
                     style={[styles.seriesCard, { backgroundColor: t.bg }, on && styles.seriesOn]}>
-                    <Eagle height={60} light={tone !== 'sand'} />
+                    <Eagle height={60} light={t.lightEagle} />
                     <Text style={[styles.seriesName, { color: t.text }]}>{name}</Text>
                   </Tap>
                 );
@@ -127,7 +131,7 @@ export default function PodcastTab() {
                   variant={active ? 'solid' : 'outline'}
                   iconSize={18}
                   onPress={() => playEpisode(e)}
-                  style={!active ? { borderColor: Colors.brown, backgroundColor: 'transparent' } : undefined}
+                  style={!active ? { borderColor: c.accent, backgroundColor: 'transparent' } : undefined}
                 />
               </View>
             );
@@ -161,7 +165,8 @@ export default function PodcastTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   cover: { width: 132, height: 132, borderRadius: 22, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   follow: {
     alignSelf: 'flex-start',
@@ -172,22 +177,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.brown,
+    borderColor: c.accent,
   },
-  followText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brownDark },
-  notice: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 20, color: Colors.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: Colors.parchment },
+  followText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.brownDark },
+  notice: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 20, color: c.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: c.parchment },
   seriesCard: { width: 150, height: 168, borderRadius: Radius.lg, padding: 14, justifyContent: 'space-between' },
-  seriesOn: { borderWidth: 3, borderColor: Colors.gold },
+  seriesOn: { borderWidth: 3, borderColor: c.gold },
   seriesName: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, fontVariant: ['lining-nums'] },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  link: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brown },
-  episode: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: Colors.line },
-  episodeSeries: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: Colors.eyebrow },
-  episodeTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: Colors.text },
-  meta: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
-  miniWrap: { paddingHorizontal: 10, paddingBottom: 8, backgroundColor: Colors.ivory },
-  mini: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6, paddingLeft: 8, borderRadius: 18, backgroundColor: Colors.deep },
-  miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
-  miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.cream },
-  miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.creamMuted },
+  link: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
+  episode: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.line },
+  episodeSeries: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: c.eyebrow },
+  episodeTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: c.text },
+  meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  miniWrap: { paddingHorizontal: 10, paddingBottom: 8, backgroundColor: c.ivory },
+  mini: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6, paddingLeft: 8, borderRadius: 18, backgroundColor: c.deep },
+  miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
+  miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
+  miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.creamMuted },
 });

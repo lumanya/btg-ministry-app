@@ -5,12 +5,13 @@ import { Eagle, ScrollCard } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Body, Button, Card, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
 import { formatLength } from '@/lib/podcast';
 import { useFeed } from '@/state/feed';
 import { usePlayer } from '@/state/player';
+import { useColors, useStyles } from '@/state/theme';
 
 function greeting() {
   const h = new Date().getHours();
@@ -22,6 +23,8 @@ function greeting() {
 const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function Home() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const { feed, refreshing, refresh } = useFeed();
   const live = feed.live;
@@ -102,7 +105,7 @@ export default function Home() {
               onPress={() => router.push({ pathname: '/devotional/[id]', params: { id: today.id } })}
               style={{ flex: 1, minHeight: 46 }}
             />
-            <IconButton icon="podcast" label="Listen to this devotional" size={46} onPress={() => router.push('/player')} style={{ borderColor: Colors.brown, backgroundColor: 'transparent' }} />
+            <IconButton icon="podcast" label="Listen to this devotional" size={46} onPress={() => router.push('/player')} style={{ borderColor: c.accent, backgroundColor: 'transparent' }} />
           </View>
         </ScrollCard>
       </View>
@@ -110,7 +113,7 @@ export default function Home() {
       <Card style={{ gap: 14, padding: 18 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={styles.flameDisc}>
-            <Icon name="flame" color={Colors.brown} />
+            <Icon name="flame" color={c.accent} />
           </View>
           <View style={{ gap: 2, flex: 1 }}>
             <Text style={styles.cardTitle}>{streak > 0 ? `${streak}-day reading streak` : 'Start a reading streak'}</Text>
@@ -124,7 +127,7 @@ export default function Home() {
             return (
               <View key={i} style={{ alignItems: 'center', gap: 6 }}>
                 <View style={[styles.dot, done && styles.dotDone, isToday && styles.dotToday]} />
-                <Text style={[styles.dayLetter, isToday && { color: Colors.text, fontFamily: Fonts.sansBold }]}>{d}</Text>
+                <Text style={[styles.dayLetter, isToday && { color: c.text, fontFamily: Fonts.sansBold }]}>{d}</Text>
               </View>
             );
           })}
@@ -194,7 +197,7 @@ export default function Home() {
             label="Share this word"
             iconSize={18}
             onPress={() => Share.share({ message: `“${quote}” — Iman Mwakanyamale, BTG Ministry` })}
-            style={{ backgroundColor: 'transparent', borderColor: Colors.brown }}
+            style={{ backgroundColor: 'transparent', borderColor: c.accent }}
           />
         </View>
       </View>
@@ -202,30 +205,31 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandText: { fontFamily: Fonts.display, fontSize: 22, color: Colors.text },
-  greeting: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textMuted },
+  brandText: { fontFamily: Fonts.display, fontSize: 22, color: c.text },
+  greeting: { fontFamily: Fonts.sansMedium, fontSize: 14, color: c.textMuted },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
-  liveCard: { backgroundColor: Colors.brown, borderRadius: Radius.xl, padding: 14, paddingBottom: 18, gap: 14 },
+  liveCard: { backgroundColor: c.brown, borderRadius: Radius.xl, padding: 14, paddingBottom: 18, gap: 14 },
   liveFooter: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 4 },
-  liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: Colors.cream },
-  liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.creamMuted },
-  joinPill: { height: 40, paddingHorizontal: 18, borderRadius: Radius.pill, backgroundColor: Colors.cream, justifyContent: 'center' },
-  joinText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brownDark },
+  liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: c.cream },
+  liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: c.creamMuted },
+  joinPill: { height: 40, paddingHorizontal: 18, borderRadius: Radius.pill, backgroundColor: c.cream, justifyContent: 'center' },
+  joinText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Brand.brownDark },
 
-  refChip: { borderWidth: 1, borderColor: Colors.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-  refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.textMuted },
+  refChip: { borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
 
-  flameDisc: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.parchment, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: Colors.text },
+  flameDisc: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.parchment, alignItems: 'center', justifyContent: 'center' },
+  cardTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: c.text },
   week: { flexDirection: 'row', justifyContent: 'space-between' },
-  dot: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.sand },
-  dotDone: { backgroundColor: Colors.brown },
-  dotToday: { backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.brown },
-  dayLetter: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.textMuted },
+  dot: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.sand },
+  dotDone: { backgroundColor: c.brown },
+  dotToday: { backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: c.accent },
+  dayLetter: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
 
   listenRow: {
     flexDirection: 'row',
@@ -233,15 +237,15 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 12,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: Colors.line,
+    borderColor: c.line,
   },
-  listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
-  listenTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 22, color: Colors.text },
-  metaText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
-  sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: Colors.text },
+  listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
+  listenTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 22, color: c.text },
+  metaText: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
 
-  quote: { gap: 14, padding: 20, paddingTop: 24, borderRadius: Radius.lg, backgroundColor: Colors.sand },
-  quoteText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 29, color: Colors.brownDark },
+  quote: { gap: 14, padding: 20, paddingTop: 24, borderRadius: Radius.lg, backgroundColor: c.sand },
+  quoteText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 29, color: c.brownDark },
 });

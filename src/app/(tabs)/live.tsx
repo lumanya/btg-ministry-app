@@ -8,16 +8,19 @@ import { Icon, IconName } from '@/components/icon';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links, services } from '@/content/sample';
 import { formatStart, videoMeta, youtubeWatchUrl } from '@/lib/video';
 import { useFeed } from '@/state/feed';
+import { useColors, useStyles } from '@/state/theme';
 
 type Panel = 'upcoming' | 'prayer';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Live() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { feed, refreshing, refresh } = useFeed();
@@ -83,7 +86,7 @@ export default function Live() {
                 <Eagle height={26} />
               </View>
               <Text style={styles.meta}>
-                <Text style={{ fontFamily: Fonts.sansSemiBold, color: Colors.text }}>Iman Mwakanyamale</Text> · Streaming now
+                <Text style={{ fontFamily: Fonts.sansSemiBold, color: c.text }}>Iman Mwakanyamale</Text> · Streaming now
               </Text>
             </View>
           </View>
@@ -124,9 +127,9 @@ export default function Live() {
             key={a.label}
             accessibilityRole="button"
             onPress={a.onPress}
-            style={[styles.action, a.primary && { backgroundColor: Colors.brown, borderColor: Colors.brown }]}>
-            <Icon name={a.icon} size={20} color={a.primary ? Colors.cream : Colors.brownDark} />
-            <Text style={[styles.actionText, a.primary && { color: Colors.cream }]}>{a.label}</Text>
+            style={[styles.action, a.primary && { backgroundColor: c.brown, borderColor: c.brown }]}>
+            <Icon name={a.icon} size={20} color={a.primary ? c.cream : c.brownDark} />
+            <Text style={[styles.actionText, a.primary && { color: c.cream }]}>{a.label}</Text>
           </Tap>
         ))}
       </View>
@@ -141,7 +144,7 @@ export default function Live() {
               accessibilityState={{ selected: on }}
               onPress={() => setPanel(p)}
               style={[styles.segmentItem, on && styles.segmentOn]}>
-              <Text style={[styles.segmentText, on && { color: Colors.cream }]}>{p === 'upcoming' ? 'Coming up' : 'Prayer request'}</Text>
+              <Text style={[styles.segmentText, on && { color: c.cream }]}>{p === 'upcoming' ? 'Coming up' : 'Prayer request'}</Text>
             </Tap>
           );
         })}
@@ -169,7 +172,7 @@ export default function Live() {
                   label={on ? `Turn off the reminder for ${s.name}` : `Remind me about ${s.name}`}
                   iconSize={18}
                   onPress={() => setReminders((r) => ({ ...r, [s.id]: !on }))}
-                  style={!on ? { borderColor: Colors.brown, backgroundColor: 'transparent' } : undefined}
+                  style={!on ? { borderColor: c.accent, backgroundColor: 'transparent' } : undefined}
                 />
               </View>
             );
@@ -183,7 +186,7 @@ export default function Live() {
           {sent ? (
             <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12 }} accessibilityLiveRegion="polite">
               <View style={styles.checkDisc}>
-                <Icon name="check" color={Colors.cream} />
+                <Icon name="check" color={c.cream} />
               </View>
               <Title size={26} style={{ textAlign: 'center' }}>Your request is with us.</Title>
               <Body style={{ textAlign: 'center' }}>We are standing with you in prayer.</Body>
@@ -209,7 +212,7 @@ export default function Live() {
                 accessibilityLabelledBy="prayerLabel"
                 accessibilityLabel="Your prayer request"
                 placeholder="Share what you would like the ministry to pray for"
-                placeholderTextColor={Colors.textSubtle}
+                placeholderTextColor={c.textSubtle}
                 style={styles.textArea}
               />
               <Button label="Send to the prayer team" onPress={() => prayer.trim() && setSent(true)} />
@@ -221,32 +224,33 @@ export default function Live() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.sand, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2, overflow: 'hidden' },
-  meta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted },
-  metaSmall: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
-  offline: { gap: 16, padding: 18, borderRadius: Radius.xl, backgroundColor: Colors.parchment, borderWidth: 1, borderColor: Colors.line },
-  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
-  latest: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: Radius.md, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.line },
-  latestTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 19, color: Colors.text },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.sand, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2, overflow: 'hidden' },
+  meta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
+  metaSmall: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  offline: { gap: 16, padding: 18, borderRadius: Radius.xl, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
+  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  latest: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: Radius.md, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
+  latestTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 19, color: c.text },
   actions: { flexDirection: 'row', gap: 10 },
   action: {
     flex: 1,
     height: 72,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.line,
-    backgroundColor: Colors.white,
+    borderColor: c.line,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-  actionText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: Colors.brownDark },
-  segment: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: Radius.pill, backgroundColor: Colors.parchment, borderWidth: 1, borderColor: Colors.line },
+  actionText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.brownDark },
+  segment: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: Radius.pill, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
   segmentItem: { flex: 1, height: 44, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
-  segmentOn: { backgroundColor: Colors.brown },
-  segmentText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brownDark },
+  segmentOn: { backgroundColor: c.brown },
+  segmentText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.brownDark },
   service: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -254,27 +258,27 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingLeft: 16,
     borderRadius: 18,
-    backgroundColor: Colors.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: Colors.line,
+    borderColor: c.line,
   },
-  dayBox: { width: 56, height: 56, borderRadius: 14, backgroundColor: Colors.parchment, alignItems: 'center', justifyContent: 'center' },
-  dayText: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: Colors.eyebrow },
-  timeText: { fontFamily: Fonts.display, fontSize: 16, color: Colors.text },
-  serviceName: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: Colors.text },
-  prayerCard: { padding: 18, borderRadius: 18, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.line },
-  label: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: '#3A2413' },
+  dayBox: { width: 56, height: 56, borderRadius: 14, backgroundColor: c.parchment, alignItems: 'center', justifyContent: 'center' },
+  dayText: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: c.eyebrow },
+  timeText: { fontFamily: Fonts.display, fontSize: 16, color: c.text },
+  serviceName: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: c.text },
+  prayerCard: { padding: 18, borderRadius: 18, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
+  label: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.text },
   textArea: {
     minHeight: 112,
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.inputBorder,
-    backgroundColor: Colors.ivory,
+    borderColor: c.inputBorder,
+    backgroundColor: c.ivory,
     fontFamily: Fonts.sans,
     fontSize: 15,
-    color: Colors.text,
+    color: c.text,
     textAlignVertical: 'top',
   },
-  checkDisc: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'center' },
+  checkDisc: { width: 52, height: 52, borderRadius: 26, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
 });

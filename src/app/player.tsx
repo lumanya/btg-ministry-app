@@ -8,23 +8,25 @@ import { Arch } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Scrubber } from '@/components/scrubber';
 import { IconButton, Tap } from '@/components/ui';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Fonts, Palette, Radius } from '@/constants/theme';
 import { formatClock } from '@/lib/podcast';
 import { formatSpeed, usePlayer } from '@/state/player';
+import { useColors, useStyles } from '@/state/theme';
 
 /** Circular "skip" icon with the number of seconds inside. */
 function Skip({ seconds, forward }: { seconds: number; forward?: boolean }) {
+  const c = useColors();
   return (
     <Svg width={32} height={32} viewBox="0 0 24 24">
       <Path
         d={forward ? 'M19.5 12a7.5 7.5 0 1 1-2.2-5.3' : 'M4.5 12a7.5 7.5 0 1 0 2.2-5.3'}
-        stroke={Colors.brownDark}
+        stroke={c.brownDark}
         strokeWidth={1.6}
         strokeLinecap="round"
         fill="none"
       />
-      <Path d={forward ? 'M19.5 4v3.5H16' : 'M4.5 4v3.5H8'} stroke={Colors.brownDark} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <SvgText x={12} y={15.2} textAnchor="middle" fontSize={7} fontWeight="700" fill={Colors.brownDark}>
+      <Path d={forward ? 'M19.5 4v3.5H16' : 'M4.5 4v3.5H8'} stroke={c.brownDark} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <SvgText x={12} y={15.2} textAnchor="middle" fontSize={7} fontWeight="700" fill={c.brownDark}>
         {String(seconds)}
       </SvgText>
     </Svg>
@@ -32,6 +34,8 @@ function Skip({ seconds, forward }: { seconds: number; forward?: boolean }) {
 }
 
 export default function PlayerScreen() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const p = usePlayer();
@@ -95,9 +99,9 @@ export default function PlayerScreen() {
           onPress={() => (p.episode || !episode ? p.toggle() : p.play(episode))}
           style={[styles.playBtn, disabled && { opacity: 0.5 }]}>
           {p.buffering && p.playing ? (
-            <ActivityIndicator color={Colors.cream} />
+            <ActivityIndicator color={c.cream} />
           ) : (
-            <Icon name={p.playing ? 'pause' : 'play'} size={30} color={Colors.cream} />
+            <Icon name={p.playing ? 'pause' : 'play'} size={30} color={c.cream} />
           )}
         </Tap>
         <Tap accessibilityRole="button" accessibilityLabel="Forward 30 seconds" disabled={disabled || !isLoaded} onPress={() => p.skip(30)} style={styles.ctrl}>
@@ -117,9 +121,9 @@ export default function PlayerScreen() {
           accessibilityState={{ selected: p.sleepOn }}
           accessibilityLabel={p.sleepOn ? 'Sleep timer on: stops in 30 minutes. Tap to cancel' : 'Sleep timer: stop after 30 minutes'}
           onPress={p.toggleSleep}
-          style={[styles.pill, p.sleepOn && { backgroundColor: Colors.brown, borderColor: Colors.brown }]}>
-          <Icon name="moon" size={16} color={p.sleepOn ? Colors.cream : Colors.brownDark} />
-          <Text style={[styles.pillText, p.sleepOn && { color: Colors.cream }]}>{p.sleepOn ? '30 min' : 'Sleep'}</Text>
+          style={[styles.pill, p.sleepOn && { backgroundColor: c.brown, borderColor: c.brown }]}>
+          <Icon name="moon" size={16} color={p.sleepOn ? c.cream : c.brownDark} />
+          <Text style={[styles.pillText, p.sleepOn && { color: c.cream }]}>{p.sleepOn ? '30 min' : 'Sleep'}</Text>
         </Tap>
         <Tap
           accessibilityRole="button"
@@ -133,41 +137,42 @@ export default function PlayerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.parchment, paddingHorizontal: 24, justifyContent: 'space-between', gap: 14 },
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
+  root: { flex: 1, backgroundColor: c.parchment, paddingHorizontal: 24, justifyContent: 'space-between', gap: 14 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  kicker: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: Colors.eyebrow },
-  show: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: Colors.text },
+  kicker: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: c.eyebrow },
+  show: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.text },
   art: {
     alignSelf: 'center',
     width: 318,
     maxWidth: '100%',
     aspectRatio: 1,
     borderRadius: 30,
-    backgroundColor: Colors.brown,
+    backgroundColor: c.brown,
     alignItems: 'center',
     justifyContent: 'flex-end',
     overflow: 'hidden',
-    shadowColor: Colors.brownDark,
+    shadowColor: c.brownDark,
     shadowOpacity: 0.28,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 16 },
     elevation: 10,
   },
-  title: { fontFamily: Fonts.display, fontSize: 30, lineHeight: 32, color: Colors.text },
-  speaker: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textMuted },
-  notice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: Colors.textMuted },
-  time: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.textMuted, fontVariant: ['tabular-nums'] },
+  title: { fontFamily: Fonts.display, fontSize: 30, lineHeight: 32, color: c.text },
+  speaker: { fontFamily: Fonts.sans, fontSize: 15, color: c.textMuted },
+  notice: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: c.textMuted },
+  time: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted, fontVariant: ['tabular-nums'] },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4 },
   ctrl: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
   playBtn: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.brown,
+    backgroundColor: c.brown,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.brownDark,
+    shadowColor: c.brownDark,
     shadowOpacity: 0.3,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 10 },
@@ -178,12 +183,12 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.lineStrong,
-    backgroundColor: Colors.ivory,
+    borderColor: c.lineStrong,
+    backgroundColor: c.ivory,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-  pillText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: Colors.brownDark },
+  pillText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.brownDark },
 });

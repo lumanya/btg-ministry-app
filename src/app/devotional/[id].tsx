@@ -6,12 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Button, IconButton, Tap } from '@/components/ui';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Brand, Fonts, Palette, Radius } from '@/constants/theme';
 import { devotionals, findDevotional, formatDate } from '@/content/sample';
+import { useColors, useStyles } from '@/state/theme';
 
 const SIZES = [16, 18, 20, 23];
 
 export default function Reader() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -28,7 +31,7 @@ export default function Reader() {
   const [first, ...rest] = d.excerpt;
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.paper }}>
+    <View style={{ flex: 1, backgroundColor: c.paper }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
         <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/devotional'))} style={{ marginRight: 'auto' }} />
         <View style={styles.sizeGroup} accessibilityRole="adjustable" accessibilityLabel="Text size">
@@ -78,7 +81,7 @@ export default function Reader() {
 
         <Tap accessibilityRole="button" onPress={() => router.push('/player')} style={styles.listen}>
           <View style={styles.listenDisc}>
-            <Icon name="play" size={18} color={Colors.cream} />
+            <Icon name="play" size={18} color={c.cream} />
           </View>
           <View style={{ gap: 2 }}>
             <Text style={styles.listenTitle}>Listen to this devotional</Text>
@@ -89,7 +92,7 @@ export default function Reader() {
         {done ? (
           <View style={styles.done} accessibilityLiveRegion="polite">
             <View style={styles.doneDisc}>
-              <Icon name="flame" color={Colors.brown} filled />
+              <Icon name="flame" color={Brand.brown} filled />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.doneTitle}>4-day streak</Text>
@@ -128,22 +131,23 @@ export default function Reader() {
   );
 }
 
-const styles = StyleSheet.create({
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: Colors.sand },
-  sizeGroup: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: Colors.lineStrong, borderRadius: Radius.pill },
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: c.sand },
+  sizeGroup: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill },
   sizeBtn: { width: 44, height: 40, alignItems: 'center', justifyContent: 'center' },
-  sizeA: { fontFamily: Fonts.display, color: Colors.brownDark },
-  sizeDivider: { width: 1, height: 20, backgroundColor: Colors.lineStrong },
-  kicker: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: Colors.eyebrow },
-  title: { fontFamily: Fonts.display, fontSize: 48, lineHeight: 48, color: Colors.text },
-  subtitle: { fontFamily: Fonts.displayItalic, fontSize: 22, color: Colors.textMuted },
-  verse: { alignItems: 'center', gap: 12, padding: 24, paddingHorizontal: 20, borderRadius: Radius.lg, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.line },
-  verseText: { fontFamily: Fonts.displayItalic, fontSize: 23, lineHeight: 29, color: Colors.brownDark, textAlign: 'center' },
-  verseRef: { fontFamily: Fonts.sansBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: Colors.eyebrow },
-  body: { fontFamily: Fonts.sans, color: '#2E1D10' },
-  dropCap: { fontFamily: Fonts.display, fontSize: 40, color: Colors.brown },
-  placeholder: { padding: 18, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: Colors.inputBorder },
-  placeholderText: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 21, color: Colors.textMuted },
+  sizeA: { fontFamily: Fonts.display, color: c.brownDark },
+  sizeDivider: { width: 1, height: 20, backgroundColor: c.lineStrong },
+  kicker: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
+  title: { fontFamily: Fonts.display, fontSize: 48, lineHeight: 48, color: c.text },
+  subtitle: { fontFamily: Fonts.displayItalic, fontSize: 22, color: c.textMuted },
+  verse: { alignItems: 'center', gap: 12, padding: 24, paddingHorizontal: 20, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
+  verseText: { fontFamily: Fonts.displayItalic, fontSize: 23, lineHeight: 29, color: c.brownDark, textAlign: 'center' },
+  verseRef: { fontFamily: Fonts.sansBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
+  body: { fontFamily: Fonts.sans, color: c.text },
+  dropCap: { fontFamily: Fonts.display, fontSize: 40, color: c.accent },
+  placeholder: { padding: 18, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: c.inputBorder },
+  placeholderText: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 21, color: c.textMuted },
   listen: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,20 +155,20 @@ const styles = StyleSheet.create({
     padding: 12,
     paddingRight: 16,
     borderRadius: 18,
-    backgroundColor: Colors.parchment,
+    backgroundColor: c.parchment,
     borderWidth: 1,
-    borderColor: Colors.line,
+    borderColor: c.line,
   },
-  listenDisc: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'center' },
-  listenTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: Colors.text },
-  listenMeta: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
-  done: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: Radius.lg, backgroundColor: Colors.brown },
-  doneDisc: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
-  doneTitle: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, color: Colors.cream },
-  doneMeta: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.creamMuted },
-  undo: { minHeight: 44, paddingHorizontal: 12, borderRadius: Radius.pill, borderWidth: 1, borderColor: Colors.gold, justifyContent: 'center' },
-  undoText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: Colors.cream },
-  navCard: { flex: 1, gap: 6, padding: 14, borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.line, backgroundColor: Colors.white },
-  navLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.eyebrow },
-  navTitle: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 21, color: Colors.text },
+  listenDisc: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
+  listenTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
+  listenMeta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  done: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: Radius.lg, backgroundColor: c.brown },
+  doneDisc: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.cream, alignItems: 'center', justifyContent: 'center' },
+  doneTitle: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, color: c.cream },
+  doneMeta: { fontFamily: Fonts.sans, fontSize: 13, color: c.creamMuted },
+  undo: { minHeight: 44, paddingHorizontal: 12, borderRadius: Radius.pill, borderWidth: 1, borderColor: c.gold, justifyContent: 'center' },
+  undoText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.cream },
+  navCard: { flex: 1, gap: 6, padding: 14, borderRadius: Radius.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.white },
+  navLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.eyebrow },
+  navTitle: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 21, color: c.text },
 });

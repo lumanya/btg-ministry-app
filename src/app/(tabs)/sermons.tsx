@@ -5,9 +5,10 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon } from '@/components/icon';
 import { Eyebrow, Screen, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { FeedVideo, videoMeta, videoTone } from '@/lib/video';
 import { useFeed } from '@/state/feed';
+import { useColors, useStyles } from '@/state/theme';
 
 const filters = [
   { id: 'all', label: 'All' },
@@ -18,6 +19,8 @@ const filters = [
 type FilterId = (typeof filters)[number]['id'];
 
 export default function Sermons() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const { feed, status, refreshing, refresh } = useFeed();
   const [filter, setFilter] = useState<FilterId>('all');
@@ -35,12 +38,12 @@ export default function Sermons() {
       <Title>Sermons</Title>
 
       <View style={styles.search}>
-        <Icon name="search" size={20} color={Colors.textMuted} />
+        <Icon name="search" size={20} color={c.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Search sermons and teachings"
-          placeholderTextColor={Colors.textSubtle}
+          placeholderTextColor={c.textSubtle}
           accessibilityLabel="Search sermons"
           returnKeyType="search"
           style={styles.searchInput}
@@ -61,7 +64,7 @@ export default function Sermons() {
               accessibilityState={{ selected: on }}
               onPress={() => setFilter(f.id)}
               style={[styles.chip, on && styles.chipOn]}>
-              <Text style={[styles.chipText, on && { color: Colors.cream }]}>{f.label}</Text>
+              <Text style={[styles.chipText, on && { color: c.cream }]}>{f.label}</Text>
             </Tap>
           );
         })}
@@ -110,7 +113,8 @@ export default function Sermons() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -119,25 +123,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.lineStrong,
-    backgroundColor: Colors.white,
+    borderColor: c.lineStrong,
+    backgroundColor: c.white,
   },
-  searchInput: { flex: 1, height: '100%', fontFamily: Fonts.sans, fontSize: 15, color: Colors.text },
+  searchInput: { flex: 1, height: '100%', fontFamily: Fonts.sans, fontSize: 15, color: c.text },
   chip: {
     height: 44,
     paddingHorizontal: 18,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.lineStrong,
-    backgroundColor: Colors.white,
+    borderColor: c.lineStrong,
+    backgroundColor: c.white,
     justifyContent: 'center',
   },
-  chipOn: { backgroundColor: Colors.brown, borderColor: Colors.brown },
-  chipText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brownDark },
-  notice: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: Colors.parchment },
-  itemTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: Colors.text },
-  meta: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
+  chipOn: { backgroundColor: c.brown, borderColor: c.brown },
+  chipText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.brownDark },
+  notice: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: c.parchment },
+  itemTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
+  meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  empty: { padding: 28, borderRadius: Radius.lg, backgroundColor: Colors.parchment, alignItems: 'center' },
+  empty: { padding: 28, borderRadius: Radius.lg, backgroundColor: c.parchment, alignItems: 'center' },
 });

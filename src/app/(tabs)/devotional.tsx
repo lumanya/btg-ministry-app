@@ -2,11 +2,12 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Eagle, ScrollCard, tones } from '@/components/art';
+import { Eagle, ScrollCard, useTones } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Fonts, Palette, Radius } from '@/constants/theme';
 import { devotionals, formatDate, podcast, todaysDevotionalId } from '@/content/sample';
+import { useColors, useStyles } from '@/state/theme';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -24,6 +25,9 @@ function buildWeek() {
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function DevotionalTab() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
+  const toneSet = useTones();
   const router = useRouter();
   const week = buildWeek();
   const [selectedId, setSelectedId] = useState(todaysDevotionalId);
@@ -39,7 +43,7 @@ export default function DevotionalTab() {
       <View style={styles.header}>
         <Title size={34}>Daily devotional</Title>
         <View style={styles.streak} accessible accessibilityLabel="3-day reading streak">
-          <Icon name="flame" size={16} color={Colors.brown} filled />
+          <Icon name="flame" size={16} color={c.accent} filled />
           <Text style={styles.streakText}>3</Text>
         </View>
       </View>
@@ -59,9 +63,9 @@ export default function DevotionalTab() {
                 accessibilityLabel={`${w.weekday} ${w.day}: ${d ? d.title : 'no devotional'}`}
                 onPress={() => d && setSelectedId(d.id)}
                 style={[styles.day, on && styles.dayOn, !d && styles.dayEmpty]}>
-                <Text style={[styles.dayLetter, on && { color: Colors.cream }]}>{w.weekday.charAt(0)}</Text>
-                <Text style={[styles.dayNum, on && { color: Colors.cream }, !d && { color: Colors.textSubtle }]}>{w.day}</Text>
-                <View style={[styles.dayDot, d && { backgroundColor: on ? Colors.gold : Colors.brown }]} />
+                <Text style={[styles.dayLetter, on && { color: c.cream }]}>{w.weekday.charAt(0)}</Text>
+                <Text style={[styles.dayNum, on && { color: c.cream }, !d && { color: c.textSubtle }]}>{w.day}</Text>
+                <View style={[styles.dayDot, d && { backgroundColor: on ? c.gold : c.accent }]} />
               </Tap>
             );
           })}
@@ -87,7 +91,7 @@ export default function DevotionalTab() {
               label="Listen to this devotional"
               size={46}
               onPress={() => router.push('/player')}
-              style={{ borderColor: Colors.brown, backgroundColor: 'transparent' }}
+              style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
             />
           </View>
         </ScrollCard>
@@ -97,7 +101,7 @@ export default function DevotionalTab() {
         <Eyebrow>Series</Eyebrow>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {podcast.series.map((s) => {
-            const t = tones[s.tone];
+            const t = toneSet[s.tone];
             const first = devotionals.find((d) => d.series === s.name);
             return (
               <Tap
@@ -106,7 +110,7 @@ export default function DevotionalTab() {
                 accessibilityLabel={`${s.name} series`}
                 onPress={() => first && setSelectedId(first.id)}
                 style={[styles.series, { backgroundColor: t.bg }]}>
-                <Eagle height={30} light={s.tone !== 'sand'} />
+                <Eagle height={30} light={t.lightEagle} />
                 <Text style={[styles.seriesName, { color: t.text }]}>{s.name}</Text>
               </Tap>
             );
@@ -122,7 +126,7 @@ export default function DevotionalTab() {
               <Text style={styles.earlierDate}>{formatDate(d.date)}</Text>
               <Text style={styles.earlierTitle}>{d.title}</Text>
             </View>
-            <Icon name="chevron" size={18} color={Colors.brown} />
+            <Icon name="chevron" size={18} color={c.accent} />
           </Tap>
         ))}
       </View>
@@ -130,7 +134,8 @@ export default function DevotionalTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   streak: {
     flexDirection: 'row',
@@ -139,34 +144,34 @@ const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: 12,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.parchment,
+    backgroundColor: c.parchment,
     borderWidth: 1,
-    borderColor: Colors.line,
+    borderColor: c.line,
   },
-  streakText: { fontFamily: Fonts.sansBold, fontSize: 14, color: Colors.brown },
+  streakText: { fontFamily: Fonts.sansBold, fontSize: 14, color: c.accent },
   week: { flexDirection: 'row', gap: 4 },
   day: {
     flex: 1,
     height: 66,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.line,
-    backgroundColor: Colors.white,
+    borderColor: c.line,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
   },
-  dayOn: { backgroundColor: Colors.brown, borderColor: Colors.brown },
-  dayEmpty: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: Colors.lineStrong },
-  dayLetter: { fontFamily: Fonts.sansSemiBold, fontSize: 11, color: Colors.textMuted },
-  dayNum: { fontFamily: Fonts.sansBold, fontSize: 18, color: Colors.text },
+  dayOn: { backgroundColor: c.brown, borderColor: c.brown },
+  dayEmpty: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: c.lineStrong },
+  dayLetter: { fontFamily: Fonts.sansSemiBold, fontSize: 11, color: c.textMuted },
+  dayNum: { fontFamily: Fonts.sansBold, fontSize: 18, color: c.text },
   dayDot: { width: 5, height: 5, borderRadius: 3 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  refChip: { borderWidth: 1, borderColor: Colors.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-  refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.textMuted },
+  refChip: { borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
   series: { flex: 1, height: 92, borderRadius: Radius.md, padding: 12, justifyContent: 'space-between' },
   seriesName: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 20 },
-  earlier: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, borderBottomWidth: 1, borderBottomColor: Colors.line },
-  earlierDate: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.eyebrow },
-  earlierTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 23, color: Colors.text },
+  earlier: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, borderBottomWidth: 1, borderBottomColor: c.line },
+  earlierDate: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.eyebrow },
+  earlierTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 23, color: c.text },
 });

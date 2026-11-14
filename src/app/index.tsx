@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logoImage } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Button, Eyebrow } from '@/components/ui';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
+import { useColors, useStyles } from '@/state/theme';
 
 const features: { icon: IconName; label: string }[] = [
   { icon: 'sermons', label: 'Sermons' },
@@ -17,6 +18,8 @@ const features: { icon: IconName; label: string }[] = [
 
 /** Welcome screen shown when the app opens. */
 export default function Welcome() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const start = () => router.replace('/home');
@@ -44,7 +47,7 @@ export default function Welcome() {
       <View style={styles.features}>
         {features.map((f) => (
           <View key={f.label} style={styles.feature}>
-            <Icon name={f.icon} color={Colors.brown} />
+            <Icon name={f.icon} color={c.accent} />
             <Text style={styles.featureLabel}>{f.label}</Text>
           </View>
         ))}
@@ -58,10 +61,11 @@ export default function Welcome() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.ivory,
+    backgroundColor: c.ivory,
     paddingHorizontal: ScreenPadding + 4,
     justifyContent: 'space-between',
     gap: 16,
@@ -72,13 +76,14 @@ const styles = StyleSheet.create({
     width: 236,
     height: 236,
     borderRadius: 118,
-    backgroundColor: Colors.parchment,
+    // The logo artwork is drawn for a light background, so its disc stays light in dark mode.
+    backgroundColor: Brand.parchment,
     borderWidth: 1,
-    borderColor: Colors.line,
+    borderColor: Brand.line,
   },
   logo: { width: 260, height: 260 },
-  headline: { fontFamily: Fonts.display, fontSize: 42, lineHeight: 44, color: Colors.text },
-  headlineEm: { fontFamily: Fonts.displayItalic, color: Colors.brown },
+  headline: { fontFamily: Fonts.display, fontSize: 42, lineHeight: 44, color: c.text },
+  headlineEm: { fontFamily: Fonts.displayItalic, color: c.accent },
   features: { flexDirection: 'row', gap: 8 },
   feature: {
     flex: 1,
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: Radius.md,
-    backgroundColor: Colors.parchment,
+    backgroundColor: c.parchment,
   },
-  featureLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.brownDark },
+  featureLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.brownDark },
 });

@@ -9,12 +9,15 @@ import { Icon, IconName } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
-import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
+import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
 import { findVideo, videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
 import { useFeed } from '@/state/feed';
+import { useColors, useStyles } from '@/state/theme';
 
 export default function SermonScreen() {
+  const c = useColors();
+  const styles = useStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -52,7 +55,7 @@ export default function SermonScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.ivory }}>
+    <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
         <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
         <Eyebrow style={{ fontSize: 13 }}>{video.kind === 'stream' || video.kind === 'live' ? 'Livestream' : 'Sermon'}</Eyebrow>
@@ -63,7 +66,7 @@ export default function SermonScreen() {
         <YouTubePlayer youtubeId={video.youtubeId} style={{ height: playerHeight }} />
       ) : (
         <Tap accessibilityRole="button" accessibilityLabel={`Play ${video.title}`} onPress={play}>
-          <VideoThumb video={video} height={playerHeight} titleSize={28} radius={0} play="center" style={{ backgroundColor: Colors.night }} />
+          <VideoThumb video={video} height={playerHeight} titleSize={28} radius={0} play="center" style={{ backgroundColor: c.night }} />
         </Tap>
       )}
 
@@ -94,9 +97,9 @@ export default function SermonScreen() {
               accessibilityRole="button"
               accessibilityState={a.on === undefined ? undefined : { selected: a.on }}
               onPress={a.onPress}
-              style={[styles.action, a.on && { backgroundColor: Colors.brown, borderColor: Colors.brown }]}>
-              <Icon name={a.icon} size={20} color={a.on ? Colors.cream : Colors.brownDark} filled={a.on} />
-              <Text style={[styles.actionText, a.on && { color: Colors.cream }]}>{a.label}</Text>
+              style={[styles.action, a.on && { backgroundColor: c.brown, borderColor: c.brown }]}>
+              <Icon name={a.icon} size={20} color={a.on ? c.cream : c.brownDark} filled={a.on} />
+              <Text style={[styles.actionText, a.on && { color: c.cream }]}>{a.label}</Text>
             </Tap>
           ))}
         </View>
@@ -136,35 +139,36 @@ export default function SermonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingBottom: 8 },
-  missing: { flex: 1, backgroundColor: Colors.ivory, paddingHorizontal: ScreenPadding, gap: 16 },
-  link: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: Colors.brown },
-  meta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted },
-  speaker: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: Colors.parchment },
+  missing: { flex: 1, backgroundColor: c.ivory, paddingHorizontal: ScreenPadding, gap: 16 },
+  link: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.accent },
+  meta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
+  speaker: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: c.parchment },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.sand,
+    backgroundColor: c.sand,
     borderWidth: 1,
-    borderColor: Colors.lineStrong,
+    borderColor: c.lineStrong,
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 3,
     overflow: 'hidden',
   },
-  speakerName: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: Colors.text },
+  speakerName: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
   action: {
     flex: 1,
     height: 68,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.line,
-    backgroundColor: Colors.white,
+    borderColor: c.line,
+    backgroundColor: c.white,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-  actionText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.brownDark },
+  actionText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.brownDark },
 });

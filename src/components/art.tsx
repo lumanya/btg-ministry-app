@@ -2,8 +2,9 @@ import { Image } from 'expo-image';
 import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-import { Colors, Fonts } from '@/constants/theme';
+import { Brand, Fonts, Palette } from '@/constants/theme';
 import type { ArtTone } from '@/content/sample';
+import { useColors, useStyles, useTheme } from '@/state/theme';
 
 export const eagleImage = require('@/assets/images/eagle.png');
 export const eagleCreamImage = require('@/assets/images/eagle-cream.png');
@@ -12,16 +13,33 @@ export const logoImage = require('@/assets/images/logo-full.png');
 /** Width ÷ height of the eagle emblem images. */
 export const EAGLE_RATIO = 0.73;
 
-export const tones: Record<ArtTone, { bg: string; line: string; text: string; eagle: number }> = {
-  brown: { bg: Colors.brown, line: Colors.goldLine, text: Colors.cream, eagle: eagleCreamImage },
-  deep: { bg: Colors.deep, line: Colors.goldLineDeep, text: Colors.cream, eagle: eagleCreamImage },
-  sand: { bg: Colors.sand, line: Colors.lineStrong, text: Colors.text, eagle: eagleImage },
-};
+export type Tone = { bg: string; line: string; text: string; eagle: number; lightEagle: boolean };
 
-export function Eagle({ height, light = false }: { height: number; light?: boolean }) {
+/** Artwork tile colours for the current mode. In dark mode the sand tile turns dark, so its eagle turns cream. */
+export function tonesFor(c: Palette, isDark: boolean): Record<ArtTone, Tone> {
+  return {
+    brown: { bg: c.brown, line: c.goldLine, text: c.cream, eagle: eagleCreamImage, lightEagle: true },
+    deep: { bg: c.deep, line: c.goldLineDeep, text: c.cream, eagle: eagleCreamImage, lightEagle: true },
+    sand: isDark
+      ? { bg: c.sand, line: c.lineStrong, text: c.text, eagle: eagleCreamImage, lightEagle: true }
+      : { bg: c.sand, line: c.lineStrong, text: c.text, eagle: eagleImage, lightEagle: false },
+  };
+}
+
+export function useTones() {
+  const { colors, isDark } = useTheme();
+  return tonesFor(colors, isDark);
+}
+
+/**
+ * The eagle emblem. Brown on light backgrounds and cream on dark ones;
+ * pass `light` to force the cream version (for brown or dark tiles).
+ */
+export function Eagle({ height, light }: { height: number; light?: boolean }) {
+  const { isDark } = useTheme();
   return (
     <Image
-      source={light ? eagleCreamImage : eagleImage}
+      source={(light ?? isDark) ? eagleCreamImage : eagleImage}
       style={{ width: height * EAGLE_RATIO, height }}
       contentFit="contain"
       accessible={false}
@@ -46,7 +64,9 @@ export function Arch({
   eagleHeight: number;
   label?: string;
 }) {
-  const t = tones[tone];
+  const c = useColors();
+  const styles = useStyles(createStyles);
+  const t = useTones()[tone];
   return (
     <View
       style={{
@@ -64,7 +84,7 @@ export function Arch({
         gap: 10,
       }}>
       <Image source={t.eagle} style={{ width: eagleHeight * EAGLE_RATIO, height: eagleHeight }} contentFit="contain" />
-      {label ? <Text style={[styles.archLabel, { color: Colors.gold }]}>{label}</Text> : null}
+      {label ? <Text style={[styles.archLabel, { color: c.gold }]}>{label}</Text> : null}
     </View>
   );
 }
@@ -85,7 +105,8 @@ export function SermonArt({
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 }) {
-  const t = tones[tone];
+  const styles = useStyles(createStyles);
+  const t = useTones()[tone];
   const archH = Math.round(height * 0.76);
   const archW = Math.round(archH * 0.58);
   return (
@@ -101,6 +122,7 @@ export function SermonArt({
 
 /** The scroll from the logo: a rolled bar above and below the content. */
 export function ScrollCard({ children }: { children: ReactNode }) {
+  const styles = useStyles(createStyles);
   return (
     <View style={{ alignItems: 'center' }}>
       <Roll />
@@ -111,6 +133,7 @@ export function ScrollCard({ children }: { children: ReactNode }) {
 }
 
 function Roll() {
+  const styles = useStyles(createStyles);
   return (
     <View style={styles.roll} accessible={false}>
       <View style={styles.rollKnob} />
@@ -123,7 +146,8 @@ function Roll() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   archLabel: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase' },
   sermonArt: {
     borderRadius: 16,
@@ -134,16 +158,16 @@ const styles = StyleSheet.create({
   },
   sermonTitle: { flex: 1, fontFamily: Fonts.display },
   roll: { width: '100%', flexDirection: 'row', alignItems: 'center' },
-  rollKnob: { width: 10, height: 28, borderRadius: 4, backgroundColor: Colors.brownDark },
-  rollBar: { flex: 1, height: 20, borderRadius: 4, backgroundColor: Colors.brown, overflow: 'hidden', justifyContent: 'space-between' },
+  rollKnob: { width: 10, height: 28, borderRadius: 4, backgroundColor: Brand.brownDark },
+  rollBar: { flex: 1, height: 20, borderRadius: 4, backgroundColor: Brand.brown, overflow: 'hidden', justifyContent: 'space-between' },
   rollShine: { height: 3, backgroundColor: 'rgba(255,255,255,0.16)' },
   rollShade: { height: 6, backgroundColor: 'rgba(31,19,10,0.22)' },
   paper: {
     width: '92%',
-    backgroundColor: Colors.paper,
+    backgroundColor: c.paper,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: Colors.lineStrong,
+    borderColor: c.lineStrong,
     paddingVertical: 22,
     paddingHorizontal: 20,
     gap: 12,

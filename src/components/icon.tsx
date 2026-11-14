@@ -1,6 +1,7 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { useColors } from '@/state/theme';
 
-import { Colors } from '@/constants/theme';
+
 
 export type IconName =
   | 'home'
@@ -42,7 +43,9 @@ type Props = {
 };
 
 /** Line icons drawn to match the BTG Ministry design (24 × 24 grid, 1.8 stroke). */
-export function Icon({ name, size = 22, color = Colors.brownDark, filled = false, dot = false }: Props) {
+export function Icon({ name, size = 22, color: colorProp, filled = false, dot = false }: Props) {
+  const c = useColors();
+  const color = colorProp ?? c.brownDark;
   const stroke = {
     stroke: color,
     strokeWidth: 1.8,
@@ -78,7 +81,7 @@ export function Icon({ name, size = 22, color = Colors.brownDark, filled = false
           <Path d="M8 16a5.7 5.7 0 0 1 0-8" {...stroke} />
           <Path d="M19 5a10 10 0 0 1 0 14" {...stroke} />
           <Path d="M5 19a10 10 0 0 1 0-14" {...stroke} />
-          {dot ? <Circle cx={20.5} cy={3.5} r={3} fill={Colors.live} /> : null}
+          {dot ? <Circle cx={20.5} cy={3.5} r={3} fill={c.live} /> : null}
         </>
       );
       break;

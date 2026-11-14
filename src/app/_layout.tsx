@@ -13,11 +13,12 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
-import { Colors } from '@/constants/theme';
 import { FeedProvider } from '@/state/feed';
 import { PlayerProvider } from '@/state/player';
+import { ThemeProvider, useTheme } from '@/state/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,10 +41,28 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <FeedProvider>
-    <PlayerProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ivory } }}>
+    <ThemeProvider>
+      <FeedProvider>
+        <PlayerProvider>
+          <AppStack />
+        </PlayerProvider>
+      </FeedProvider>
+    </ThemeProvider>
+  );
+}
+
+function AppStack() {
+  const { colors: c, isDark } = useTheme();
+
+  // The window behind the screens (seen during transitions) follows the theme too.
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(c.ivory).catch(() => {});
+  }, [c.ivory]);
+
+  return (
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.ivory } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sermon/[id]" />
@@ -51,7 +70,6 @@ export default function RootLayout() {
         <Stack.Screen name="player" options={{ presentation: 'modal' }} />
         <Stack.Screen name="give" />
       </Stack>
-    </PlayerProvider>
-    </FeedProvider>
+    </>
   );
 }

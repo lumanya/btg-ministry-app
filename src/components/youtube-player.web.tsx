@@ -1,13 +1,15 @@
 import { StyleProp, View, ViewStyle } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+
 
 import { embedUrl } from './youtube-embed';
+import { useColors } from '@/state/theme';
 
 /** Web version of the player: a plain YouTube iframe. */
 export function YouTubePlayer({ youtubeId, style }: { youtubeId: string; style?: StyleProp<ViewStyle> }) {
+  const c = useColors();
   return (
-    <View style={[{ backgroundColor: Colors.night, overflow: 'hidden' }, style]}>
+    <View style={[{ backgroundColor: c.night, overflow: 'hidden' }, style]}>
       <iframe
         title="YouTube video player"
         src={embedUrl(youtubeId)}

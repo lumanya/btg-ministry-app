@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { GestureResponderEvent, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { Palette } from '@/constants/theme';
 import { formatClock } from '@/lib/podcast';
+import { useStyles } from '@/state/theme';
 
 /**
  * Playback position bar. Tap or drag to seek; screen readers can swipe up
@@ -19,6 +20,7 @@ export function Scrubber({
   onSeek: (seconds: number) => void;
   disabled?: boolean;
 }) {
+  const styles = useStyles(createStyles);
   const [width, setWidth] = useState(1);
   const [drag, setDrag] = useState<number | null>(null);
   // Left edge of the bar on screen, measured when a touch starts.
@@ -70,19 +72,20 @@ export function Scrubber({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: Palette) =>
+  StyleSheet.create({
   track: { height: 28, justifyContent: 'center' },
-  rail: { height: 4, borderRadius: 2, backgroundColor: '#D9C9B1', overflow: 'hidden' },
-  fill: { height: 4, backgroundColor: Colors.brown },
+  rail: { height: 4, borderRadius: 2, backgroundColor: c.rail, overflow: 'hidden' },
+  fill: { height: 4, backgroundColor: c.brown },
   thumb: {
     position: 'absolute',
     width: 16,
     height: 16,
     marginLeft: -8,
     borderRadius: 8,
-    backgroundColor: Colors.brown,
+    backgroundColor: c.brown,
     borderWidth: 2,
-    borderColor: Colors.parchment,
+    borderColor: c.parchment,
   },
   thumbActive: { width: 22, height: 22, marginLeft: -11, borderRadius: 11 },
 });

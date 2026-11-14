@@ -2,9 +2,10 @@ import * as WebBrowser from 'expo-web-browser';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { Colors } from '@/constants/theme';
+
 
 import { embedUrl } from './youtube-embed';
+import { useColors } from '@/state/theme';
 
 /**
  * Plays a YouTube video or livestream inside the app.
@@ -16,12 +17,13 @@ import { embedUrl } from './youtube-embed';
 const APP_REFERER = 'https://org.btgministry.app';
 
 export function YouTubePlayer({ youtubeId, style }: { youtubeId: string; style?: StyleProp<ViewStyle> }) {
+  const c = useColors();
   const src = embedUrl(youtubeId);
   return (
-    <View style={[{ backgroundColor: Colors.night, overflow: 'hidden' }, style]}>
+    <View style={[{ backgroundColor: c.night, overflow: 'hidden' }, style]}>
       <WebView
         source={{ uri: src, headers: { Referer: APP_REFERER } }}
-        style={{ flex: 1, backgroundColor: Colors.night }}
+        style={{ flex: 1, backgroundColor: c.night }}
         allowsInlineMediaPlayback
         allowsFullscreenVideo
         mediaPlaybackRequiresUserAction={false}
