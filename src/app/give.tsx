@@ -61,7 +61,7 @@ export default function Give() {
               <View style={styles.rowFooter}>
                 <Text style={styles.name}>{r.name}</Text>
                 <Tap accessibilityRole="button" accessibilityLabel={`Copy ${r.label}`} onPress={() => copy(r.key, r.number)} style={styles.copy}>
-                  <Icon name={copied === r.key ? 'check' : 'copy'} size={16} color={c.cream} />
+                  <Icon name={copied === r.key ? 'check' : 'copy'} size={16} color={c.accent} />
                   <Text style={styles.copyText} accessibilityLiveRegion="polite">{copied === r.key ? 'Copied' : 'Copy'}</Text>
                 </Tap>
               </View>
@@ -81,13 +81,13 @@ export default function Give() {
 const createStyles = (c: Palette) =>
   StyleSheet.create({
   topBar: { paddingHorizontal: 12, paddingBottom: 4 },
-  card: { padding: 22, borderRadius: Radius.lg, backgroundColor: c.brown, gap: 4 },
-  cardTitle: { fontFamily: Fonts.display, fontSize: 32, color: c.cream, marginBottom: 8 },
+  card: { padding: 22, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line, gap: 4 },
+  cardTitle: { fontFamily: Fonts.display, fontSize: 32, color: c.text, marginBottom: 8 },
   row: { gap: 6, paddingVertical: 18, borderTopWidth: 1, borderTopColor: '#8E6641' },
   rowFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  label: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.gold },
-  number: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 36, letterSpacing: 1.2, color: c.cream, fontVariant: ['lining-nums', 'tabular-nums'] },
-  name: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: c.creamMuted },
+  label: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
+  number: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 36, letterSpacing: 1.2, color: c.text, fontVariant: ['lining-nums', 'tabular-nums'] },
+  name: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
   copy: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,9 +96,9 @@ const createStyles = (c: Palette) =>
     paddingHorizontal: 16,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: c.gold,
+    borderColor: c.accent,
   },
-  copyText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
+  copyText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
   help: { gap: 8, padding: 18, borderRadius: Radius.lg, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
   helpText: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.brownDark },
 });

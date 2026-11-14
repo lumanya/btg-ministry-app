@@ -38,7 +38,7 @@ export default function PodcastTab() {
         <Title>Podcast</Title>
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
-          <View style={[styles.cover, { backgroundColor: c.brown }]}>
+          <View style={[styles.cover, { backgroundColor: c.artBrown }]}>
             {p.podcast.artwork ? (
               <Image source={{ uri: p.podcast.artwork }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
             ) : (

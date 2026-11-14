@@ -8,31 +8,43 @@
  */
 
 export const light = {
-  ivory: '#FCFAF6', // screen background
-  parchment: '#F6EFE3', // soft panels
-  sand: '#EDE1CF', // selected tab pill, quote panel
-  paper: '#FBF3E4', // the devotional scroll and reader
+  // Light and airy: near-white screens, soft warm borders, and a caramel brown
+  // kept for buttons, selected states and small accents.
+  ivory: '#FFFDFA', // screen background
+  parchment: '#FAF6F0', // soft panels
+  sand: '#F3ECE2', // selected tab pill, quote panel
+  paper: '#FFFCF7', // the devotional scroll and reader
   white: '#FFFFFF', // cards and inputs
-  line: '#E2D5C2', // card borders
-  lineStrong: '#CDBBA0',
-  inputBorder: '#A38660',
-  rail: '#D9C9B1', // empty part of progress bars
+  line: '#EFE6DA', // card borders
+  lineStrong: '#E0D3C1',
+  inputBorder: '#A88E70',
+  rail: '#EDE4D8', // empty part of progress bars
 
-  text: '#1F130A',
-  textMuted: '#5C4634',
-  textSubtle: '#6B5038', // inactive tab labels, placeholders
-  eyebrow: '#7A4E26', // small uppercase labels
+  text: '#2B1D12',
+  textMuted: '#6B5644',
+  textSubtle: '#80694F', // inactive tab labels, placeholders
+  eyebrow: '#94643A', // small uppercase labels
 
-  brown: '#704828', // filled buttons and selected states (cream text on top)
-  accent: '#704828', // links, icons and outlines on the screen background
+  brown: '#8B5A2B', // filled buttons and selected states (cream text on top)
+  accent: '#8B5A2B', // links, icons and outlines on the screen background
   brownDark: '#4F3119', // strong icons and button text on the screen background
-  deep: '#3A2413', // dark artwork tiles
-  night: '#2A1A0F', // video players
-  cream: '#F8EFE0', // text on brown
-  creamMuted: '#EAD9C0',
+  deep: '#3A2413', // dark artwork
+  night: '#1C130C', // video players
+  cream: '#FFFFFF', // text on brown
+  creamMuted: '#F3E6D3',
   gold: '#E6C898', // accents on brown
-  goldLine: '#C9A577', // arch outline on brown
-  goldLineDeep: '#A8875C', // arch outline on deep
+  goldLine: '#C9A577',
+  goldLineDeep: '#A8875C',
+
+  // Artwork tiles (sermon placeholders, series, podcast cover).
+  artBrown: '#EFE3D3',
+  artDeep: '#E6D6C2',
+  artSand: '#F7F1E9',
+  artLine: '#CDB596',
+  artText: '#3A2716',
+  // The scroll rods from the logo.
+  roll: '#C9A77F',
+  rollKnob: '#A47A4E',
 
   live: '#B42318',
   danger: '#B42318', // error text and borders
@@ -41,31 +53,40 @@ export const light = {
 export type Palette = typeof light;
 
 export const dark: Palette = {
-  ivory: '#16100B',
-  parchment: '#211810',
-  sand: '#33261A',
-  paper: '#1E160F',
-  white: '#241B13',
-  line: '#3A2C20',
-  lineStrong: '#54412F',
-  inputBorder: '#7A6249',
-  rail: '#4A3828',
+  // Warm charcoal rather than brown, so dark mode stays clean, not muddy.
+  ivory: '#131110',
+  parchment: '#1C1916',
+  sand: '#2A2520',
+  paper: '#171412',
+  white: '#1E1A17',
+  line: '#2E2925',
+  lineStrong: '#463F38',
+  inputBorder: '#7D7064',
+  rail: '#3A332D',
 
-  text: '#F4EADB',
-  textMuted: '#CDBAA2',
-  textSubtle: '#B19C83',
-  eyebrow: '#DDB680',
+  text: '#F5EFE7',
+  textMuted: '#C9BFB3',
+  textSubtle: '#A89C8E',
+  eyebrow: '#D9AE7A',
 
-  brown: '#744A26',
+  brown: '#8B5A2B',
   accent: '#E2B57A',
-  brownDark: '#EFE0C8',
-  deep: '#2C1D11',
-  night: '#0F0A06',
-  cream: '#F8EFE0',
-  creamMuted: '#EAD9C0',
+  brownDark: '#F1E4D2',
+  deep: '#241F1B',
+  night: '#0B0908',
+  cream: '#FFFFFF',
+  creamMuted: '#F3E6D3',
   gold: '#E6C898',
   goldLine: '#C9A577',
   goldLineDeep: '#A8875C',
+
+  artBrown: '#2E251E',
+  artDeep: '#26201B',
+  artSand: '#211C18',
+  artLine: '#5C4C3C',
+  artText: '#F5EFE7',
+  roll: '#6E5238',
+  rollKnob: '#584029',
 
   live: '#D13A2E',
   danger: '#FF9D8F',
@@ -73,11 +94,11 @@ export const dark: Palette = {
 
 /** Fixed brand colours for artwork (the scroll, the logo disc) that look the same in both modes. */
 export const Brand = {
-  brown: '#704828',
+  brown: '#8B5A2B',
   brownDark: '#4F3119',
-  ivory: '#FCFAF6',
-  parchment: '#F6EFE3',
-  line: '#E2D5C2',
+  ivory: '#FFFDFA',
+  parchment: '#FAF6F0',
+  line: '#EFE6DA',
 } as const;
 
 export const Fonts = {

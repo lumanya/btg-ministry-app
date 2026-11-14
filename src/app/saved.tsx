@@ -131,7 +131,7 @@ function Empty({ title, text, action, onAction }: { title: string; text: string;
     <Appear>
       <View style={styles.empty}>
         <View style={styles.emptyArt}>
-          <Eagle height={58} light />
+          <Eagle height={58} />
         </View>
         <Title size={26} style={{ textAlign: 'center' }}>
           {title}
@@ -157,5 +157,5 @@ const createStyles = (c: Palette) =>
     devDate: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.eyebrow },
     devTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: c.text },
     empty: { alignItems: 'center', gap: 14, paddingVertical: 36, paddingHorizontal: 20, borderRadius: Radius.xl, backgroundColor: c.parchment },
-    emptyArt: { width: 84, height: 84, borderRadius: 42, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6 },
+    emptyArt: { width: 84, height: 84, borderRadius: 42, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6 },
   });

@@ -4,7 +4,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { SermonArt } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { LiveBadge } from '@/components/ui';
-import { Brand, Fonts, Palette } from '@/constants/theme';
+import { Fonts, Palette } from '@/constants/theme';
 import type { ArtTone } from '@/content/sample';
 import type { FeedVideo } from '@/lib/video';
 import { useColors, useStyles } from '@/state/theme';
@@ -41,7 +41,7 @@ export function VideoThumb({
           { width: playSize, height: playSize, borderRadius: playSize / 2 },
           play === 'corner' ? { right: 12, bottom: 12 } : { left: '50%', top: '50%', marginLeft: -playSize / 2, marginTop: -playSize / 2 },
         ]}>
-        <Icon name="play" size={playSize * 0.42} color={Brand.brown} />
+        <Icon name="play" size={playSize * 0.42} color={c.brown} />
       </View>
     );
 
@@ -70,7 +70,7 @@ export function VideoThumb({
   }
 
   return (
-    <View style={[{ height, borderRadius: radius, overflow: 'hidden', backgroundColor: c.night }, style]}>
+    <View style={[{ height, borderRadius: radius, overflow: 'hidden', backgroundColor: c.artDeep }, style]}>
       <Image source={{ uri: video.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
       {badges}
       {playButton}

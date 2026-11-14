@@ -8,7 +8,7 @@ import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Pop } from '@/components/motion';
 import { Button, IconButton, Tap } from '@/components/ui';
-import { Brand, Fonts, Palette, Radius } from '@/constants/theme';
+import { Fonts, Palette, Radius } from '@/constants/theme';
 import { devotionals, findDevotional, formatDate } from '@/content/sample';
 import { success, tap } from '@/lib/haptics';
 import { useLibrary } from '@/state/library';
@@ -121,7 +121,7 @@ export default function Reader() {
           <Animated.View entering={FadeIn.duration(250)} style={styles.done} accessibilityLiveRegion="polite">
             <Animated.View entering={ZoomIn.springify().damping(10)}>
               <Pop trigger={lib.streak} style={styles.doneDisc}>
-                <Icon name="flame" color={Brand.brown} filled />
+                <Icon name="flame" color={c.gold} filled />
               </Pop>
             </Animated.View>
             <View style={{ flex: 1, gap: 2 }}>
@@ -194,12 +194,12 @@ const createStyles = (c: Palette) =>
   listenDisc: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
   listenTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
   listenMeta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
-  done: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: Radius.lg, backgroundColor: c.brown },
-  doneDisc: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.cream, alignItems: 'center', justifyContent: 'center' },
-  doneTitle: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, color: c.cream },
-  doneMeta: { fontFamily: Fonts.sans, fontSize: 13, color: c.creamMuted },
-  undo: { minHeight: 44, paddingHorizontal: 12, borderRadius: Radius.pill, borderWidth: 1, borderColor: c.gold, justifyContent: 'center' },
-  undoText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.cream },
+  done: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: Radius.lg, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
+  doneDisc: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
+  doneTitle: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, color: c.text },
+  doneMeta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  undo: { minHeight: 44, paddingHorizontal: 12, borderRadius: Radius.pill, borderWidth: 1, borderColor: c.accent, justifyContent: 'center' },
+  undoText: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.accent },
   navCard: { flex: 1, gap: 6, padding: 14, borderRadius: Radius.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.white },
   navLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.eyebrow },
   navTitle: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 21, color: c.text },

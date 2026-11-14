@@ -119,7 +119,7 @@ function MiniPlayer() {
           onPress={() => router.push('/player')}
           style={styles.miniMain}>
           <View style={styles.miniArt}>
-            <Eagle height={36} light />
+            <Eagle height={36} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.miniTitle} numberOfLines={1}>
@@ -133,12 +133,12 @@ function MiniPlayer() {
         <IconButton
           icon={p.playing ? 'pause' : 'play'}
           label={p.playing ? 'Pause' : `Play ${episode.title}`}
-          variant="cream"
+          variant="solid"
           iconSize={18}
           onPress={() => (p.episode ? p.toggle() : p.play(episode))}
         />
         <View style={styles.miniTrack} pointerEvents="none">
-          <Animated.View style={[styles.miniFill, fill, { backgroundColor: c.gold }]} />
+          <Animated.View style={[styles.miniFill, fill, { backgroundColor: c.accent }]} />
         </View>
       </View>
     </Animated.View>
@@ -147,7 +147,7 @@ function MiniPlayer() {
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
-    bar: { backgroundColor: c.ivory, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.lineStrong, paddingTop: 6 },
+    bar: { backgroundColor: c.white, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.lineStrong, paddingTop: 6 },
     row: { flexDirection: 'row' },
     item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, minHeight: 54 },
     iconWrap: { width: 56, height: 30, alignItems: 'center', justifyContent: 'center' },
@@ -161,18 +161,20 @@ const createStyles = (c: Palette) =>
       padding: 6,
       paddingLeft: 8,
       borderRadius: Radius.lg,
-      backgroundColor: c.deep,
+      backgroundColor: c.white,
+      borderWidth: 1,
+      borderColor: c.line,
       overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOpacity: 0.18,
+      shadowColor: '#3A2413',
+      shadowOpacity: 0.08,
       shadowRadius: 12,
       shadowOffset: { width: 0, height: 6 },
       elevation: 6,
     },
     miniMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
-    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
-    miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
-    miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.creamMuted },
-    miniTrack: { position: 'absolute', left: 14, right: 14, bottom: 0, height: 2, backgroundColor: 'rgba(248,239,224,0.15)' },
+    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
+    miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.text },
+    miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.textMuted },
+    miniTrack: { position: 'absolute', left: 14, right: 14, bottom: 0, height: 2, backgroundColor: c.rail },
     miniFill: { height: 2 },
   });

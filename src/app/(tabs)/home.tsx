@@ -6,7 +6,7 @@ import { Icon } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
-import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
+import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
 import { formatLength } from '@/lib/podcast';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
@@ -103,9 +103,9 @@ export default function Home() {
       <Appear index={1}>
         {loading ? (
           <View style={[styles.liveCard, { gap: 14 }]} accessibilityLabel="Loading the latest service">
-            <Skeleton height={176} radius={16} style={{ backgroundColor: 'rgba(248,239,224,0.12)' }} />
-            <Skeleton height={22} width="70%" style={{ backgroundColor: 'rgba(248,239,224,0.12)' }} />
-            <Skeleton height={14} width="45%" style={{ backgroundColor: 'rgba(248,239,224,0.12)' }} />
+            <Skeleton height={176} radius={16} />
+            <Skeleton height={22} width="70%" />
+            <Skeleton height={14} width="45%" />
           </View>
         ) : feature ? (
           <Tap
@@ -117,7 +117,7 @@ export default function Home() {
             <VideoThumb video={feature} height={176} play="center" />
             <View style={styles.liveFooter}>
               <View style={{ gap: 4, flex: 1 }}>
-                <Eyebrow onDark style={{ fontSize: 11 }}>
+                <Eyebrow style={{ fontSize: 11 }}>
                   {live ? 'Streaming now' : 'Latest service'}
                 </Eyebrow>
                 <Text style={styles.liveTitle} numberOfLines={2}>
@@ -201,7 +201,7 @@ export default function Home() {
               onPress={() => router.push('/player')}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={styles.listenArt}>
-                <Eagle height={54} light />
+                <Eagle height={54} />
               </View>
               <View style={{ flex: 1, gap: 6 }}>
                 <Text style={styles.listenTitle} numberOfLines={2}>
@@ -290,22 +290,24 @@ const createStyles = (c: Palette) =>
     rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
     liveCard: {
-      backgroundColor: c.brown,
+      backgroundColor: c.white,
+      borderWidth: 1,
+      borderColor: c.line,
       borderRadius: Radius.xl,
-      padding: 14,
-      paddingBottom: 18,
+      padding: 10,
+      paddingBottom: 16,
       gap: 14,
-      shadowColor: Brand.brownDark,
-      shadowOpacity: 0.22,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 10 },
-      elevation: 6,
+      shadowColor: '#3A2413',
+      shadowOpacity: 0.06,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 2,
     },
     liveFooter: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 4 },
-    liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: c.cream },
-    liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: c.creamMuted },
-    joinPill: { height: 40, paddingHorizontal: 18, borderRadius: Radius.pill, backgroundColor: c.cream, justifyContent: 'center' },
-    joinText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Brand.brownDark },
+    liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: c.text },
+    liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
+    joinPill: { height: 40, paddingHorizontal: 18, borderRadius: Radius.pill, backgroundColor: c.brown, justifyContent: 'center' },
+    joinText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
 
     refChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
     readChip: { backgroundColor: c.brown, borderColor: c.brown },
@@ -330,7 +332,7 @@ const createStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.line,
     },
-    listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
+    listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
     listenTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 22, color: c.text },
     metaText: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: c.textMuted },
     sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },

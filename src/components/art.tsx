@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-import { Brand, Fonts, Palette } from '@/constants/theme';
+import { Fonts, Palette } from '@/constants/theme';
 import type { ArtTone } from '@/content/sample';
 import { useColors, useStyles, useTheme } from '@/state/theme';
 
@@ -15,14 +15,14 @@ export const EAGLE_RATIO = 0.73;
 
 export type Tone = { bg: string; line: string; text: string; eagle: number; lightEagle: boolean };
 
-/** Artwork tile colours for the current mode. In dark mode the sand tile turns dark, so its eagle turns cream. */
+/** Artwork tile colours for the current mode: soft and light by day, warm charcoal at night. */
 export function tonesFor(c: Palette, isDark: boolean): Record<ArtTone, Tone> {
+  const eagle = isDark ? eagleCreamImage : eagleImage;
+  const base = { line: c.artLine, text: c.artText, eagle, lightEagle: isDark };
   return {
-    brown: { bg: c.brown, line: c.goldLine, text: c.cream, eagle: eagleCreamImage, lightEagle: true },
-    deep: { bg: c.deep, line: c.goldLineDeep, text: c.cream, eagle: eagleCreamImage, lightEagle: true },
-    sand: isDark
-      ? { bg: c.sand, line: c.lineStrong, text: c.text, eagle: eagleCreamImage, lightEagle: true }
-      : { bg: c.sand, line: c.lineStrong, text: c.text, eagle: eagleImage, lightEagle: false },
+    brown: { ...base, bg: c.artBrown },
+    deep: { ...base, bg: c.artDeep },
+    sand: { ...base, bg: c.artSand },
   };
 }
 
@@ -84,7 +84,7 @@ export function Arch({
         gap: 10,
       }}>
       <Image source={t.eagle} style={{ width: eagleHeight * EAGLE_RATIO, height: eagleHeight }} contentFit="contain" />
-      {label ? <Text style={[styles.archLabel, { color: c.gold }]}>{label}</Text> : null}
+      {label ? <Text style={[styles.archLabel, { color: c.eyebrow }]}>{label}</Text> : null}
     </View>
   );
 }
@@ -158,10 +158,10 @@ const createStyles = (c: Palette) =>
   },
   sermonTitle: { flex: 1, fontFamily: Fonts.display },
   roll: { width: '100%', flexDirection: 'row', alignItems: 'center' },
-  rollKnob: { width: 10, height: 28, borderRadius: 4, backgroundColor: Brand.brownDark },
-  rollBar: { flex: 1, height: 20, borderRadius: 4, backgroundColor: Brand.brown, overflow: 'hidden', justifyContent: 'space-between' },
+  rollKnob: { width: 8, height: 22, borderRadius: 4, backgroundColor: c.rollKnob },
+  rollBar: { flex: 1, height: 14, borderRadius: 4, backgroundColor: c.roll, overflow: 'hidden', justifyContent: 'space-between' },
   rollShine: { height: 3, backgroundColor: 'rgba(255,255,255,0.16)' },
-  rollShade: { height: 6, backgroundColor: 'rgba(31,19,10,0.22)' },
+  rollShade: { height: 4, backgroundColor: 'rgba(31,19,10,0.12)' },
   paper: {
     width: '92%',
     backgroundColor: c.paper,

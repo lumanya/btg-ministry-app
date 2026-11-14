@@ -94,7 +94,7 @@ export default function Live() {
       ) : (
         <View style={styles.offline}>
           <View style={styles.offlineArt}>
-            <Eagle height={64} light />
+            <Eagle height={64} />
           </View>
           <View style={{ gap: 6 }}>
             <Title size={28}>We’re not live right now.</Title>
@@ -231,7 +231,7 @@ const createStyles = (c: Palette) =>
   meta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
   metaSmall: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
   offline: { gap: 16, padding: 18, borderRadius: Radius.xl, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
-  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
   latest: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: Radius.md, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
   latestTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 19, color: c.text },
   actions: { flexDirection: 'row', gap: 10 },

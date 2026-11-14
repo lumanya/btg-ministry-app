@@ -187,7 +187,8 @@ supabase/
 
 ## Brand
 
-- Colours from the logo: ivory `#FCFAF6`, brown `#704828`, deep brown `#3A2413`, cream `#F8EFE0`. Dark mode uses warm near-black `#16100B` with gold `#E2B57A` for links and icons.
+- Light and airy: near-white screens `#FFFDFA`, white cards with soft warm borders `#EFE6DA`, and caramel brown `#8B5A2B` from the logo kept for buttons, selected states and small accents. Artwork tiles use soft latte tones.
+- Dark mode uses warm charcoal `#131110` (not brown) with gold `#E2B57A` for links and icons.
 - Type: **Cormorant Garamond** for titles, **Instrument Sans** for everything else (both free Google Fonts, bundled with the app).
 
 ## Next steps
