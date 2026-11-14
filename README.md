@@ -179,7 +179,7 @@ Members' reading streaks and saved items are also stored in their account, so th
 npx supabase db push
 ```
 
-Then open **SQL Editor** in the Supabase dashboard, paste the contents of `supabase/seed.sql` and run it. That adds the devotionals, series, giving details and quotes from btgministry.org so the app isn't empty on day one. (No CLI? Paste each file in `supabase/migrations/` into the SQL Editor in date order instead, then the seed.)
+Then open **SQL Editor** in the Supabase dashboard, paste the contents of `supabase/seed.sql` and run it. **Easiest without the CLI:** paste `supabase/setup.sql` (all tables, rules and starting content in one file) into a new SQL Editor query and click Run, once. That adds the devotionals, series, giving details and quotes from btgministry.org so the app isn't empty on day one. (No CLI? Paste each file in `supabase/migrations/` into the SQL Editor in date order instead, then the seed.)
 
 **2. Make yourself the first admin.** Create an account in the app with your email, then run this once in the SQL Editor:
 
