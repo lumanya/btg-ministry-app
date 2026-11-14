@@ -1,22 +1,25 @@
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Arch } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import type { FeedPlaylist } from '@/lib/video';
+import { smallThumbnail, useDataSaver } from '@/state/data-saver';
 import { useColors, useStyles } from '@/state/theme';
 
 /** A series (YouTube playlist) tile: cover, a stacked-cards edge, title and count. */
 export function PlaylistCard({ playlist, onPress, width = 220 }: { playlist: FeedPlaylist; onPress: () => void; width?: number }) {
   const c = useColors();
   const styles = useStyles(createStyles);
+  const saving = useDataSaver().active;
   const height = Math.round(width * 0.5625);
   return (
     <Tap
       accessibilityRole="button"
-      accessibilityLabel={`${playlist.title} series, ${playlist.count} teachings`}
+      accessibilityLabel={t('{title} series, {n} teachings', { title: playlist.title, n: playlist.count })}
       onPress={onPress}
       style={{ width, gap: 10 }}>
       <View style={{ paddingTop: 8 }}>
@@ -25,7 +28,7 @@ export function PlaylistCard({ playlist, onPress, width = 220 }: { playlist: Fee
         <View style={[styles.layer, { top: 4, left: 8, right: 8, backgroundColor: c.sand }]} />
         <View style={[styles.cover, { height }]}>
           {playlist.thumbnail ? (
-            <Image source={{ uri: playlist.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
+            <Image source={{ uri: smallThumbnail(playlist.thumbnail, saving) ?? playlist.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
           ) : (
             <View style={styles.art}>
               <Arch tone="brown" width={Math.round(height * 0.5)} height={Math.round(height * 0.78)} eagleHeight={Math.round(height * 0.46)} />

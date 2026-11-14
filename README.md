@@ -224,6 +224,26 @@ Setup, once:
 
 **Events.** Staff add conferences and special services on the dashboard's **Events** page (date, place, picture, registration link). The next one shows on Home; members can register, get directions, set a reminder and invite friends with a share card.
 
+## Kiswahili, likes and views, data saver
+
+**Kiswahili.** The whole app is in English and Kiswahili. It follows the phone's language; members can choose under **Settings → Language** (Phone, English or Kiswahili). Screens use `t('English text')` from `src/i18n`; the Kiswahili for each phrase is in `src/i18n/sw.ts` (`npm run test:i18n` lists any phrase that has no Kiswahili yet). Staff add Kiswahili versions of devotionals (the *Kiswahili* switch at the top of the editor), events, quotes, service names and announcements in the dashboard; where there is none, Kiswahili readers see the English. Notifications go out in each phone's language.
+
+**Likes and views.** Members tap the heart on a sermon or devotional; the count is shared by everyone. Signed-in members are counted by account, guests by a random id made on the phone. Devotionals show how many people read them; sermons show YouTube's view count. The dashboard's Overview lists the most loved items of the last 30 days, and the Devotionals list shows likes and reads.
+
+**Data saver.** Under **Settings → Data saver** (Auto, On, Off). On *Auto* it switches on with mobile data: smaller pictures and fewer checks for new content. Podcast episodes can be downloaded (the arrow next to each one) to listen without internet; downloads appear at the top of the Podcast tab and play from the phone. The podcast list is kept for offline use too.
+
+Setup, once: run `supabase/migrations/20261115090000_kiswahili_likes.sql` in the SQL Editor, then redeploy `youtube-feed` and `send-notifications`.
+
+## Publishing to the App Store and Google Play
+
+Builds are made with EAS (`eas.json`): `preview` makes an Android APK to install directly for testing; `production` makes store builds, with build numbers counted by EAS.
+
+1. Accounts: Apple Developer Program (US$99 a year) and Google Play Console (US$25 once), both in the ministry's name.
+2. `npx eas-cli login`, then `npx eas-cli init` (adds the project id to `app.json`).
+3. `npx eas-cli build --profile preview --platform android` to try the app on Android phones.
+4. `npx eas-cli build --profile production --platform all`, then `npx eas-cli submit --platform ios` and `--platform android`.
+5. Store pages: privacy policy, support and account deletion pages are in `admin/public/` and are published with the dashboard (`…/privacy.html`, `…/support.html`, `…/delete-account.html`).
+
 ## Light and dark mode
 
 The app follows the phone's light or dark setting. Members can override it under **Settings → Appearance** (Phone, Light or Dark), and the choice is remembered. Colours for both modes are in `src/constants/theme.ts`; screens read them with `useColors()` and `useStyles()` from `src/state/theme.tsx`.
@@ -246,9 +266,11 @@ src/
   components/     icon.tsx, ui.tsx (buttons, text, cards), art.tsx (arch artwork, scroll)
   constants/      theme.ts: brand colours, fonts, spacing
   content/        sample.ts: built-in content, shown until Supabase is connected
+  i18n/           index.ts: t() and dates in English or Kiswahili; sw.ts: the Kiswahili
   lib/            video.ts, podcast.ts, supabase.ts, content.ts (database rows -> screens), library-sync.ts, streak.ts
   state/          auth.tsx: accounts; content.tsx: devotionals, services, giving, prayer requests;
-                  library.tsx: streak and saved items; theme.tsx; feed.tsx: YouTube; player.tsx: audio
+                  library.tsx: streak and saved items; theme.tsx; feed.tsx: YouTube; player.tsx: audio;
+                  language.tsx; data-saver.tsx; engagement.ts: likes and views; downloads.ts: offline podcast
 assets/images/    app icon, splash, eagle emblem, full logo
 supabase/
   functions/youtube-feed/     reads the YouTube channel
@@ -272,14 +294,15 @@ admin/                        the staff dashboard (React + Vite website)
 2. **Podcast audio** — built; add the RSS feed as in "Connect the podcast" above.
 3. **Backend and dashboard** — built; follow "Backend and admin dashboard" above.
 4. **Accounts** — built, with streaks and saved items stored in the account.
-5. **Notifications** — "We're live", the daily devotional and service reminders.
-6. **Publishing** — build with EAS (`npx eas-cli build`) and submit to the Play Store and App Store.
+5. **Notifications** — built.
+6. **Kiswahili, likes and views, data saver** — built.
+7. **Publishing** — ready to build; see "Publishing to the App Store and Google Play".
 
 ## Checks
 
 ```bash
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
-npm test            # YouTube feed, podcast reader, sign-in checks, streaks, sync, database access rules
+npm test            # YouTube feed, podcast reader, sign-in checks, streaks, sync, database access rules, Kiswahili
 cd admin && npm run typecheck && npm test   # the dashboard
 ```

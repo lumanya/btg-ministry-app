@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Appear } from '@/components/motion';
@@ -33,10 +34,10 @@ export default function Saved() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: ScreenPadding, paddingBottom: insets.bottom + 40, gap: 20 }} showsVerticalScrollIndicator={false}>
-        <Title size={38}>Saved</Title>
+        <Title size={38}>{t('Saved')}</Title>
 
         <View style={styles.segment} accessibilityRole="tablist">
           {(['sermons', 'devotionals'] as Section[]).map((s) => {
@@ -50,7 +51,7 @@ export default function Saved() {
                 onPress={() => setSection(s)}
                 style={[styles.segmentItem, on && styles.segmentOn]}>
                 <Text style={[styles.segmentText, on && { color: c.cream }]}>
-                  {s === 'sermons' ? 'Sermons' : 'Devotionals'}
+                  {s === 'sermons' ? t('Sermons') : t('Devotionals')}
                   {counts[s] ? ` · ${counts[s]}` : ''}
                 </Text>
               </Tap>
@@ -77,16 +78,16 @@ export default function Saved() {
                         <Text style={styles.meta}>{videoMeta(v)}</Text>
                       </View>
                     </Tap>
-                    <IconButton icon="bookmark" filled selected label={`Remove ${v.title} from saved`} variant="plain" onPress={() => lib.toggleVideo(v)} />
+                    <IconButton icon="bookmark" filled selected label={t('Remove {title} from saved', { title: v.title })} variant="plain" onPress={() => lib.toggleVideo(v)} />
                   </View>
                 </Appear>
               ))}
             </View>
           ) : (
             <Empty
-              title="No saved sermons yet"
-              text="Tap Save on any sermon to keep it here for later."
-              action="Browse sermons"
+              title={t('No saved sermons yet')}
+              text={t("Tap Save on any sermon to keep it here for later.")}
+              action={t('Browse sermons')}
               onAction={() => router.navigate('/sermons')}
             />
           )
@@ -105,20 +106,20 @@ export default function Saved() {
                     {lib.isRead(d.id) ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Icon name="check" size={14} color={c.accent} />
-                        <Text style={styles.meta}>Read</Text>
+                        <Text style={styles.meta}>{t('Read')}</Text>
                       </View>
                     ) : null}
                   </Tap>
-                  <IconButton icon="bookmark" filled selected label={`Remove ${d.title} from saved`} variant="plain" onPress={() => lib.toggleDevotional(d.id)} />
+                  <IconButton icon="bookmark" filled selected label={t('Remove {title} from saved', { title: d.title })} variant="plain" onPress={() => lib.toggleDevotional(d.id)} />
                 </View>
               </Appear>
             ))}
           </View>
         ) : (
           <Empty
-            title="No saved devotionals yet"
-            text="Tap the bookmark while reading a devotional to keep it here."
-            action="Today’s devotional"
+            title={t('No saved devotionals yet')}
+            text={t("Tap the bookmark while reading a devotional to keep it here.")}
+            action={t('Today’s devotional')}
             onAction={() => router.navigate('/devotional')}
           />
         )}

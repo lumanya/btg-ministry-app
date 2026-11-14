@@ -13,6 +13,9 @@ export type Planned = {
   topic: Topic;
   title: string;
   body: string;
+  /** The same in Kiswahili, for phones set to Kiswahili. */
+  title_sw: string;
+  body_sw: string;
   url: string;
 };
 
@@ -22,11 +25,11 @@ export type PlanInput = {
   live: { id: string; title: string } | null;
   upcoming: { id: string; title: string; scheduledStart: string | null }[];
   /** Active weekly services: weekday 0 = Sunday, start_time "18:30:00", Tanzania time. */
-  services: { id: string; name: string; weekday: number; start_time: string; livestreamed: boolean }[];
+  services: { id: string; name: string; name_sw?: string | null; weekday: number; start_time: string; livestreamed: boolean }[];
   /** Today's published devotional (Tanzania date), if any. */
-  devotional: { slug: string; title: string; scripture_ref: string | null; publish_on: string } | null;
+  devotional: { slug: string; title: string; title_sw?: string | null; scripture_ref: string | null; publish_on: string } | null;
   /** Published events with reminders on, starting within the next day or so. */
-  events: { id: string; title: string; starts_at: string; location_name: string | null }[];
+  events: { id: string; title: string; title_sw?: string | null; starts_at: string; location_name: string | null }[];
 };
 
 const EAT_OFFSET_MS = 3 * 60 * 60 * 1000;
@@ -78,6 +81,8 @@ export function plan(input: PlanInput): Planned[] {
       topic: 'live',
       title: 'We’re live now',
       body: `${input.live.title} · Join the service in the app.`,
+      title_sw: 'Tuko mubashara sasa',
+      body_sw: `${input.live.title} · Jiunge na ibada kwenye programu.`,
       url: '/live',
     });
   }
@@ -90,6 +95,8 @@ export function plan(input: PlanInput): Planned[] {
       topic: 'services',
       title: 'Starting in 30 minutes',
       body: `${u.title} · Tap to join the livestream.`,
+      title_sw: 'Inaanza baada ya dakika 30',
+      body_sw: `${u.title} · Gusa ili kujiunga mubashara.`,
       url: '/live',
     });
   }
@@ -104,6 +111,8 @@ export function plan(input: PlanInput): Planned[] {
         topic: 'services',
         title: `${s.name} starts at ${eat(start).hhmm}`,
         body: s.livestreamed ? 'Join us in person or watch live in the app.' : 'We look forward to seeing you.',
+        title_sw: `${s.name_sw || s.name} inaanza saa ${eat(start).hhmm}`,
+        body_sw: s.livestreamed ? 'Karibu ana kwa ana au tazama mubashara kwenye programu.' : 'Tunatarajia kukuona.',
         url: '/live',
       });
     }
@@ -116,6 +125,8 @@ export function plan(input: PlanInput): Planned[] {
       topic: 'devotional',
       title: 'Today’s devotional',
       body: d.scripture_ref ? `${d.title} · ${d.scripture_ref}` : d.title,
+      title_sw: 'Tafakari ya leo',
+      body_sw: d.scripture_ref ? `${d.title_sw || d.title} · ${d.scripture_ref}` : d.title_sw || d.title,
       url: `/devotional/${d.slug}`,
     });
   }
@@ -130,15 +141,21 @@ export function plan(input: PlanInput): Planned[] {
         topic: 'events',
         title: `Starting soon: ${e.title}`,
         body: `Today at ${eat(new Date(start)).hhmm}${where}`,
+        title_sw: `Inaanza hivi punde: ${e.title_sw || e.title}`,
+        body_sw: `Leo saa ${eat(new Date(start)).hhmm}${where}`,
         url: `/events/${e.id}`,
       });
     } else if (until > 2 * 60 * MIN && until <= 24 * 60 * MIN) {
-      const day = eat(new Date(start)).date === today.date ? 'Today' : 'Tomorrow';
+      const isToday = eat(new Date(start)).date === today.date;
+      const day = isToday ? 'Today' : 'Tomorrow';
+      const siku = isToday ? 'Leo' : 'Kesho';
       out.push({
         dedupe_key: `event:${e.id}:day`,
         topic: 'events',
         title: `${day}: ${e.title}`,
         body: `${day} at ${eat(new Date(start)).hhmm}${where}`,
+        title_sw: `${siku}: ${e.title_sw || e.title}`,
+        body_sw: `${siku} saa ${eat(new Date(start)).hhmm}${where}`,
         url: `/events/${e.id}`,
       });
     }

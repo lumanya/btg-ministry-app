@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import type { ComponentRef, Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { eagleCreamImage, eagleImage, EAGLE_RATIO } from '@/components/art';
 import { Fonts } from '@/constants/theme';
 
@@ -43,7 +44,7 @@ export type CardRef = ComponentRef<typeof View>;
 type Props = CardContent & { theme: CardTheme; format: CardFormat; width: number; ref?: Ref<CardRef> };
 
 export function ShareCard({ kind, text, attribution, title, theme, format, width, ref }: Props) {
-  const t = CARD_THEMES[theme];
+  const th = CARD_THEMES[theme];
   const height = Math.round(width * (format === 'status' ? 16 / 9 : 5 / 4));
   const u = width / 360; // design units: the card is laid out at 360 wide
   const isEvent = kind === 'event';
@@ -56,7 +57,7 @@ export function ShareCard({ kind, text, attribution, title, theme, format, width
     <View
       ref={ref}
       collapsable={false}
-      style={{ width, height, backgroundColor: t.bg, padding: 28 * u, justifyContent: 'space-between', overflow: 'hidden' }}>
+      style={{ width, height, backgroundColor: th.bg, padding: 28 * u, justifyContent: 'space-between', overflow: 'hidden' }}>
       {/* A thin temple arch behind everything, from the logo. */}
       <View
         pointerEvents="none"
@@ -67,41 +68,41 @@ export function ShareCard({ kind, text, attribution, title, theme, format, width
           top: 108 * u,
           bottom: -20 * u,
           borderWidth: 1,
-          borderColor: t.rule,
+          borderColor: th.rule,
           borderTopLeftRadius: 160 * u,
           borderTopRightRadius: 160 * u,
         }}
       />
 
       <View style={{ alignItems: 'center', gap: 10 * u }}>
-        <Image source={t.lightEagle ? eagleCreamImage : eagleImage} style={{ width: 34 * u * EAGLE_RATIO, height: 34 * u }} contentFit="contain" />
-        <Text style={[styles.kicker, { color: t.accent, fontSize: 11 * u, letterSpacing: 2.4 * u }]}>{KICKER[kind]}</Text>
+        <Image source={th.lightEagle ? eagleCreamImage : eagleImage} style={{ width: 34 * u * EAGLE_RATIO, height: 34 * u }} contentFit="contain" />
+        <Text style={[styles.kicker, { color: th.accent, fontSize: 11 * u, letterSpacing: 2.4 * u }]}>{t(KICKER[kind])}</Text>
       </View>
 
       <View style={{ alignItems: 'center', gap: 16 * u, paddingHorizontal: 6 * u }}>
-        {!isEvent ? <Text style={[styles.mark, { color: t.accent, fontSize: 64 * u, lineHeight: 52 * u }]}>“</Text> : null}
+        {!isEvent ? <Text style={[styles.mark, { color: th.accent, fontSize: 64 * u, lineHeight: 52 * u }]}>“</Text> : null}
         {kind === 'devotional' && title ? (
-          <Text style={[styles.title, { color: t.muted, fontSize: 15 * u }]}>{title}</Text>
+          <Text style={[styles.title, { color: th.muted, fontSize: 15 * u }]}>{title}</Text>
         ) : null}
-        <Text style={[isEvent ? styles.eventTitle : styles.quote, { color: t.text, fontSize: isEvent ? 34 * u : size, lineHeight: (isEvent ? 36 : size / u * 1.22) * u }]}>
+        <Text style={[isEvent ? styles.eventTitle : styles.quote, { color: th.text, fontSize: isEvent ? 34 * u : size, lineHeight: (isEvent ? 36 : size / u * 1.22) * u }]}>
           {body}
         </Text>
         {isEvent ? (
-          <View style={{ alignItems: 'center', gap: 4 * u, paddingVertical: 10 * u, paddingHorizontal: 16 * u, borderRadius: 14 * u, backgroundColor: t.panel }}>
-            <Text style={[styles.eventWhen, { color: t.text, fontSize: 15 * u }]}>{text}</Text>
-            {attribution ? <Text style={[styles.attr, { color: t.muted, fontSize: 13 * u }]}>{attribution}</Text> : null}
+          <View style={{ alignItems: 'center', gap: 4 * u, paddingVertical: 10 * u, paddingHorizontal: 16 * u, borderRadius: 14 * u, backgroundColor: th.panel }}>
+            <Text style={[styles.eventWhen, { color: th.text, fontSize: 15 * u }]}>{text}</Text>
+            {attribution ? <Text style={[styles.attr, { color: th.muted, fontSize: 13 * u }]}>{attribution}</Text> : null}
           </View>
         ) : attribution ? (
           <View style={{ alignItems: 'center', gap: 8 * u }}>
-            <View style={{ width: 28 * u, height: 1.5 * u, backgroundColor: t.accent }} />
-            <Text style={[styles.attr, { color: t.muted, fontSize: 13 * u, letterSpacing: 1.2 * u }]}>{attribution}</Text>
+            <View style={{ width: 28 * u, height: 1.5 * u, backgroundColor: th.accent }} />
+            <Text style={[styles.attr, { color: th.muted, fontSize: 13 * u, letterSpacing: 1.2 * u }]}>{attribution}</Text>
           </View>
         ) : null}
       </View>
 
       <View style={{ alignItems: 'center', gap: 2 * u }}>
-        <Text style={[styles.brand, { color: t.text, fontSize: 17 * u }]}>BTG Ministry</Text>
-        <Text style={[styles.site, { color: t.muted, fontSize: 11 * u }]}>Building the Temple of God · btgministry.org</Text>
+        <Text style={[styles.brand, { color: th.text, fontSize: 17 * u }]}>BTG Ministry</Text>
+        <Text style={[styles.site, { color: th.muted, fontSize: 11 * u }]}>Building the Temple of God · btgministry.org</Text>
       </View>
     </View>
   );

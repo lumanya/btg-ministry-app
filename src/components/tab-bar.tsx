@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
+import { t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { IconButton, Tap } from '@/components/ui';
@@ -76,7 +77,7 @@ function TabItem({ label, icon, focused, dot, onPress }: { label: string; icon: 
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
-      accessibilityLabel={dot ? `${label}, streaming now` : label}
+      accessibilityLabel={dot ? t('{label}, streaming now', { label }) : label}
       onPress={onPress}
       style={styles.item}>
       <View style={styles.iconWrap}>
@@ -115,7 +116,7 @@ function MiniPlayer() {
       <View style={styles.mini}>
         <Tap
           accessibilityRole="button"
-          accessibilityLabel={`Open the player: ${episode.title}`}
+          accessibilityLabel={t('Open the player: {title}', { title: episode.title })}
           onPress={() => router.push('/player')}
           style={styles.miniMain}>
           <View style={styles.miniArt}>
@@ -126,13 +127,13 @@ function MiniPlayer() {
               {episode.title}
             </Text>
             <Text style={styles.miniMeta} numberOfLines={1}>
-              {p.playing ? 'Playing' : p.episode ? 'Paused' : 'Continue listening'} · {p.podcast.title}
+              {p.playing ? t('Playing') : p.episode ? t('Paused') : t('Continue listening')} · {p.podcast.title}
             </Text>
           </View>
         </Tap>
         <IconButton
           icon={p.playing ? 'pause' : 'play'}
-          label={p.playing ? 'Pause' : `Play ${episode.title}`}
+          label={p.playing ? t('Pause') : t('Play {title}', { title: episode.title })}
           variant="solid"
           iconSize={18}
           onPress={() => (p.episode ? p.toggle() : p.play(episode))}

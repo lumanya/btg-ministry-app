@@ -17,6 +17,8 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { AuthProvider } from '@/state/auth';
+import { DataSaverProvider } from '@/state/data-saver';
+import { LanguageProvider } from '@/state/language';
 import { ContentProvider } from '@/state/content';
 import { FeedProvider } from '@/state/feed';
 import { LibraryProvider } from '@/state/library';
@@ -45,21 +47,25 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ContentProvider>
-          <FeedProvider>
-            <PlayerProvider>
-              <LibraryProvider>
-                <NotificationsProvider>
-                  <AppStack />
-                </NotificationsProvider>
-              </LibraryProvider>
-            </PlayerProvider>
-          </FeedProvider>
-        </ContentProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <DataSaverProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ContentProvider>
+              <FeedProvider>
+                <PlayerProvider>
+                  <LibraryProvider>
+                    <NotificationsProvider>
+                      <AppStack />
+                    </NotificationsProvider>
+                  </LibraryProvider>
+                </PlayerProvider>
+              </FeedProvider>
+            </ContentProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </DataSaverProvider>
+    </LanguageProvider>
   );
 }
 

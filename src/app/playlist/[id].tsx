@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Arch } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Appear, Skeleton } from '@/components/motion';
@@ -13,12 +14,14 @@ import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import type { FeedPlaylist, FeedVideo } from '@/lib/video';
 import { videoMeta, videoTone } from '@/lib/video';
 import { useFeed } from '@/state/feed';
+import { smallThumbnail, useDataSaver } from '@/state/data-saver';
 import { useColors, useStyles } from '@/state/theme';
 
 /** One series of teachings, in the order arranged on YouTube. */
 export default function PlaylistScreen() {
   const c = useColors();
   const styles = useStyles(createStyles);
+  const saving = useDataSaver().active;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,8 +47,8 @@ export default function PlaylistScreen() {
   }, [id, loadPlaylist]);
 
   useEffect(() => {
-    const t = setTimeout(first, 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(first, 0);
+    return () => clearTimeout(timer);
   }, [first]);
 
   const more = async () => {
@@ -63,13 +66,13 @@ export default function PlaylistScreen() {
   };
 
   const open = (v: FeedVideo) => router.push({ pathname: '/sermon/[id]', params: { id: v.id, playlist: id } });
-  const title = info?.title ?? 'Series';
+  const title = info?.title ?? t('Series');
 
   const header = (
     <View style={{ gap: 18, paddingBottom: 8 }}>
       <View style={styles.hero}>
         {info?.thumbnail ? (
-          <Image source={{ uri: info.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
+          <Image source={{ uri: smallThumbnail(info.thumbnail, saving) ?? info.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
         ) : (
           <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', backgroundColor: c.artBrown }]}>
             <Arch tone="brown" width={90} height={140} eagleHeight={80} />
@@ -77,16 +80,16 @@ export default function PlaylistScreen() {
         )}
       </View>
       <View style={{ gap: 6 }}>
-        <Eyebrow>Series · {info ? `${info.count} teachings` : 'Teachings'}</Eyebrow>
+        <Eyebrow>Series · {info ? t('{n} teachings', { n: info.count }) : t('Teachings')}</Eyebrow>
         <Title size={34}>{title}</Title>
         {info?.description ? <Body>{info.description.split('\n')[0]}</Body> : null}
       </View>
       {videos?.length ? (
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button label="Start from part 1" icon="play" onPress={() => open(videos[0])} style={{ flex: 1 }} />
+          <Button label={t('Start from part 1')} icon="play" onPress={() => open(videos[0])} style={{ flex: 1 }} />
           <IconButton
             icon="share"
-            label={`Share the ${title} series`}
+            label={t('Share the {title} series', { title })}
             size={52}
             onPress={() => Share.share({ message: `${title} — a teaching series from BTG Ministry. https://www.youtube.com/playlist?list=${id}` })}
           />
@@ -94,7 +97,7 @@ export default function PlaylistScreen() {
       ) : null}
       {error ? (
         <Tap accessibilityRole="button" onPress={first} style={styles.notice}>
-          <Text style={styles.meta}>Couldn’t load this series. Tap to try again.</Text>
+          <Text style={styles.meta}>{t('Couldn’t load this series. Tap to try again.')}</Text>
         </Tap>
       ) : null}
     </View>
@@ -103,7 +106,7 @@ export default function PlaylistScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
       </View>
       <FlatList
         data={videos ?? []}
@@ -126,19 +129,19 @@ export default function PlaylistScreen() {
               ))}
             </View>
           ) : videos?.length === 0 ? (
-            <Text style={styles.meta}>No teachings in this series yet.</Text>
+            <Text style={styles.meta}>{t('No teachings in this series yet.')}</Text>
           ) : undefined
         }
         ListFooterComponent={
           next ? (
-            <Button label={loadingMore ? 'Loading…' : 'Load more'} variant="outline" onPress={more} style={{ marginTop: 8 }} />
+            <Button label={loadingMore ? t('Loading…') : t('Load more')} variant="outline" onPress={more} style={{ marginTop: 8 }} />
           ) : undefined
         }
         renderItem={({ item: v, index: i }) => (
           <Appear index={Math.min(i, 8)}>
             <Tap
               accessibilityRole="button"
-              accessibilityLabel={`Part ${i + 1}: ${v.title}, ${videoMeta(v)}`}
+              accessibilityLabel={`${t('Part {n}: {title}', { n: i + 1, title: v.title })}, ${videoMeta(v)}`}
               onPress={() => open(v)}
               style={styles.row}>
               <View>

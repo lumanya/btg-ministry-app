@@ -5,6 +5,7 @@ import { Platform, ScrollView, Share, StyleSheet, Text, useWindowDimensions, Vie
 import { captureRef } from 'react-native-view-shot';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { FormMessage } from '@/components/form';
 import { CARD_THEMES, CardFormat, CardKind, CardRef, CardTheme, ShareCard } from '@/components/share-card';
 import { Button, IconButton, Tap, Title } from '@/components/ui';
@@ -55,7 +56,7 @@ export default function ShareScreen() {
         a.download = 'btg-ministry.png';
         a.click();
       } else if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Share' });
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: t('Share') });
       } else {
         await Share.share({ message: asText + footer });
       }
@@ -71,15 +72,15 @@ export default function ShareScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.parchment }}>
       <View style={[styles.topBar, { paddingTop: Platform.OS === 'ios' ? 12 : insets.top + 4 }]}>
-        <Title size={26}>Share</Title>
-        <IconButton icon="down" label="Close" variant="plain" onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
+        <Title size={26}>{t('Share')}</Title>
+        <IconButton icon="down" label={t('Close')} variant="plain" onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
       </View>
       <ScrollView contentContainerStyle={{ alignItems: 'center', gap: 18, paddingHorizontal: ScreenPadding, paddingBottom: insets.bottom + 28 }}>
         <View style={styles.preview}>
           <ShareCard ref={card} kind={kind} text={text} attribution={params.attribution} title={params.title} theme={theme} format={format} width={width} />
         </View>
 
-        <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Card colour">
+        <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel={t('Card colour')}>
           {(Object.keys(CARD_THEMES) as CardTheme[]).map((k) => {
             const on = k === theme;
             return (
@@ -87,24 +88,24 @@ export default function ShareScreen() {
                 key={k}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
-                accessibilityLabel={CARD_THEMES[k].label}
+                accessibilityLabel={t(CARD_THEMES[k].label)}
                 onPress={() => {
                   tick();
                   setTheme(k);
                 }}
                 style={[styles.swatchWrap, on && { borderColor: c.accent }]}>
                 <View style={[styles.swatch, { backgroundColor: CARD_THEMES[k].bg, borderColor: CARD_THEMES[k].rule }]} />
-                <Text style={[styles.swatchText, on && { color: c.text }]}>{CARD_THEMES[k].label}</Text>
+                <Text style={[styles.swatchText, on && { color: c.text }]}>{t(CARD_THEMES[k].label)}</Text>
               </Tap>
             );
           })}
         </View>
 
-        <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel="Card shape">
+        <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel={t('Card shape')}>
           {(
             [
-              ['post', 'Chat & post'],
-              ['status', 'Status & story'],
+              ['post', t('Chat & post')],
+              ['status', t('Status & story')],
             ] as [CardFormat, string][]
           ).map(([k, label]) => {
             const on = k === format;
@@ -118,7 +119,7 @@ export default function ShareScreen() {
                   setFormat(k);
                 }}
                 style={[styles.segmentItem, on && { backgroundColor: c.brown }]}>
-                <Text style={[styles.segmentText, on && { color: c.cream }]}>{label}</Text>
+                <Text style={[styles.segmentText, on && { color: c.cream }]}>{t(label)}</Text>
               </Tap>
             );
           })}
@@ -126,8 +127,8 @@ export default function ShareScreen() {
 
         {error ? <FormMessage>{error}</FormMessage> : null}
         <View style={{ alignSelf: 'stretch', gap: 10 }}>
-          <Button label={busy ? 'Preparing…' : Platform.OS === 'web' ? 'Download image' : 'Share image'} icon="image" onPress={busy ? undefined : shareImage} />
-          <Button label="Share as text" variant="outline" onPress={() => Share.share({ message: asText + footer })} />
+          <Button label={busy ? t('Preparing…') : Platform.OS === 'web' ? t('Download image') : t('Share image')} icon="image" onPress={busy ? undefined : shareImage} />
+          <Button label={t('Share as text')} variant="outline" onPress={() => Share.share({ message: asText + footer })} />
         </View>
       </ScrollView>
     </View>

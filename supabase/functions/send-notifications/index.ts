@@ -19,7 +19,7 @@ import { chunks, eat, plan } from './plan.ts';
 const EXPO_PUSH = 'https://exp.host/--/api/v2/push/send';
 const BATCH = 100;
 
-type Outgoing = { id: string; title: string; body: string; topic: string; url: string | null };
+type Outgoing = { id: string; title: string; body: string; title_sw: string | null; body_sw: string | null; topic: string; url: string | null };
 
 Deno.serve(async () => {
   const url = Deno.env.get('SUPABASE_URL');
@@ -34,10 +34,10 @@ Deno.serve(async () => {
     const today = eat(now).date;
     const [feedRes, services, devotional, events] = await Promise.all([
       fetch(`${url}/functions/v1/youtube-feed`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      db.from('services').select('id,name,weekday,start_time,livestreamed').eq('active', true),
+      db.from('services').select('id,name,name_sw,weekday,start_time,livestreamed').eq('active', true),
       db
         .from('devotionals')
-        .select('slug,title,scripture_ref,publish_on')
+        .select('slug,title,title_sw,scripture_ref,publish_on')
         .eq('status', 'published')
         .eq('publish_on', today)
         .order('updated_at', { ascending: false })
@@ -45,7 +45,7 @@ Deno.serve(async () => {
         .maybeSingle(),
       db
         .from('events')
-        .select('id,title,starts_at,location_name')
+        .select('id,title,title_sw,starts_at,location_name')
         .eq('status', 'published')
         .eq('remind', true)
         .gt('starts_at', now.toISOString())
@@ -91,7 +91,7 @@ Deno.serve(async () => {
       .update({ status: 'sending' })
       .eq('id', id)
       .eq('status', 'queued')
-      .select('id,title,body,topic,url')
+      .select('id,title,body,title_sw,body_sw,topic,url')
       .maybeSingle();
     if (!claimed) continue;
     try {
@@ -120,23 +120,28 @@ async function sendToTopic(db: ReturnType<typeof createClient>, n: Outgoing) {
 
   // Collect every phone first, so removing uninstalled ones doesn't shift the pages.
   const tokens: string[] = [];
+  const swahili = new Set<string>();
   for (let from = 0; ; from += pageSize) {
     const { data: devices, error } = await db
       .from('push_devices')
-      .select('token')
+      .select('token,locale')
       .contains('topics', [n.topic])
       .order('token')
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
-    tokens.push(...(devices ?? []).map((d: { token: string }) => d.token));
+    for (const d of (devices ?? []) as { token: string; locale: string }[]) {
+      tokens.push(d.token);
+      if (d.locale === 'sw') swahili.add(d.token);
+    }
     if ((devices ?? []).length < pageSize) break;
   }
 
   for (const batch of chunks(tokens, BATCH)) {
     const messages = batch.map((to) => ({
       to,
-      title: n.title,
-      body: n.body,
+      // Kiswahili for phones set to it, when the notification has a translation.
+      title: swahili.has(to) && n.title_sw ? n.title_sw : n.title,
+      body: swahili.has(to) && n.body_sw ? n.body_sw : n.body,
       data: n.url ? { url: n.url } : {},
       sound: 'default',
       channelId: 'default',

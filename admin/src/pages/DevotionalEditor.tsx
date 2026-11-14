@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { go } from '../App';
 import { addDays, devotionalState, formatDay, friendlyError, slugify, todayInTanzania } from '../lib';
 import { db } from '../supabase';
-import { Button, ConfirmButton, Field, Loading, PageHead, useToast } from '../ui';
+import { Button, ConfirmButton, Field, Loading, PageHead, Segment, useToast } from '../ui';
 import { STATE_LABEL } from './Devotionals';
 
 type Form = {
@@ -18,7 +18,16 @@ type Form = {
   audio_url: string;
   publish_on: string;
   status: 'draft' | 'published';
+  title_sw: string;
+  subtitle_sw: string;
+  scripture_text_sw: string;
+  excerpt_sw: string;
+  body_sw: string;
 };
+
+/** The fields written in each language; everything else is shared. */
+type TextKey = 'title' | 'subtitle' | 'scripture_text' | 'excerpt' | 'body';
+type Lang = 'en' | 'sw';
 
 type Series = { id: string; name: string };
 
@@ -34,6 +43,11 @@ const blank = (date: string): Form => ({
   audio_url: '',
   publish_on: date,
   status: 'draft',
+  title_sw: '',
+  subtitle_sw: '',
+  scripture_text_sw: '',
+  excerpt_sw: '',
+  body_sw: '',
 });
 
 export default function DevotionalEditor({ id, query }: { id: string | null; query: URLSearchParams }) {
@@ -48,6 +62,7 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
   const [loadError, setLoadError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
+  const [lang, setLang] = useState<Lang>('en');
 
   useEffect(() => {
     db()
@@ -58,7 +73,7 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
     if (!id) return;
     db()
       .from('devotionals')
-      .select('title,slug,subtitle,scripture_ref,scripture_text,excerpt,body,series_id,audio_url,publish_on,status')
+      .select('title,slug,subtitle,scripture_ref,scripture_text,excerpt,body,series_id,audio_url,publish_on,status,title_sw,subtitle_sw,scripture_text_sw,excerpt_sw,body_sw')
       .eq('id', id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -93,6 +108,11 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
   const validate = () => {
     const e: typeof errors = {};
     if (!form.title.trim()) e.title = 'Give the devotional a title.';
+    if (e.title) setLang('en');
+    if (form.body_sw.trim() && !form.title_sw.trim()) {
+      e.title_sw = 'Add the Kiswahili title too, or clear the Kiswahili text.';
+      if (!e.title) setLang('sw');
+    }
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug)) e.slug = 'Use lowercase letters and numbers, joined by hyphens.';
     if (e.slug) setLinkOpen(true);
     if (!form.publish_on) e.publish_on = 'Choose the day it appears.';
@@ -119,6 +139,11 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
       audio_url: form.audio_url.trim() || null,
       publish_on: form.publish_on,
       status,
+      title_sw: form.title_sw.trim() || null,
+      subtitle_sw: form.subtitle_sw.trim() || null,
+      scripture_text_sw: form.scripture_text_sw.trim() || null,
+      excerpt_sw: form.excerpt_sw.trim() || null,
+      body_sw: form.body_sw.trim() || null,
     };
     const res = id
       ? await db().from('devotionals').update(row).eq('id', id).select('id').single()
@@ -165,7 +190,11 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
   const savedState = saved ? devotionalState(saved.status, saved.publish_on, today) : null;
   const future = form.publish_on > today;
   const publishLabel = future ? `Schedule for ${formatDay(form.publish_on)}` : 'Publish now';
-  const paras = form.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  // The text fields for the language being edited.
+  const k = (key: TextKey) => (lang === 'sw' ? (`${key}_sw` as const) : key);
+  const text = (key: TextKey) => form[k(key)];
+  const paras = text('body').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const hasSw = !!(form.title_sw.trim() || form.body_sw.trim());
 
   return (
     <>
@@ -192,8 +221,24 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
 
       <div className="editor">
         <div className="stack" style={{ gap: 20 }}>
-          <Field label="Title" error={errors.title}>
-            {(p) => <input {...p} className="input" value={form.title} onChange={(e) => set('title', e.target.value)} maxLength={160} />}
+          <div className="stack tight">
+            <Segment<Lang>
+              label="Language"
+              value={lang}
+              onChange={setLang}
+              options={[
+                { value: 'en', label: 'English' },
+                { value: 'sw', label: hasSw ? 'Kiswahili ✓' : 'Kiswahili' },
+              ]}
+            />
+            <span className="small muted">
+              {lang === 'sw'
+                ? 'Members who use the app in Kiswahili see this version. Leave it empty and they see the English one.'
+                : 'Add a Kiswahili version under “Kiswahili”. Date, series, scripture reference and recording are shared.'}
+            </span>
+          </div>
+          <Field label={lang === 'sw' ? 'Title (Kiswahili)' : 'Title'} error={lang === 'sw' ? errors.title_sw : errors.title}>
+            {(p) => <input {...p} className="input" lang={lang} value={text('title')} onChange={(e) => set(k('title'), e.target.value)} maxLength={160} />}
           </Field>
           <div className="grid-2">
             <Field label="Appears on" hint="The day it becomes “Today’s devotional”." error={errors.publish_on}>
@@ -217,17 +262,17 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
               {(p) => <input {...p} className="input" value={form.scripture_ref} onChange={(e) => set('scripture_ref', e.target.value)} maxLength={80} />}
             </Field>
             <Field label="Subtitle (optional)">
-              {(p) => <input {...p} className="input" value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} maxLength={160} />}
+              {(p) => <input {...p} className="input" lang={lang} value={text('subtitle')} onChange={(e) => set(k('subtitle'), e.target.value)} maxLength={160} />}
             </Field>
           </div>
-          <Field label="Scripture text (optional)" hint="Shown as the verse card at the top of the reading.">
-            {(p) => <textarea {...p} className="textarea" style={{ minHeight: 80 }} value={form.scripture_text} onChange={(e) => set('scripture_text', e.target.value)} maxLength={1000} />}
+          <Field label="Scripture text (optional)" hint={lang === 'sw' ? 'From the Swahili Union Version (SUV).' : 'Shown as the verse card at the top of the reading.'}>
+            {(p) => <textarea {...p} className="textarea" lang={lang} style={{ minHeight: 80 }} value={text('scripture_text')} onChange={(e) => set(k('scripture_text'), e.target.value)} maxLength={1000} />}
           </Field>
-          <Field label="Devotional" hint="Leave a blank line between paragraphs.">
-            {(p) => <textarea {...p} className="textarea tall" value={form.body} onChange={(e) => set('body', e.target.value)} maxLength={40000} />}
+          <Field label={lang === 'sw' ? 'Devotional (Kiswahili)' : 'Devotional'} hint="Leave a blank line between paragraphs.">
+            {(p) => <textarea {...p} className="textarea tall" lang={lang} value={text('body')} onChange={(e) => set(k('body'), e.target.value)} maxLength={40000} />}
           </Field>
           <Field label="Short summary (optional)" hint="Shown on the home screen card. If empty, the first paragraph is used.">
-            {(p) => <textarea {...p} className="textarea" style={{ minHeight: 70 }} value={form.excerpt} onChange={(e) => set('excerpt', e.target.value)} maxLength={400} />}
+            {(p) => <textarea {...p} className="textarea" lang={lang} style={{ minHeight: 70 }} value={text('excerpt')} onChange={(e) => set(k('excerpt'), e.target.value)} maxLength={400} />}
           </Field>
 
           <div className="card soft stack tight">
@@ -316,14 +361,14 @@ export default function DevotionalEditor({ id, query }: { id: string | null; que
         </div>
 
         <aside className="preview stack tight" aria-label="Preview">
-          <span className="eyebrow">Preview in the app</span>
-          <div className="phone">
-            <span className="kicker">Daily devotional · {formatDay(form.publish_on)}</span>
-            <h2>{form.title || 'Title'}</h2>
-            {form.subtitle ? <span className="sub">{form.subtitle}</span> : null}
-            {form.scripture_text ? (
+          <span className="eyebrow">Preview in the app{lang === 'sw' ? ' · Kiswahili' : ''}</span>
+          <div className="phone" lang={lang}>
+            <span className="kicker">{lang === 'sw' ? 'Tafakari ya kila siku' : 'Daily devotional'} · {formatDay(form.publish_on)}</span>
+            <h2>{text('title') || 'Title'}</h2>
+            {text('subtitle') ? <span className="sub">{text('subtitle')}</span> : null}
+            {text('scripture_text') ? (
               <div className="verse">
-                “{form.scripture_text}”<small>{form.scripture_ref} · KJV</small>
+                “{text('scripture_text')}”<small>{form.scripture_ref} · {lang === 'sw' ? 'SUV' : 'KJV'}</small>
               </div>
             ) : form.scripture_ref ? (
               <span className="kicker">{form.scripture_ref}</span>

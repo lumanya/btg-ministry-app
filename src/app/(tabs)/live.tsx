@@ -3,6 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
+import { dayName, t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
@@ -18,7 +19,6 @@ import { useColors, useStyles } from '@/state/theme';
 
 type Panel = 'upcoming' | 'prayer';
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Live() {
   const c = useColors();
@@ -46,7 +46,7 @@ export default function Live() {
       await content.sendPrayer({ message: prayer });
       setSent(true);
     } catch (e) {
-      setPrayerError(e instanceof Error ? e.message : 'We couldn’t send your request. Try again.');
+      setPrayerError(e instanceof Error ? e.message : t('We couldn’t send your request. Try again.'));
     } finally {
       setSending(false);
     }
@@ -63,27 +63,32 @@ export default function Live() {
         const d = new Date(v.scheduledStart!);
         return {
           id: v.id,
-          day: DAYS[d.getDay()],
+          day: dayName(d.getDay(), true),
           time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
           name: v.title,
           meta: formatStart(v.scheduledStart!),
         };
       })
-    : content.services;
+    : content.services.map((s) => ({
+        ...s,
+        // Day and "Livestreamed" in the member's language.
+        day: s.weekday === undefined ? s.day : dayName(s.weekday, true),
+        meta: s.weekday === undefined ? s.meta : [s.venue?.trim(), s.livestreamed ? t('Livestreamed') : null].filter(Boolean).join(' · '),
+      }));
 
   const actions: { icon: IconName; label: string; onPress: () => void; primary?: boolean }[] = [
-    { icon: 'chat', label: 'Prayer', onPress: () => setPanel('prayer') },
-    { icon: 'heart', label: 'Give', onPress: () => router.push('/give'), primary: true },
+    { icon: 'chat', label: t('Prayer'), onPress: () => setPanel('prayer') },
+    { icon: 'heart', label: t('Give'), onPress: () => router.push('/give'), primary: true },
     { icon: 'sermons', label: 'YouTube', onPress: () => WebBrowser.openBrowserAsync(liveUrl) },
   ];
 
   return (
     <Screen gap={20} refreshing={refreshing} onRefresh={refresh}>
       <View style={styles.header}>
-        <Title>Live</Title>
+        <Title>{t('Live')}</Title>
         <IconButton
           icon="share"
-          label="Share the livestream"
+          label={t('Share the livestream')}
           iconSize={18}
           onPress={() => Share.share({ message: `Join the BTG Ministry livestream: ${liveUrl}` })}
         />
@@ -94,7 +99,7 @@ export default function Live() {
           {watching ? (
             <YouTubePlayer youtubeId={live.youtubeId!} style={{ height: playerHeight, borderRadius: 18 }} />
           ) : (
-            <Tap accessibilityRole="button" accessibilityLabel={`Watch the livestream: ${live.title}`} onPress={() => setWatchingId(live.id)}>
+            <Tap accessibilityRole="button" accessibilityLabel={t('Watch the livestream: {title}', { title: live.title })} onPress={() => setWatchingId(live.id)}>
               <VideoThumb video={live} height={playerHeight} radius={18} play="center" />
             </Tap>
           )}
@@ -116,22 +121,22 @@ export default function Live() {
             <Eagle height={64} />
           </View>
           <View style={{ gap: 6 }}>
-            <Title size={28}>We’re not live right now.</Title>
+            <Title size={28}>{t('We’re not live right now.')}</Title>
             <Body>
               {feed.upcoming[0]?.scheduledStart
-                ? `The next livestream starts ${formatStart(feed.upcoming[0].scheduledStart)}. Turn on a reminder below.`
-                : 'Turn on a reminder below and we’ll let you know when the next service begins.'}
+                ? t('The next livestream starts {when}. Turn on a reminder below.', { when: formatStart(feed.upcoming[0].scheduledStart) })
+                : t('Turn on a reminder below and we’ll let you know when the next service begins.')}
             </Body>
           </View>
           {latest ? (
             <Tap
               accessibilityRole="button"
-              accessibilityLabel={`Watch the latest service: ${latest.title}`}
+              accessibilityLabel={t('Watch the latest service: {title}', { title: latest.title })}
               onPress={() => router.push({ pathname: '/sermon/[id]', params: { id: latest.id } })}
               style={styles.latest}>
               <VideoThumb video={latest} height={68} titleSize={12} radius={10} style={{ width: 120, gap: 6 }} />
               <View style={{ flex: 1, gap: 3 }}>
-                <Eyebrow style={{ fontSize: 11 }}>Latest service</Eyebrow>
+                <Eyebrow style={{ fontSize: 11 }}>{t('Latest service')}</Eyebrow>
                 <Text style={styles.latestTitle} numberOfLines={2}>{latest.title}</Text>
                 <Text style={styles.metaSmall}>{videoMeta(latest)}</Text>
               </View>
@@ -163,7 +168,7 @@ export default function Live() {
               accessibilityState={{ selected: on }}
               onPress={() => setPanel(p)}
               style={[styles.segmentItem, on && styles.segmentOn]}>
-              <Text style={[styles.segmentText, on && { color: c.cream }]}>{p === 'upcoming' ? 'Coming up' : 'Prayer request'}</Text>
+              <Text style={[styles.segmentText, on && { color: c.cream }]}>{p === 'upcoming' ? t('Coming up') : t('Prayer request')}</Text>
             </Tap>
           );
         })}
@@ -188,7 +193,7 @@ export default function Live() {
                   filled={on}
                   selected={on}
                   variant={on ? 'solid' : 'outline'}
-                  label={on ? `Turn off the reminder for ${s.name}` : `Remind me about ${s.name}`}
+                  label={on ? t('Turn off the reminder for {name}', { name: s.name }) : t('Remind me about {name}', { name: s.name })}
                   iconSize={18}
                   onPress={() => setReminders((r) => ({ ...r, [s.id]: !on }))}
                   style={!on ? { borderColor: c.accent, backgroundColor: 'transparent' } : undefined}
@@ -197,7 +202,7 @@ export default function Live() {
             );
           })}
           <Text style={styles.metaSmall} accessibilityLiveRegion="polite">
-            {anyReminder ? 'We will notify you when the stream starts.' : ' '}
+            {anyReminder ? t('We will notify you when the stream starts.') : ' '}
           </Text>
         </View>
       ) : (
@@ -207,10 +212,10 @@ export default function Live() {
               <View style={styles.checkDisc}>
                 <Icon name="check" color={c.cream} />
               </View>
-              <Title size={26} style={{ textAlign: 'center' }}>Your request is with us.</Title>
-              <Body style={{ textAlign: 'center' }}>We are standing with you in prayer.</Body>
+              <Title size={26} style={{ textAlign: 'center' }}>{t('Your request is with us.')}</Title>
+              <Body style={{ textAlign: 'center' }}>{t('We are standing with you in prayer.')}</Body>
               <Button
-                label="Send another"
+                label={t('Send another')}
                 variant="outline"
                 onPress={() => {
                   setPrayer('');
@@ -222,7 +227,7 @@ export default function Live() {
           ) : (
             <View style={{ gap: 12 }}>
               <Text style={styles.label} nativeID="prayerLabel">
-                Your prayer request
+                {t('Your prayer request')}
               </Text>
               <TextInput
                 value={prayer}
@@ -233,14 +238,14 @@ export default function Live() {
                 maxLength={2000}
                 multiline
                 accessibilityLabelledBy="prayerLabel"
-                accessibilityLabel="Your prayer request"
-                placeholder="Share what you would like the ministry to pray for"
+                accessibilityLabel={t('Your prayer request')}
+                placeholder={t('Share what you would like the ministry to pray for')}
                 placeholderTextColor={c.textSubtle}
                 style={styles.textArea}
               />
               {prayerError ? <FormMessage>{prayerError}</FormMessage> : null}
-              <Button label={sending ? 'Sending…' : 'Send to the prayer team'} onPress={sendPrayer} />
-              <Text style={styles.metaSmall}>Only the ministry’s prayer team can read your request.</Text>
+              <Button label={sending ? t('Sending…') : t('Send to the prayer team')} onPress={sendPrayer} />
+              <Text style={styles.metaSmall}>{t('Only the ministry’s prayer team can read your request.')}</Text>
             </View>
           )}
         </View>

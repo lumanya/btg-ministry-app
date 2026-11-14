@@ -18,9 +18,11 @@ type EventRow = {
   livestreamed: boolean;
   remind: boolean;
   status: 'draft' | 'published';
+  title_sw?: string | null;
+  description_sw?: string | null;
 };
 
-const COLUMNS = 'id,title,starts_at,ends_at,location_name,address,description,image_url,registration_url,livestreamed,remind,status';
+const COLUMNS = 'id,title,starts_at,ends_at,location_name,address,description,image_url,registration_url,livestreamed,remind,status,title_sw,description_sw';
 
 /* ---------- List ---------- */
 
@@ -118,6 +120,8 @@ type Form = {
   livestreamed: boolean;
   remind: boolean;
   status: 'draft' | 'published';
+  title_sw: string;
+  description_sw: string;
 };
 
 function defaultStart() {
@@ -137,6 +141,8 @@ const blank = (): Form => ({
   livestreamed: false,
   remind: true,
   status: 'draft',
+  title_sw: '',
+  description_sw: '',
 });
 
 export function EventEditor({ id }: { id: string | null }) {
@@ -170,6 +176,8 @@ export function EventEditor({ id }: { id: string | null }) {
           livestreamed: r.livestreamed,
           remind: r.remind,
           status: r.status,
+          title_sw: r.title_sw ?? '',
+          description_sw: r.description_sw ?? '',
         });
         setSavedStatus(r.status);
       });
@@ -200,6 +208,8 @@ export function EventEditor({ id }: { id: string | null }) {
       location_name: form.location_name.trim() || null,
       address: form.address.trim() || null,
       description: form.description.trim(),
+      title_sw: form.title_sw.trim() || null,
+      description_sw: form.description_sw.trim() || null,
       image_url: form.image_url.trim() || null,
       registration_url: form.registration_url.trim() || null,
       livestreamed: form.livestreamed,
@@ -271,6 +281,18 @@ export function EventEditor({ id }: { id: string | null }) {
           <Field label="About this event" hint="Leave a blank line between paragraphs.">
             {(p) => <textarea {...p} className="textarea" style={{ minHeight: 160 }} value={form.description} maxLength={8000} onChange={(e) => set('description', e.target.value)} />}
           </Field>
+          <details open={!!(form.title_sw || form.description_sw)} className="card soft">
+            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Kiswahili (optional)</summary>
+            <p className="small muted">Members who use the app in Kiswahili see these instead. Leave empty to show the English.</p>
+            <div className="stack" style={{ gap: 16 }}>
+              <Field label="Name in Kiswahili">
+                {(p) => <input {...p} lang="sw" className="input" value={form.title_sw} maxLength={120} placeholder="Kongamano la Mwaka 2026" onChange={(e) => set('title_sw', e.target.value)} />}
+              </Field>
+              <Field label="About this event, in Kiswahili">
+                {(p) => <textarea {...p} lang="sw" className="textarea" style={{ minHeight: 120 }} value={form.description_sw} maxLength={8000} onChange={(e) => set('description_sw', e.target.value)} />}
+              </Field>
+            </div>
+          </details>
           <Field label="Registration link (optional)" error={errors.registration_url} hint="A form or ticket page. Members see a Register button.">
             {(p) => <input {...p} className="input" value={form.registration_url} placeholder="https://" onChange={(e) => set('registration_url', e.target.value)} />}
           </Field>

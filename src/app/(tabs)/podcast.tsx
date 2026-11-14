@@ -3,13 +3,17 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Arch, Eagle, useTones } from '@/components/art';
+import { DownloadButton } from '@/components/download-button';
 import { Icon } from '@/components/icon';
 import { Body, Eyebrow, IconButton, ProgressBar, Screen, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { ArtTone } from '@/content/sample';
 import { Episode, formatLength } from '@/lib/podcast';
 import { formatDay } from '@/lib/video';
+import { useDataSaver } from '@/state/data-saver';
+import { formatBytes, useDownloads } from '@/state/downloads';
 import { usePlayer } from '@/state/player';
 import { useColors, useStyles } from '@/state/theme';
 
@@ -23,9 +27,18 @@ export default function PodcastTab() {
   const p = usePlayer();
   const [following, setFollowing] = useState(false);
   const [seriesFilter, setSeriesFilter] = useState<string | null>(null);
+  const [showDownloads, setShowDownloads] = useState(false);
+  const downloads = useDownloads();
+  const { online } = useDataSaver();
 
   const series = [...new Set(p.podcast.episodes.map((e) => e.series).filter((s): s is string => !!s))];
-  const episodes = seriesFilter ? p.podcast.episodes.filter((e) => e.series === seriesFilter) : p.podcast.episodes;
+  // Offline, or when asked: only what's saved on the phone.
+  const onlyDownloads = (showDownloads || !online) && downloads.list.length > 0;
+  const episodes = onlyDownloads
+    ? downloads.list.map((d) => d.episode)
+    : seriesFilter
+      ? p.podcast.episodes.filter((e) => e.series === seriesFilter)
+      : p.podcast.episodes;
 
   const playEpisode = (e: Episode) => {
     p.play(e);
@@ -35,7 +48,7 @@ export default function PodcastTab() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <Screen gap={24} refreshing={false} onRefresh={p.status === 'sample' ? undefined : p.refresh}>
-        <Title>Podcast</Title>
+        <Title>{t('Podcast')}</Title>
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
           <View style={[styles.cover, { backgroundColor: c.artBrown }]}>
@@ -49,7 +62,7 @@ export default function PodcastTab() {
             <View style={{ gap: 6 }}>
               <Title size={26}>{p.podcast.title}</Title>
               <Body style={{ fontSize: 13, lineHeight: 18 }}>
-                {p.podcast.description.split('\n')[0] || 'Audio teachings from Iman Mwakanyamale'}
+                {p.podcast.description.split('\n')[0] || t('Audio teachings from Iman Mwakanyamale')}
               </Body>
             </View>
             <Tap
@@ -58,20 +71,38 @@ export default function PodcastTab() {
               onPress={() => setFollowing((f) => !f)}
               style={[styles.follow, following && { backgroundColor: c.brown }]}>
               <Icon name={following ? 'check' : 'plus'} size={16} color={following ? c.cream : c.brownDark} />
-              <Text style={[styles.followText, following && { color: c.cream }]}>{following ? 'Following' : 'Follow'}</Text>
+              <Text style={[styles.followText, following && { color: c.cream }]}>{following ? t('Following') : t('Follow')}</Text>
             </Tap>
           </View>
         </View>
 
         {p.status === 'sample' ? (
-          <Text style={styles.notice}>Sample episodes. Audio plays here once the podcast feed is connected.</Text>
+          <Text style={styles.notice}>{t('Sample episodes. Audio plays here once the podcast feed is connected.')}</Text>
         ) : p.status === 'error' ? (
-          <Text style={styles.notice} accessibilityLiveRegion="polite">Couldn’t load the podcast. Pull down to try again.</Text>
+          <Text style={styles.notice} accessibilityLiveRegion="polite">{t('Couldn’t load the podcast. Pull down to try again.')}</Text>
         ) : null}
 
-        {series.length > 1 ? (
+        {downloads.list.length ? (
+          <Tap
+            accessibilityRole="button"
+            accessibilityState={{ selected: onlyDownloads }}
+            onPress={() => setShowDownloads((v) => !v)}
+            style={[styles.downloads, onlyDownloads && { borderColor: c.accent }]}>
+            <Icon name="download" size={20} color={c.accent} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.downloadsTitle}>{t('Downloads')}</Text>
+              <Text style={styles.meta}>
+                {downloads.list.length === 1 ? t('1 episode') : t('{n} episodes', { n: downloads.list.length })} · {formatBytes(downloads.totalBytes)}
+                {!online ? ` · ${t('No internet: showing your downloads')}` : ''}
+              </Text>
+            </View>
+            <Text style={styles.link}>{onlyDownloads ? (online ? t('Show all') : '') : t('Show')}</Text>
+          </Tap>
+        ) : null}
+
+        {series.length > 1 && !onlyDownloads ? (
           <View style={{ gap: 12 }}>
-            <Eyebrow>Series</Eyebrow>
+            <Eyebrow>{t('Series')}</Eyebrow>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -79,18 +110,18 @@ export default function PodcastTab() {
               contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 12 }}>
               {series.map((name, i) => {
                 const tone = SERIES_TONES[i % SERIES_TONES.length];
-                const t = toneSet[tone];
+                const tn = toneSet[tone];
                 const on = seriesFilter === name;
                 return (
                   <Tap
                     key={name}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
-                    accessibilityLabel={on ? `Showing ${name}. Tap to show all episodes` : `Show the ${name} series`}
+                    accessibilityLabel={on ? t('Showing {name}. Tap to show all episodes', { name }) : t('Show the {name} series', { name })}
                     onPress={() => setSeriesFilter(on ? null : name)}
-                    style={[styles.seriesCard, { backgroundColor: t.bg }, on && styles.seriesOn]}>
-                    <Eagle height={60} light={t.lightEagle} />
-                    <Text style={[styles.seriesName, { color: t.text }]}>{name}</Text>
+                    style={[styles.seriesCard, { backgroundColor: tn.bg }, on && styles.seriesOn]}>
+                    <Eagle height={60} light={tn.lightEagle} />
+                    <Text style={[styles.seriesName, { color: tn.text }]}>{name}</Text>
                   </Tap>
                 );
               })}
@@ -100,17 +131,17 @@ export default function PodcastTab() {
 
         <View>
           <View style={styles.listHeader}>
-            <Eyebrow>{seriesFilter ?? 'Episodes'}</Eyebrow>
-            {seriesFilter ? (
+            <Eyebrow>{onlyDownloads ? t('Downloads') : (seriesFilter ?? t('Episodes'))}</Eyebrow>
+            {seriesFilter && !onlyDownloads ? (
               <Tap accessibilityRole="button" onPress={() => setSeriesFilter(null)} style={{ minHeight: 44, justifyContent: 'center' }}>
-                <Text style={styles.link}>Show all</Text>
+                <Text style={styles.link}>{t('Show all')}</Text>
               </Tap>
             ) : null}
           </View>
           {episodes.map((e) => {
             const active = p.episode?.id === e.id && p.playing;
             const saved = p.saved(e.id);
-            const meta = [e.date ? formatDay(e.date) : null, formatLength(e.duration), saved?.finished ? 'Played' : null].filter(Boolean).join(' · ');
+            const meta = [e.date ? formatDay(e.date) : null, formatLength(e.duration), saved?.finished ? t('Played') : null].filter(Boolean).join(' · ');
             const progress = saved && !saved.finished && saved.duration > 0 ? saved.position / saved.duration : 0;
             return (
               <View key={e.id} style={styles.episode}>
@@ -124,9 +155,10 @@ export default function PodcastTab() {
                     </View>
                   ) : null}
                 </View>
+                <DownloadButton episode={e} />
                 <IconButton
                   icon={active ? 'pause' : 'play'}
-                  label={`${active ? 'Pause' : 'Play'} ${e.title}`}
+                  label={`${active ? t('Pause') : t('Play')} ${e.title}`}
                   variant={active ? 'solid' : 'outline'}
                   iconSize={18}
                   onPress={() => playEpisode(e)}
@@ -163,7 +195,9 @@ const createStyles = (c: Palette) =>
   seriesName: { fontFamily: Fonts.display, fontSize: 24, lineHeight: 25, fontVariant: ['lining-nums'] },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   link: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
-  episode: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.line },
+  downloads: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: Radius.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.white },
+  downloadsTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
+  episode: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.line },
   episodeSeries: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: c.eyebrow },
   episodeTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: c.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { GestureResponderEvent, StyleSheet, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Palette } from '@/constants/theme';
 import { formatClock } from '@/lib/podcast';
 import { useStyles } from '@/state/theme';
@@ -50,8 +51,8 @@ export function Scrubber({
       onResponderTerminate={() => setDrag(null)}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel="Playback position"
-      accessibilityValue={{ text: duration > 0 ? `${formatClock(shown)} of ${formatClock(duration)}` : 'Not started' }}
+      accessibilityLabel={t('Playback position')}
+      accessibilityValue={{ text: duration > 0 ? t('{time} of {total}', { time: formatClock(shown), total: formatClock(duration) }) : t('Not started') }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => {
         if (!enabled) return;

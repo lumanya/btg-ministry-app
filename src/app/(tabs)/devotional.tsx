@@ -2,19 +2,21 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { dayName, monthName, t } from '@/i18n';
 import { Eagle, ScrollCard, useTones } from '@/components/art';
 import { Icon } from '@/components/icon';
+import { StatLine } from '@/components/like-button';
 import { Pop } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import { Devotional, formatDate } from '@/content/sample';
 import { devotionalEpisode } from '@/lib/content';
 import { useContent } from '@/state/content';
+import { useStats } from '@/state/engagement';
 import { usePlayer } from '@/state/player';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** The seven days ending on the newest devotional, so the strip always has content. */
 function buildWeek(devotionals: Devotional[]) {
@@ -23,11 +25,10 @@ function buildWeek(devotionals: Devotional[]) {
     const d = new Date(newest);
     d.setDate(newest.getDate() - (6 - i));
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { iso, day: d.getDate(), weekday: WEEKDAYS[d.getDay()], devotional: devotionals.find((x) => x.date === iso) };
+    return { iso, day: d.getDate(), weekday: d.getDay(), devotional: devotionals.find((x) => x.date === iso) };
   });
 }
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function DevotionalTab() {
   const c = useColors();
@@ -45,15 +46,17 @@ export default function DevotionalTab() {
   const [y, m] = week[6].iso.split('-').map(Number);
   const weekIds = new Set(week.map((w) => w.devotional?.id));
   const earlier = devotionals.filter((d) => !weekIds.has(d.id));
+  const statOf = useStats('devotional', [selected.id, ...earlier.slice(0, 40).map((d) => d.id)]);
+  const selectedStat = statOf(selected.id);
 
   const open = (id: string) => router.push({ pathname: '/devotional/[id]', params: { id } });
 
   return (
     <Screen gap={22} refreshing={content.refreshing} onRefresh={content.status === 'sample' ? undefined : content.refresh}>
       <View style={styles.header}>
-        <Title size={34}>Daily devotional</Title>
+        <Title size={34}>{t('Daily devotional')}</Title>
         <Pop trigger={lib.streak} style={styles.streak}>
-          <View accessible accessibilityLabel={`${lib.streak}-day reading streak`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View accessible accessibilityLabel={t('{n}-day reading streak', { n: lib.streak })} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="flame" size={16} color={c.accent} filled={lib.streak > 0} />
             <Text style={styles.streakText}>{lib.streak}</Text>
           </View>
@@ -61,7 +64,7 @@ export default function DevotionalTab() {
       </View>
 
       <View style={{ gap: 10 }}>
-        <Eyebrow>{`${MONTHS[m - 1]} ${y}`}</Eyebrow>
+        <Eyebrow>{`${monthName(m - 1)} ${y}`}</Eyebrow>
         <View style={styles.week}>
           {week.map((w) => {
             const d = w.devotional;
@@ -72,10 +75,10 @@ export default function DevotionalTab() {
                 disabled={!d}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on, disabled: !d }}
-                accessibilityLabel={`${w.weekday} ${w.day}: ${d ? `${d.title}${lib.isRead(d.id) ? ', read' : ''}` : 'no devotional'}`}
+                accessibilityLabel={`${dayName(w.weekday)} ${w.day}: ${d ? `${d.title}${lib.isRead(d.id) ? ', read' : ''}` : '—'}`}
                 onPress={() => d && setSelectedId(d.id)}
                 style={[styles.day, on && styles.dayOn, !d && styles.dayEmpty]}>
-                <Text style={[styles.dayLetter, on && { color: c.cream }]}>{w.weekday.charAt(0)}</Text>
+                <Text style={[styles.dayLetter, on && { color: c.cream }]}>{dayName(w.weekday, true).charAt(0)}</Text>
                 <Text style={[styles.dayNum, on && { color: c.cream }, !d && { color: c.textSubtle }]}>{w.day}</Text>
                 {d && lib.isRead(d.id) ? (
                   <Icon name="check" size={12} color={on ? c.gold : c.accent} />
@@ -95,7 +98,7 @@ export default function DevotionalTab() {
             {lib.isRead(selected.id) ? (
               <View style={[styles.refChip, styles.readChip]}>
                 <Icon name="check" size={13} color={c.cream} />
-                <Text style={[styles.refText, { color: c.cream }]}>Read</Text>
+                <Text style={[styles.refText, { color: c.cream }]}>{t('Read')}</Text>
               </View>
             ) : selected.scripture ? (
               <View style={styles.refChip}>
@@ -105,12 +108,13 @@ export default function DevotionalTab() {
           </View>
           <Title size={30}>{selected.title}</Title>
           <Body>{selected.excerpt}</Body>
+          <StatLine likes={selectedStat?.likes ?? 0} views={selectedStat?.views ?? 0} viewWord="reads" />
           <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
-            <Button label={lib.isRead(selected.id) ? 'Read again' : 'Read'} variant={lib.isRead(selected.id) ? 'outline' : 'primary'} onPress={() => open(selected.id)} style={{ flex: 1, minHeight: 46 }} />
+            <Button label={lib.isRead(selected.id) ? t('Read again') : t('Read')} variant={lib.isRead(selected.id) ? 'outline' : 'primary'} onPress={() => open(selected.id)} style={{ flex: 1, minHeight: 46 }} />
             {selected.audioUrl ? (
               <IconButton
                 icon="podcast"
-                label="Listen to this devotional"
+                label={t('Listen to this devotional')}
                 size={46}
                 onPress={() => {
                   player.play(devotionalEpisode(selected));
@@ -124,20 +128,20 @@ export default function DevotionalTab() {
       </View>
 
       <View style={{ gap: 12 }}>
-        <Eyebrow>Series</Eyebrow>
+        <Eyebrow>{t('Series')}</Eyebrow>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {content.series.map((s) => {
-            const t = toneSet[s.tone];
+            const tn = toneSet[s.tone];
             const first = devotionals.find((d) => d.series === s.name);
             return (
               <Tap
                 key={s.name}
                 accessibilityRole="button"
-                accessibilityLabel={`${s.name} series`}
+                accessibilityLabel={t('{title} series, {n} teachings', { title: s.name, n: devotionals.filter((d) => d.series === s.name).length })}
                 onPress={() => first && setSelectedId(first.id)}
-                style={[styles.series, { backgroundColor: t.bg }]}>
-                <Eagle height={30} light={t.lightEagle} />
-                <Text style={[styles.seriesName, { color: t.text }]}>{s.name}</Text>
+                style={[styles.series, { backgroundColor: tn.bg }]}>
+                <Eagle height={30} light={tn.lightEagle} />
+                <Text style={[styles.seriesName, { color: tn.text }]}>{s.name}</Text>
               </Tap>
             );
           })}
@@ -145,12 +149,13 @@ export default function DevotionalTab() {
       </View>
 
       <View>
-        <Eyebrow style={{ marginBottom: 4 }}>Earlier</Eyebrow>
+        <Eyebrow style={{ marginBottom: 4 }}>{t('Earlier')}</Eyebrow>
         {earlier.map((d) => (
           <Tap key={d.id} accessibilityRole="button" accessibilityLabel={`${d.title}, ${formatDate(d.date)}`} onPress={() => open(d.id)} style={styles.earlier}>
             <View style={{ flex: 1, gap: 3 }}>
               <Text style={styles.earlierDate}>{formatDate(d.date)}</Text>
               <Text style={styles.earlierTitle}>{d.title}</Text>
+              <StatLine likes={statOf(d.id)?.likes ?? 0} views={statOf(d.id)?.views ?? 0} viewWord="reads" />
             </View>
             {lib.isRead(d.id) ? <Icon name="check" size={16} color={c.accent} /> : null}
             <Icon name="chevron" size={18} color={c.accent} />

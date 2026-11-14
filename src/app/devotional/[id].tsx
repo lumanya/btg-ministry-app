@@ -1,17 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Animated, { FadeIn, ZoomIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
+import { LikeButton, StatLine } from '@/components/like-button';
 import { Pop } from '@/components/motion';
 import { Button, IconButton, Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import { formatDate } from '@/content/sample';
 import { devotionalEpisode, paragraphs } from '@/lib/content';
 import { useContent } from '@/state/content';
+import { recordView, useStat } from '@/state/engagement';
 import { usePlayer } from '@/state/player';
 import { success, tap } from '@/lib/haptics';
 import { useLibrary } from '@/state/library';
@@ -38,6 +41,10 @@ export default function Reader() {
   const bookmarked = lib.isDevotionalSaved(d.id);
   const done = lib.isRead(d.id);
   const fontSize = SIZES[size];
+  const stat = useStat('devotional', d.id);
+  useEffect(() => {
+    recordView('devotional', d.id);
+  }, [d.id]);
 
   // A thin gold line under the top bar shows how far through the reading you are.
   const progress = useSharedValue(0);
@@ -47,11 +54,14 @@ export default function Reader() {
   });
   const progressStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
 
+  // Swahili text is from the Swahili Union Version; English from the King James Version.
+  const bible = d.lang === 'sw' ? 'SUV' : 'KJV';
+
   const shareCard = () =>
     router.push({
       pathname: '/share',
       params: d.scripture?.text
-        ? { kind: 'verse', text: d.scripture.text, attribution: `${d.scripture.ref} · KJV` }
+        ? { kind: 'verse', text: d.scripture.text, attribution: `${d.scripture.ref} · ${bible}` }
         : { kind: 'devotional', title: d.title, text: d.excerpt, attribution: d.scripture?.ref ?? 'Iman Mwakanyamale' },
     });
 
@@ -64,7 +74,7 @@ export default function Reader() {
     lib.toggleDevotional(d.id);
   };
   const streakLine =
-    lib.streak > 1 ? `${lib.streak}-day streak` : lib.streak === 1 ? 'Day one of your streak' : 'Read and remembered';
+    lib.streak > 1 ? t('{n}-day streak', { n: lib.streak }) : lib.streak === 1 ? t('Day one of your streak') : t('Read and remembered');
 
   // The full text when the ministry has posted it; otherwise the short excerpt.
   const [opening = d.excerpt, ...more] = paragraphs(d.body);
@@ -73,25 +83,25 @@ export default function Reader() {
   return (
     <View style={{ flex: 1, backgroundColor: c.paper }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/devotional'))} style={{ marginRight: 'auto' }} />
-        <View style={styles.sizeGroup} accessibilityRole="adjustable" accessibilityLabel="Text size">
-          <Tap accessibilityRole="button" accessibilityLabel="Smaller text" onPress={() => setSize((s) => Math.max(0, s - 1))} style={styles.sizeBtn}>
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/devotional'))} style={{ marginRight: 'auto' }} />
+        <View style={styles.sizeGroup} accessibilityRole="adjustable" accessibilityLabel={t('Text size')}>
+          <Tap accessibilityRole="button" accessibilityLabel={t('Smaller text')} onPress={() => setSize((s) => Math.max(0, s - 1))} style={styles.sizeBtn}>
             <Text style={[styles.sizeA, { fontSize: 16 }]}>A</Text>
           </Tap>
           <View style={styles.sizeDivider} />
-          <Tap accessibilityRole="button" accessibilityLabel="Larger text" onPress={() => setSize((s) => Math.min(SIZES.length - 1, s + 1))} style={styles.sizeBtn}>
+          <Tap accessibilityRole="button" accessibilityLabel={t('Larger text')} onPress={() => setSize((s) => Math.min(SIZES.length - 1, s + 1))} style={styles.sizeBtn}>
             <Text style={[styles.sizeA, { fontSize: 22 }]}>A</Text>
           </Tap>
         </View>
         <IconButton
           icon="bookmark"
-          label={bookmarked ? 'Remove bookmark' : 'Bookmark this devotional'}
+          label={bookmarked ? t('Remove bookmark') : t('Bookmark this devotional')}
           variant="plain"
           filled={bookmarked}
           selected={bookmarked}
           onPress={toggleBookmark}
         />
-        <IconButton icon="share" label="Share this devotional" variant="plain" onPress={shareCard} />
+        <IconButton icon="share" label={t('Share this devotional')} variant="plain" onPress={shareCard} />
       </View>
 
       <View style={styles.progressTrack} pointerEvents="none">
@@ -100,7 +110,7 @@ export default function Reader() {
 
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40, gap: 22 }} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 10 }}>
-          <Text style={styles.kicker}>Daily devotional · {formatDate(d.date)}</Text>
+          <Text style={styles.kicker}>{t('Daily devotional · {date}', { date: formatDate(d.date) })}</Text>
           <Text style={styles.title} accessibilityRole="header">{d.title}</Text>
           {d.subtitle ? <Text style={styles.subtitle}>{d.subtitle}</Text> : null}
         </View>
@@ -109,7 +119,7 @@ export default function Reader() {
           <View style={styles.verse}>
             <Eagle height={36} />
             <Text style={styles.verseText}>“{d.scripture.text}”</Text>
-            <Text style={styles.verseRef}>{d.scripture.ref} · KJV</Text>
+            <Text style={styles.verseRef}>{d.scripture.ref} · {bible}</Text>
           </View>
         ) : null}
 
@@ -125,6 +135,11 @@ export default function Reader() {
           ))}
         </View>
 
+        <View style={styles.statsRow}>
+          <LikeButton kind="devotional" id={d.id} label={t('Like this devotional')} />
+          <StatLine likes={0} views={stat?.views ?? 0} viewWord="reads" />
+        </View>
+
         {d.audioUrl ? (
         <Tap
           accessibilityRole="button"
@@ -137,8 +152,8 @@ export default function Reader() {
             <Icon name="play" size={18} color={c.cream} />
           </View>
           <View style={{ gap: 2 }}>
-            <Text style={styles.listenTitle}>Listen to this devotional</Text>
-            <Text style={styles.listenMeta}>Read aloud by the ministry</Text>
+            <Text style={styles.listenTitle}>{t('Listen to this devotional')}</Text>
+            <Text style={styles.listenMeta}>{t('Read aloud by the ministry')}</Text>
           </View>
         </Tap>
         ) : null}
@@ -152,29 +167,29 @@ export default function Reader() {
             </Animated.View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.doneTitle}>{streakLine}</Text>
-              <Text style={styles.doneMeta}>Well done. Come back tomorrow for the next word.</Text>
+              <Text style={styles.doneMeta}>{t('Well done. Come back tomorrow for the next word.')}</Text>
             </View>
-            <Tap haptic="tick" accessibilityRole="button" accessibilityLabel="Undo mark as read" onPress={() => lib.unmarkRead(d.id)} style={styles.undo}>
-              <Text style={styles.undoText}>Undo</Text>
+            <Tap haptic="tick" accessibilityRole="button" accessibilityLabel={t('Undo mark as read')} onPress={() => lib.unmarkRead(d.id)} style={styles.undo}>
+              <Text style={styles.undoText}>{t('Undo')}</Text>
             </Tap>
           </Animated.View>
         ) : (
-          <Button label="Mark as read" icon="check" onPress={markRead} style={{ minHeight: 56 }} />
+          <Button label={t('Mark as read')} icon="check" onPress={markRead} style={{ minHeight: 56 }} />
         )}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[
-            { label: 'Previous', item: older },
-            { label: 'Next', item: newer },
+            { label: t('Previous'), item: older },
+            { label: t('Next'), item: newer },
           ].map(({ label, item }) =>
             item ? (
               <Tap
                 key={label}
                 accessibilityRole="button"
-                accessibilityLabel={`${label} devotional: ${item.title}`}
+                accessibilityLabel={t('{label} devotional: {title}', { label: t(label), title: item.title })}
                 onPress={() => router.replace({ pathname: '/devotional/[id]', params: { id: item.id } })}
                 style={styles.navCard}>
-                <Text style={styles.navLabel}>{label} · {formatDate(item.date).replace(/, \d{4}$/, '')}</Text>
+                <Text style={styles.navLabel}>{t(label)} · {formatDate(item.date).replace(/, \d{4}$/, '')}</Text>
                 <Text style={styles.navTitle}>{item.title}</Text>
               </Tap>
             ) : (
@@ -190,6 +205,7 @@ export default function Reader() {
 const createStyles = (c: Palette) =>
   StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   progressTrack: { height: 2, backgroundColor: c.sand },
   progressFill: { height: 2, backgroundColor: c.accent },
   sizeGroup: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill },

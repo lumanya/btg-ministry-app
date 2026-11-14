@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { t } from '@/i18n';
 import { AuthScreen, Field, FormMessage, TextLink } from '@/components/form';
 import { Button } from '@/components/ui';
 import { checkCode } from '@/lib/auth-messages';
@@ -35,16 +36,16 @@ export default function Verify() {
   const resend = async () => {
     setNote(null);
     const res = await auth.resendSignUpCode(email);
-    if (res.ok) setNote(`We sent a new code to ${email}.`);
+    if (res.ok) setNote(t('We sent a new code to {email}.', { email }));
     else setError(res.error);
   };
 
   return (
-    <AuthScreen title="Check your email." subtitle={`We sent a code to ${email || 'your email'}. Enter it below to confirm your account.`}>
+    <AuthScreen title={t('Check your email.')} subtitle={t('We sent a code to {email}. Enter it below to confirm your account.', { email: email || t('your email') })}>
       {note ? <FormMessage tone="info">{note}</FormMessage> : null}
       <View style={{ gap: 18 }}>
         <Field
-          label="Code from the email"
+          label={t('Code from the email')}
           value={code}
           onChangeText={setCode}
           error={error}
@@ -55,9 +56,9 @@ export default function Verify() {
           returnKeyType="go"
           onSubmitEditing={submit}
         />
-        <TextLink label="Send a new code" onPress={resend} />
+        <TextLink label={t('Send a new code')} onPress={resend} />
       </View>
-      <Button label={busy ? 'Confirming…' : 'Confirm my account'} onPress={busy ? undefined : submit} />
+      <Button label={busy ? t('Confirming…') : t('Confirm my account')} onPress={busy ? undefined : submit} />
     </AuthScreen>
   );
 }

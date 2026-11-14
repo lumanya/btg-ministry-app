@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { dateNames, t } from '@/i18n';
 import { Arch } from '@/components/art';
 import { FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
@@ -32,14 +33,14 @@ export default function EventScreen() {
   if (!event) {
     return (
       <View style={{ flex: 1, backgroundColor: c.ivory, paddingTop: insets.top + 60, paddingHorizontal: ScreenPadding, gap: 16 }}>
-        <Title size={28}>This event isn’t available.</Title>
-        <Button label="See all events" variant="outline" onPress={() => router.replace('/events')} />
+        <Title size={28}>{t('This event isn’t available.')}</Title>
+        <Button label={t('See all events')} variant="outline" onPress={() => router.replace('/events')} />
       </View>
     );
   }
 
-  const when = eventWhen(event);
-  const tile = dateTile(event.startsAt);
+  const when = eventWhen(event, dateNames());
+  const tile = dateTile(event.startsAt, dateNames());
   const reminded = notify.isReminded(event.id);
   // The provider lists events that haven't finished yet.
   const ended = !content.upcoming.some((e) => e.id === event.id);
@@ -49,13 +50,13 @@ export default function EventScreen() {
     setMessage(null);
     if (reminded) {
       await notify.cancelReminder(event.id);
-      setMessage({ tone: 'info', text: 'Reminder removed.' });
+      setMessage({ tone: 'info', text: t('Reminder removed.') });
       return;
     }
     const res = await notify.remind(event);
     if (res.ok) {
       success();
-      setMessage({ tone: 'info', text: 'We’ll remind you the day before and an hour before.' });
+      setMessage({ tone: 'info', text: t('We’ll remind you the day before and an hour before.') });
     } else setMessage({ tone: 'error', text: res.error });
   };
 
@@ -73,7 +74,7 @@ export default function EventScreen() {
   const facts: { icon: IconName; label: string; detail?: string }[] = [
     { icon: 'calendar', label: when.day, detail: when.time },
     ...(place ? [{ icon: 'pin' as IconName, label: event.locationName ?? place, detail: event.locationName && event.address ? event.address : undefined }] : []),
-    ...(event.livestreamed ? [{ icon: 'live' as IconName, label: 'Streamed live', detail: 'Watch in the app’s Live tab' }] : []),
+    ...(event.livestreamed ? [{ icon: 'live' as IconName, label: t('Streamed live'), detail: t('Watch in the app’s Live tab') }] : []),
   ];
 
   return (
@@ -88,8 +89,8 @@ export default function EventScreen() {
             </View>
           )}
           <View style={[styles.heroBar, { top: insets.top + 4 }]}>
-            <IconButton icon="back" label="Back" onPress={back} />
-            <IconButton icon="share" label="Share this event" onPress={shareCard} />
+            <IconButton icon="back" label={t('Back')} onPress={back} />
+            <IconButton icon="share" label={t('Share this event')} onPress={shareCard} />
           </View>
         </View>
 
@@ -99,7 +100,7 @@ export default function EventScreen() {
             <Text style={styles.tileDay}>{tile.day}</Text>
           </View>
           <View style={{ gap: 6 }}>
-            <Eyebrow>{ended ? 'This event has ended' : 'Event'}</Eyebrow>
+            <Eyebrow>{ended ? t('This event has ended') : t('Event')}</Eyebrow>
             <Title size={34}>{event.title}</Title>
           </View>
 
@@ -120,17 +121,17 @@ export default function EventScreen() {
           {!ended ? (
             <View style={{ gap: 10 }}>
               {event.registrationUrl ? (
-                <Button label="Register" icon="arrow" onPress={() => WebBrowser.openBrowserAsync(event.registrationUrl!)} />
+                <Button label={t('Register')} icon="arrow" onPress={() => WebBrowser.openBrowserAsync(event.registrationUrl!)} />
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Button
-                  label={reminded ? 'Reminder set' : 'Remind me'}
+                  label={reminded ? t('Reminder set') : t('Remind me')}
                   icon={reminded ? 'check' : 'bell'}
                   variant={event.registrationUrl ? 'outline' : 'primary'}
                   onPress={toggleReminder}
                   style={{ flex: 1 }}
                 />
-                {place ? <Button label="Directions" icon="pin" variant="outline" onPress={directions} style={{ flex: 1 }} /> : null}
+                {place ? <Button label={t('Directions')} icon="pin" variant="outline" onPress={directions} style={{ flex: 1 }} /> : null}
               </View>
               {message ? <FormMessage tone={message.tone}>{message.text}</FormMessage> : null}
             </View>
@@ -149,8 +150,8 @@ export default function EventScreen() {
           <Tap accessibilityRole="button" onPress={shareCard} style={styles.invite}>
             <Icon name="image" color={c.accent} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={styles.factLabel}>Invite someone</Text>
-              <Text style={styles.factDetail}>Share a card on WhatsApp or your status</Text>
+              <Text style={styles.factLabel}>{t('Invite someone')}</Text>
+              <Text style={styles.factDetail}>{t('Share a card on WhatsApp or your status')}</Text>
             </View>
             <Icon name="chevron" size={18} color={c.accent} />
           </Tap>

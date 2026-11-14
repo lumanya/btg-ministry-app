@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { AuthScreen, Field, FormMessage } from '@/components/form';
 import { Button } from '@/components/ui';
 import { Fonts } from '@/constants/theme';
@@ -37,13 +38,13 @@ export default function SignUp() {
   };
 
   return (
-    <AuthScreen title="Create your account." subtitle="Join BTG Ministry to keep your streak, saved sermons and prayer requests with you on every phone.">
-      {!auth.configured ? <FormMessage tone="info">Accounts aren’t switched on in this version yet. You can still use everything as a guest.</FormMessage> : null}
+    <AuthScreen title={t('Create your account.')} subtitle={t('Join BTG Ministry to keep your streak, saved sermons and prayer requests with you on every phone.')}>
+      {!auth.configured ? <FormMessage tone="info">{t('Accounts aren’t switched on in this version yet. You can still use everything as a guest.')}</FormMessage> : null}
       {errors.form ? <FormMessage>{errors.form}</FormMessage> : null}
       <View style={{ gap: 18 }}>
-        <Field label="Your name" value={name} onChangeText={setName} error={errors.name} autoComplete="name" textContentType="name" autoCapitalize="words" returnKeyType="next" />
+        <Field label={t('Your name')} value={name} onChangeText={setName} error={errors.name} autoComplete="name" textContentType="name" autoCapitalize="words" returnKeyType="next" />
         <Field
-          label="Email"
+          label={t('Email')}
           value={email}
           onChangeText={setEmail}
           error={errors.email}
@@ -55,11 +56,11 @@ export default function SignUp() {
           returnKeyType="next"
         />
         <Field
-          label="Password"
+          label={t('Password')}
           value={password}
           onChangeText={setPassword}
           error={errors.password}
-          hint={`At least ${MIN_PASSWORD} characters.`}
+          hint={t('At least {n} characters.', { n: MIN_PASSWORD })}
           secure
           autoComplete="new-password"
           textContentType="newPassword"
@@ -68,11 +69,11 @@ export default function SignUp() {
         />
       </View>
       <View style={{ gap: 6 }}>
-        <Button label={busy ? 'Creating your account…' : 'Create account'} onPress={busy ? undefined : submit} />
-        <Button label="I already have an account" variant="outline" onPress={() => router.replace('/sign-in')} style={{ borderColor: 'transparent' }} />
+        <Button label={busy ? t('Creating your account…') : t('Create account')} onPress={busy ? undefined : submit} />
+        <Button label={t('I already have an account')} variant="outline" onPress={() => router.replace('/sign-in')} style={{ borderColor: 'transparent' }} />
       </View>
       <Text style={{ fontFamily: Fonts.sans, fontSize: 13, lineHeight: 19, color: c.textMuted }}>
-        We’ll email you a code to confirm your address. Your details are used only for your BTG Ministry account.
+        {t('We’ll email you a code to confirm your address. Your details are used only for your BTG Ministry account.')}
       </Text>
     </AuthScreen>
   );

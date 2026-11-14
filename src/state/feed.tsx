@@ -5,6 +5,7 @@ import { sampleVideos } from '@/content/sample';
 import { arrangePlaylists } from '@/lib/content';
 import { type Feed, type FeedPlaylist, type FeedVideo, findVideo as findInFeed, type PlaylistPage } from '@/lib/video';
 import { useContent } from '@/state/content';
+import { useDataSaver } from '@/state/data-saver';
 
 /**
  * The YouTube feed: what is live, what is coming up, and past sermons.
@@ -16,6 +17,11 @@ import { useContent } from '@/state/content';
 const FEED_URL = process.env.EXPO_PUBLIC_YOUTUBE_FEED_URL;
 const REFRESH_MS = 5 * 60 * 1000;
 const LIVE_REFRESH_MS = 60 * 1000;
+// With data saver on: check less often.
+const SAVER_REFRESH_MS = 15 * 60 * 1000;
+const SAVER_LIVE_REFRESH_MS = 3 * 60 * 1000;
+/** Skip a refresh when the last one was this recent (coming back to the app, data saver on). */
+const SAVER_MIN_GAP_MS = 5 * 60 * 1000;
 
 export type FeedStatus = 'sample' | 'loading' | 'ready' | 'error';
 
@@ -49,6 +55,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<FeedStatus>(FEED_URL ? 'loading' : 'sample');
   const [refreshing, setRefreshing] = useState(false);
   const inFlight = useRef(false);
+  const lastLoad = useRef(0);
   const content = useContent();
   // Videos seen in playlist pages, so their sermon pages open without the main feed.
   const [seen, setSeen] = useState<Record<string, FeedVideo>>({});
@@ -64,6 +71,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       if (!Array.isArray(next.videos)) throw new Error('Feed has an unexpected shape');
       setFeed(next);
       setStatus('ready');
+      lastLoad.current = Date.now();
     } catch (err) {
       console.warn('Could not load the YouTube feed', err);
       // Keep whatever was shown last; only flag an error if nothing real loaded.
@@ -79,21 +87,30 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     setRefreshing(false);
   }, [load]);
 
-  // Load on start, then poll: every minute while live, every 5 minutes otherwise.
+  // Load on start, then poll: every minute while live, every 5 minutes otherwise
+  // (every 3 and 15 minutes with data saver on).
   const isLive = !!feed.live;
+  const saving = useDataSaver().active;
+  const savingRef = useRef(saving);
   useEffect(() => {
-    const first = setTimeout(load, 0);
-    const timer = setInterval(load, isLive ? LIVE_REFRESH_MS : REFRESH_MS);
+    savingRef.current = saving;
+  }, [saving]);
+  useEffect(() => {
+    const first = setTimeout(() => {
+      if (Date.now() - lastLoad.current > 30 * 1000) load();
+    }, 0);
+    const every = saving ? (isLive ? SAVER_LIVE_REFRESH_MS : SAVER_REFRESH_MS) : isLive ? LIVE_REFRESH_MS : REFRESH_MS;
+    const timer = setInterval(load, every);
     return () => {
       clearTimeout(first);
       clearInterval(timer);
     };
-  }, [load, isLive]);
+  }, [load, isLive, saving]);
 
   // Refresh when the app comes back to the foreground.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') load();
+      if (state === 'active' && !(savingRef.current && Date.now() - lastLoad.current < SAVER_MIN_GAP_MS)) load();
     });
     return () => sub.remove();
   }, [load]);

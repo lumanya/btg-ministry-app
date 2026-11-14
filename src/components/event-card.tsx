@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { dateNames } from '@/i18n';
 import { Icon } from '@/components/icon';
 import { Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
@@ -11,8 +12,8 @@ import { useColors, useStyles } from '@/state/theme';
 export function EventCard({ event, onPress, compact = false }: { event: MinistryEvent; onPress: () => void; compact?: boolean }) {
   const c = useColors();
   const styles = useStyles(createStyles);
-  const when = eventWhen(event);
-  const tile = dateTile(event.startsAt);
+  const when = eventWhen(event, dateNames());
+  const tile = dateTile(event.startsAt, dateNames());
   return (
     <Tap
       accessibilityRole="button"

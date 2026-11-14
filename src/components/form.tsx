@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Body, IconButton, Tap, Title } from '@/components/ui';
@@ -29,7 +30,7 @@ export function Field({
         <TextInput
           {...input}
           accessibilityLabel={label}
-          accessibilityHint={error ?? hint}
+          accessibilityHint={error ? t(error) : hint}
           secureTextEntry={secure && hidden}
           placeholderTextColor={c.textSubtle}
           onFocus={(e) => {
@@ -45,7 +46,7 @@ export function Field({
         {secure ? (
           <IconButton
             icon={hidden ? 'eye' : 'eyeOff'}
-            label={hidden ? 'Show password' : 'Hide password'}
+            label={hidden ? t('Show password') : t('Hide password')}
             variant="plain"
             iconSize={20}
             onPress={() => setHidden((h) => !h)}
@@ -54,7 +55,7 @@ export function Field({
       </View>
       {error ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
-          {error}
+          {t(error)}
         </Text>
       ) : hint ? (
         <Text style={styles.hint}>{hint}</Text>
@@ -72,7 +73,7 @@ export function FormMessage({ tone = 'error', children }: { tone?: 'error' | 'in
       accessibilityLiveRegion="polite"
       accessibilityRole={tone === 'error' ? 'alert' : undefined}
       style={[styles.message, tone === 'error' ? { borderColor: c.danger } : { borderColor: c.lineStrong, backgroundColor: c.parchment }]}>
-      <Text style={[styles.messageText, tone === 'error' && { color: c.text }]}>{children}</Text>
+      <Text style={[styles.messageText, tone === 'error' && { color: c.text }]}>{typeof children === 'string' ? t(children) : children}</Text>
     </View>
   );
 }
@@ -86,7 +87,7 @@ export function AuthScreen({ title, subtitle, children }: { title: string; subti
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -103,7 +104,7 @@ export function AuthScreen({ title, subtitle, children }: { title: string; subti
   );
 }
 
-/** A small text link such as "Forgot your password?". */
+/** A small text link such as t("Forgot your password?"). */
 export function TextLink({ label, onPress }: { label: string; onPress: () => void }) {
   const styles = useStyles(createStyles);
   return (

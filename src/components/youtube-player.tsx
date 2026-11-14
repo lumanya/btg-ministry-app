@@ -5,6 +5,7 @@ import { WebView } from 'react-native-webview';
 
 
 import { embedUrl } from './youtube-embed';
+import { t } from '@/i18n';
 import { useColors } from '@/state/theme';
 
 /**
@@ -39,7 +40,7 @@ export function YouTubePlayer({ youtubeId, style }: { youtubeId: string; style?:
           WebBrowser.openBrowserAsync(req.url);
           return false;
         }}
-        accessibilityLabel="YouTube video player"
+        accessibilityLabel={t('YouTube video player')}
       />
     </View>
   );

@@ -66,7 +66,7 @@ async function loadFeed(key: string, channelId: string) {
 
   const videos = await youtube<{ items?: YouTubeVideoItem[] }>(
     'videos',
-    { part: 'snippet,contentDetails,liveStreamingDetails', id: ids.join(','), maxResults: '50' },
+    { part: 'snippet,contentDetails,liveStreamingDetails,statistics', id: ids.join(','), maxResults: '50' },
     key,
   );
   const feed = buildFeed(channelId, videos.items ?? []);
@@ -98,7 +98,7 @@ async function loadPlaylistPage(key: string, playlistId: string, pageToken: stri
   if (ids.length === 0) return { playlist, videos: [], nextPageToken: null };
   const videos = await youtube<{ items?: YouTubeVideoItem[] }>(
     'videos',
-    { part: 'snippet,contentDetails,liveStreamingDetails', id: ids.join(','), maxResults: '50' },
+    { part: 'snippet,contentDetails,liveStreamingDetails,statistics', id: ids.join(','), maxResults: '50' },
     key,
   );
   return { playlist, videos: buildPlaylistVideos(ids, videos.items ?? []), nextPageToken: page.nextPageToken ?? null };

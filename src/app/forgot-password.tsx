@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { t } from '@/i18n';
 import { AuthScreen, Field, FormMessage, TextLink } from '@/components/form';
 import { Button } from '@/components/ui';
 import { checkCode, checkEmail, checkPassword, MIN_PASSWORD } from '@/lib/auth-messages';
@@ -47,10 +48,10 @@ export default function ForgotPassword() {
 
   if (step === 'email') {
     return (
-      <AuthScreen title="Reset your password." subtitle="Enter your account email and we’ll send you a code.">
+      <AuthScreen title={t('Reset your password.')} subtitle={t('Enter your account email and we’ll send you a code.')}>
         {errors.form ? <FormMessage>{errors.form}</FormMessage> : null}
         <Field
-          label="Email"
+          label={t('Email')}
           value={email}
           onChangeText={setEmail}
           error={errors.email}
@@ -62,17 +63,17 @@ export default function ForgotPassword() {
           returnKeyType="go"
           onSubmitEditing={sendCode}
         />
-        <Button label={busy ? 'Sending…' : 'Send me a code'} onPress={busy ? undefined : sendCode} />
+        <Button label={busy ? t('Sending…') : t('Send me a code')} onPress={busy ? undefined : sendCode} />
       </AuthScreen>
     );
   }
 
   return (
-    <AuthScreen title="Choose a new password." subtitle={`If ${email} has an account, we’ve sent it a code. Enter it with your new password.`}>
+    <AuthScreen title={t('Choose a new password.')} subtitle={t('If {email} has an account, we’ve sent it a code. Enter it with your new password.', { email })}>
       {errors.form ? <FormMessage>{errors.form}</FormMessage> : null}
       <View style={{ gap: 18 }}>
         <Field
-          label="Code from the email"
+          label={t('Code from the email')}
           value={code}
           onChangeText={setCode}
           error={errors.code}
@@ -83,20 +84,20 @@ export default function ForgotPassword() {
           returnKeyType="next"
         />
         <Field
-          label="New password"
+          label={t('New password')}
           value={password}
           onChangeText={setPassword}
           error={errors.password}
-          hint={`At least ${MIN_PASSWORD} characters.`}
+          hint={t('At least {n} characters.', { n: MIN_PASSWORD })}
           secure
           autoComplete="new-password"
           textContentType="newPassword"
           returnKeyType="go"
           onSubmitEditing={reset}
         />
-        <TextLink label="Send a new code" onPress={sendCode} />
+        <TextLink label={t('Send a new code')} onPress={sendCode} />
       </View>
-      <Button label={busy ? 'Saving…' : 'Save new password'} onPress={busy ? undefined : reset} />
+      <Button label={busy ? t('Saving…') : t('Save new password')} onPress={busy ? undefined : reset} />
     </AuthScreen>
   );
 }

@@ -1,16 +1,15 @@
 import type { ArtTone } from '@/content/sample';
+import { compact, dayName, monthName, t } from '@/i18n';
 
 import type { Feed, FeedPlaylist, FeedVideo, PlaylistPage } from '../../supabase/functions/youtube-feed/feed';
 
 export type { Feed, FeedPlaylist, FeedVideo, PlaylistPage };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** "12 May 2024" in the phone's time zone. */
 export function formatDay(iso: string) {
   const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()} ${monthName(d.getMonth(), true)} ${d.getFullYear()}`;
 }
 
 /** "Sun 16 Nov, 10:00" in the phone's time zone. */
@@ -18,21 +17,31 @@ export function formatStart(iso: string) {
   const d = new Date(iso);
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}, ${hh}:${mm}`;
+  return `${dayName(d.getDay(), true)} ${d.getDate()} ${monthName(d.getMonth(), true)}, ${hh}:${mm}`;
 }
 
 /** Short line under a video title. */
 export function videoMeta(v: FeedVideo) {
   switch (v.kind) {
     case 'live':
-      return 'Streaming now';
+      return t('Streaming now');
     case 'upcoming':
-      return v.scheduledStart ? `Starts ${formatStart(v.scheduledStart)}` : 'Coming up';
+      return v.scheduledStart ? t('Starts {when}', { when: formatStart(v.scheduledStart) }) : t('Coming up');
     case 'stream':
-      return `Livestream · ${formatDay(v.date)}`;
+      return t('Livestream · {date}', { date: formatDay(v.date) }) + viewsSuffix(v);
     default:
-      return `Video · ${formatDay(v.date)}`;
+      return t('Video · {date}', { date: formatDay(v.date) }) + viewsSuffix(v);
   }
+}
+
+/** " · 1.2K views" from YouTube's count, or nothing when there isn't one. */
+function viewsSuffix(v: FeedVideo) {
+  return v.views ? ` · ${viewCount(v.views)}` : '';
+}
+
+/** "1 view", "1.2K views". */
+export function viewCount(n: number) {
+  return n === 1 ? t('1 view') : t('{n} views', { n: compact(n) });
 }
 
 /** Alternating artwork tones for videos without a thumbnail. */

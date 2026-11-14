@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Icon } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
@@ -38,17 +39,17 @@ export default function Give() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 32, gap: 24 }}>
         <View style={{ gap: 10 }}>
-          <Eyebrow>{'Partnership & giving'}</Eyebrow>
-          <Title size={40}>Help build the temple of God.</Title>
-          <Body>Give by mobile money or bank transfer. Copy a number, then complete the payment in your M-Pesa or banking app.</Body>
+          <Eyebrow>{t('Partnership & giving')}</Eyebrow>
+          <Title size={40}>{t('Help build the temple of God.')}</Title>
+          <Body>{t('Give by mobile money or bank transfer. Copy a number, then complete the payment in your M-Pesa or banking app.')}</Body>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Offering</Text>
+          <Text style={styles.cardTitle}>{t('Offering')}</Text>
           {rows.map((r) => (
             <View key={r.key} style={styles.row}>
               <Text style={styles.label}>{r.label}</Text>
@@ -57,9 +58,9 @@ export default function Give() {
               </Text>
               <View style={styles.rowFooter}>
                 <Text style={styles.name}>{r.name}</Text>
-                <Tap accessibilityRole="button" accessibilityLabel={`Copy ${r.label}`} onPress={() => copy(r.key, r.number)} style={styles.copy}>
+                <Tap accessibilityRole="button" accessibilityLabel={t('Copy {label}', { label: r.label })} onPress={() => copy(r.key, r.number)} style={styles.copy}>
                   <Icon name={copied === r.key ? 'check' : 'copy'} size={16} color={c.accent} />
-                  <Text style={styles.copyText} accessibilityLiveRegion="polite">{copied === r.key ? 'Copied' : 'Copy'}</Text>
+                  <Text style={styles.copyText} accessibilityLiveRegion="polite">{copied === r.key ? t('Copied') : t('Copy')}</Text>
                 </Tap>
               </View>
             </View>
@@ -67,7 +68,7 @@ export default function Give() {
         </View>
 
         <View style={styles.help}>
-          <Eyebrow style={{ fontSize: 12 }}>Questions about giving?</Eyebrow>
+          <Eyebrow style={{ fontSize: 12 }}>{t('Questions about giving?')}</Eyebrow>
           <Text style={styles.helpText}>+255 768 100 264 · info@btgministry.org</Text>
         </View>
       </ScrollView>

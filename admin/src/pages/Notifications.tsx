@@ -42,6 +42,8 @@ export default function Notifications() {
   const [events, setEvents] = useState<EventOption[]>([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [titleSw, setTitleSw] = useState('');
+  const [bodySw, setBodySw] = useState('');
   const [opens, setOpens] = useState('/home');
   const [when, setWhen] = useState<'now' | 'later'>('now');
   const [at, setAt] = useState(() => isoToEatInput(new Date(Date.now() + 3600 * 1000).toISOString()));
@@ -89,6 +91,9 @@ export default function Notifications() {
       .insert({
         title: title.trim(),
         body: body.trim(),
+        // Phones set to Kiswahili get this version when both parts are filled in.
+        title_sw: titleSw.trim() && bodySw.trim() ? titleSw.trim() : null,
+        body_sw: titleSw.trim() && bodySw.trim() ? bodySw.trim() : null,
         topic: 'announcements',
         url: opens,
         send_at: when === 'now' ? new Date().toISOString() : eatInputToIso(at),
@@ -98,6 +103,8 @@ export default function Notifications() {
     toast(when === 'now' ? 'Sending. Phones receive it within 5 minutes.' : `Scheduled for ${formatEat(eatInputToIso(at))}.`);
     setTitle('');
     setBody('');
+    setTitleSw('');
+    setBodySw('');
     load();
   };
 
@@ -148,6 +155,20 @@ export default function Notifications() {
                 <textarea {...p} className="textarea" style={{ minHeight: 90 }} value={body} maxLength={180} onChange={(e) => setBody(e.target.value)} />
               )}
             </Field>
+            <details open={!!(titleSw || bodySw)}>
+              <summary className="small" style={{ cursor: 'pointer', fontWeight: 600 }}>
+                Kiswahili version (optional)
+              </summary>
+              <div className="stack" style={{ gap: 14, marginTop: 12 }}>
+                <span className="small muted">Phones using the app in Kiswahili get this instead. Fill in both, or leave both empty.</span>
+                <Field label="Title in Kiswahili" hint={`${titleSw.length}/60`}>
+                  {(p) => <input {...p} lang="sw" className="input" value={titleSw} maxLength={60} placeholder="Usajili wa kongamano umefunguliwa" onChange={(e) => setTitleSw(e.target.value)} />}
+                </Field>
+                <Field label="Message in Kiswahili" hint={`${bodySw.length}/180`}>
+                  {(p) => <textarea {...p} lang="sw" className="textarea" style={{ minHeight: 80 }} value={bodySw} maxLength={180} onChange={(e) => setBodySw(e.target.value)} />}
+                </Field>
+              </div>
+            </details>
             <Field label="When tapped, open">
               {(p) => (
                 <select {...p} className="select" value={opens} onChange={(e) => setOpens(e.target.value)}>

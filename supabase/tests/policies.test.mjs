@@ -229,11 +229,12 @@ describe('notifications', () => {
   const TOKEN = 'ExponentPushToken[abc123]';
 
   test('anyone can register their phone, but nobody can read the device list', async () => {
-    await rows(null, `select public.register_push_device($1, 'android', array['live','devotional'])`, [TOKEN]);
+    await rows(null, `select public.register_push_device($1, 'android', array['live','devotional'], 'sw')`, [TOKEN]);
     await fails(null, `select * from public.push_devices`, [], /permission denied/);
     await fails(MEMBER, `select * from public.push_devices`, [], /permission denied/);
-    const [d] = await db.query(`select user_id, topics from public.push_devices where token = $1`, [TOKEN]).then((r) => r.rows);
+    const [d] = await db.query(`select user_id, topics, locale from public.push_devices where token = $1`, [TOKEN]).then((r) => r.rows);
     assert.equal(d.user_id, null);
+    assert.equal(d.locale, 'sw');
     assert.deepEqual(d.topics, ['live', 'devotional']);
   });
 
@@ -290,5 +291,72 @@ describe('playlists and events', () => {
     assert.equal((await rows(EDITOR, `select title from public.events`)).length, 2);
     await fails(MEMBER, `insert into public.events (title, starts_at) values ('X', now())`, [], /row-level security/);
     await fails(EDITOR, `insert into public.events (title, starts_at, ends_at) values ('X', now(), now() - interval '1 hour')`, [], /check constraint/);
+  });
+});
+
+describe('likes and views', () => {
+  const PHONE = 'phone-1234-abcd';
+  const OTHER_PHONE = 'phone-9999-zzzz';
+
+  test('guests like with their phone id; liking again unlikes', async () => {
+    const [{ toggle_like: a }] = await rows(null, `select public.toggle_like('video', 'abc', $1)`, [PHONE]);
+    assert.deepEqual(a, { liked: true, likes: 1 });
+    const [{ toggle_like: b }] = await rows(null, `select public.toggle_like('video', 'abc', $1)`, [OTHER_PHONE]);
+    assert.equal(b.likes, 2);
+    const [{ toggle_like: c }] = await rows(null, `select public.toggle_like('video', 'abc', $1)`, [PHONE]);
+    assert.deepEqual(c, { liked: false, likes: 1 });
+  });
+
+  test('members like with their account; a guest needs a phone id', async () => {
+    const [{ toggle_like: m }] = await rows(MEMBER, `select public.toggle_like('devotional', 'on-repentance')`);
+    assert.equal(m.liked, true);
+    await fails(null, `select public.toggle_like('video', 'abc')`, [], /Missing phone id/);
+    await fails(null, `select public.toggle_like('video', 'abc', 'x')`, [], /Missing phone id/);
+    await fails(null, `select public.toggle_like('sermon', 'abc', $1)`, [PHONE], /check constraint/);
+  });
+
+  test('a view counts once per person per day', async () => {
+    await rows(null, `select public.record_view('devotional', 'on-repentance', $1)`, [PHONE]);
+    await rows(null, `select public.record_view('devotional', 'on-repentance', $1)`, [PHONE]);
+    await rows(MEMBER, `select public.record_view('devotional', 'on-repentance')`);
+    const stats = await rows(MEMBER, `select * from public.item_stats('devotional', array['on-repentance', 'death'])`);
+    assert.deepEqual(
+      stats.map((s) => [s.item_id, Number(s.likes), Number(s.views), s.liked]),
+      [['on-repentance', 1, 2, true], ['death', 0, 0, false]],
+    );
+  });
+
+  test('nobody reads the raw likes or views', async () => {
+    await fails(null, `select * from public.likes`, [], /permission denied/);
+    await fails(MEMBER, `select * from public.views`, [], /permission denied/);
+    await fails(MEMBER, `select * from public.top_items('devotional')`, [], /Only staff/);
+    const top = await rows(EDITOR, `select * from public.top_items('devotional')`);
+    assert.equal(top[0].item_id, 'on-repentance');
+  });
+});
+
+describe('deleting an account', () => {
+  test('removes the member’s prayer requests, likes and views', async () => {
+    const GONE = '00000000-0000-0000-0000-0000000000dd';
+    await db.query(`insert into auth.users (id, email) values ($1, 'gone@example.com')`, [GONE]);
+    await rows(GONE, `insert into public.prayer_requests (message) values ('Please pray for my exams')`);
+    await rows(GONE, `select public.toggle_like('video', 'gone-video')`);
+    await rows(GONE, `select public.record_view('video', 'gone-video')`);
+    await db.query(`delete from auth.users where id = $1`, [GONE]);
+    const left = await db.query(
+      `select (select count(*) from public.prayer_requests where message = 'Please pray for my exams') as prayers,
+              (select count(*) from public.likes where liker = $1) as likes,
+              (select count(*) from public.views where viewer = $1) as views`,
+      ['u:' + GONE],
+    );
+    assert.deepEqual(left.rows[0], { prayers: 0, likes: 0, views: 0 });
+  });
+});
+
+describe('kiswahili content', () => {
+  test('devotionals keep a Swahili version alongside English', async () => {
+    await rows(EDITOR, `update public.devotionals set title_sw = 'Kuhusu Toba', body_sw = 'Toba ni kubadilika kwa nia.' where slug = 'on-repentance'`);
+    const [d] = await rows(null, `select title, title_sw from public.devotionals where slug = 'on-repentance'`);
+    assert.deepEqual(d, { title: 'On Repentance', title_sw: 'Kuhusu Toba' });
   });
 });

@@ -6,6 +6,7 @@ import { type Href, useRouter } from 'expo-router';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
+import { getLang, t } from '@/i18n';
 import type { MinistryEvent } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/state/auth';
@@ -28,7 +29,7 @@ export const TOPICS: { id: Topic; label: string; hint: string }[] = [
   { id: 'announcements', label: 'Announcements', hint: 'News from the ministry' },
 ];
 
-const ALL: Topic[] = TOPICS.map((t) => t.id);
+const ALL: Topic[] = TOPICS.map((x) => x.id);
 const STORAGE_KEY = 'btg.push.v1';
 
 type Stored = {
@@ -78,11 +79,11 @@ function projectId(): string | undefined {
 
 /** Why push can't work here, or null when it can. */
 function pushUnsupported(): string | null {
-  if (Platform.OS === 'web') return 'Notifications are available in the BTG Ministry phone app.';
-  if (!Device.isDevice) return 'Notifications need a real phone, not a simulator.';
+  if (Platform.OS === 'web') return t('Notifications are available in the BTG Ministry phone app.');
+  if (!Device.isDevice) return t('Notifications need a real phone, not a simulator.');
   if (Constants.executionEnvironment === 'storeClient' && Platform.OS === 'android')
-    return 'Notifications work in the installed BTG Ministry app, not in Expo Go.';
-  if (!projectId()) return 'Notifications switch on once the app is built for the app stores.';
+    return t('Notifications work in the installed BTG Ministry app, not in Expo Go.');
+  if (!projectId()) return t('Notifications switch on once the app is built for the app stores.');
   return null;
 }
 
@@ -104,7 +105,7 @@ async function ensurePermission(): Promise<boolean> {
 
 async function register(token: string, topics: Topic[]) {
   if (!supabase) return;
-  const { error } = await supabase.rpc('register_push_device', { device_token: token, device_platform: Platform.OS, device_topics: topics });
+  const { error } = await supabase.rpc('register_push_device', { device_token: token, device_platform: Platform.OS, device_topics: topics, device_locale: getLang() });
   if (error) throw error;
 }
 
@@ -161,7 +162,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     try {
       if (!(await ensurePermission())) {
-        return { ok: false, error: 'Notifications are turned off for BTG Ministry. Turn them on in your phone’s Settings, then try again.' };
+        return { ok: false, error: t('Notifications are turned off for BTG Ministry. Turn them on in your phone’s Settings, then try again.') };
       }
       const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: projectId() });
       const topics = data.topics.length ? data.topics : ALL;
@@ -171,7 +172,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     } catch (err) {
       console.warn('Could not turn on notifications', err);
-      return { ok: false, error: 'Couldn’t turn on notifications. Check your connection and try again.' };
+      return { ok: false, error: t('Couldn’t turn on notifications. Check your connection and try again.') };
     } finally {
       setBusy(false);
     }
@@ -185,7 +186,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const setTopic = useCallback(
     (topic: Topic, on: boolean) => {
-      const topics = on ? Array.from(new Set([...data.topics, topic])) : data.topics.filter((t) => t !== topic);
+      const topics = on ? Array.from(new Set([...data.topics, topic])) : data.topics.filter((x) => x !== topic);
       save((d) => ({ ...d, topics }));
       if (data.enabled && data.token) register(data.token, topics).catch(() => {});
     },
@@ -194,16 +195,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const remind = useCallback(
     async (event: MinistryEvent): Promise<Result> => {
-      if (Platform.OS === 'web') return { ok: false, error: 'Reminders are available in the phone app.' };
+      if (Platform.OS === 'web') return { ok: false, error: t('Reminders are available in the phone app.') };
       if (!(await ensurePermission())) {
-        return { ok: false, error: 'Notifications are turned off for BTG Ministry. Turn them on in your phone’s Settings.' };
+        return { ok: false, error: t('Notifications are turned off for BTG Ministry. Turn them on in your phone’s Settings.') };
       }
       const start = Date.parse(event.startsAt);
       const moments = [
-        { at: start - 24 * 3600 * 1000, title: `Tomorrow: ${event.title}` },
-        { at: start - 60 * 60 * 1000, title: `In one hour: ${event.title}` },
+        { at: start - 24 * 3600 * 1000, title: t('Tomorrow: {title}', { title: event.title }) },
+        { at: start - 60 * 60 * 1000, title: t('In one hour: {title}', { title: event.title }) },
       ].filter((m) => m.at > Date.now() + 60 * 1000);
-      if (!moments.length) return { ok: false, error: 'This event is about to start.' };
+      if (!moments.length) return { ok: false, error: t('This event is about to start.') };
       const ids = await Promise.all(
         moments.map((m) =>
           Notifications.scheduleNotificationAsync({

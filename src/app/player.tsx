@@ -4,6 +4,7 @@ import { ActivityIndicator, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Text as SvgText } from 'react-native-svg';
 
+import { t } from '@/i18n';
 import { Arch } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Scrubber } from '@/components/scrubber';
@@ -53,12 +54,12 @@ export default function PlayerScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 28 }]}>
       <View style={styles.topBar}>
-        <IconButton icon="down" label="Close player" variant="plain" iconSize={24} onPress={close} />
+        <IconButton icon="down" label={t('Close player')} variant="plain" iconSize={24} onPress={close} />
         <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
-          <Text style={styles.kicker}>Now playing</Text>
+          <Text style={styles.kicker}>{t('Now playing')}</Text>
           <Text style={styles.show} numberOfLines={1}>{p.podcast.title}</Text>
         </View>
-        <IconButton icon="queue" label="All episodes" variant="plain" onPress={() => router.navigate('/podcast')} />
+        <IconButton icon="queue" label={t('All episodes')} variant="plain" onPress={() => router.navigate('/podcast')} />
       </View>
 
       <View style={styles.art}>
@@ -71,10 +72,10 @@ export default function PlayerScreen() {
 
       <View style={{ gap: 6 }}>
         <Text style={styles.title} accessibilityRole="header" numberOfLines={3}>
-          {episode?.title ?? 'No episodes yet'}
+          {episode?.title ?? t('No episodes yet')}
         </Text>
         <Text style={styles.speaker}>Iman Mwakanyamale</Text>
-        {disabled && episode ? <Text style={styles.notice}>This is a sample episode. Audio arrives when the podcast feed is connected.</Text> : null}
+        {disabled && episode ? <Text style={styles.notice}>{t('This is a sample episode. Audio arrives when the podcast feed is connected.')}</Text> : null}
       </View>
 
       <View style={{ gap: 4 }}>
@@ -86,15 +87,15 @@ export default function PlayerScreen() {
       </View>
 
       <View style={styles.controls}>
-        <Tap accessibilityRole="button" accessibilityLabel="Previous episode" onPress={() => p.next(-1)} style={styles.ctrl}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Previous episode')} onPress={() => p.next(-1)} style={styles.ctrl}>
           <Icon name="prev" size={24} />
         </Tap>
-        <Tap accessibilityRole="button" accessibilityLabel="Back 15 seconds" disabled={disabled || !isLoaded} onPress={() => p.skip(-15)} style={styles.ctrl}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Back 15 seconds')} disabled={disabled || !isLoaded} onPress={() => p.skip(-15)} style={styles.ctrl}>
           <Skip seconds={15} />
         </Tap>
         <Tap
           accessibilityRole="button"
-          accessibilityLabel={p.playing ? 'Pause' : 'Play'}
+          accessibilityLabel={p.playing ? t('Pause') : t('Play')}
           disabled={disabled}
           onPress={() => (p.episode || !episode ? p.toggle() : p.play(episode))}
           style={[styles.playBtn, disabled && { opacity: 0.5 }]}>
@@ -104,16 +105,16 @@ export default function PlayerScreen() {
             <Icon name={p.playing ? 'pause' : 'play'} size={30} color={c.cream} />
           )}
         </Tap>
-        <Tap accessibilityRole="button" accessibilityLabel="Forward 30 seconds" disabled={disabled || !isLoaded} onPress={() => p.skip(30)} style={styles.ctrl}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Forward 30 seconds')} disabled={disabled || !isLoaded} onPress={() => p.skip(30)} style={styles.ctrl}>
           <Skip seconds={30} forward />
         </Tap>
-        <Tap accessibilityRole="button" accessibilityLabel="Next episode" onPress={() => p.next(1)} style={styles.ctrl}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Next episode')} onPress={() => p.next(1)} style={styles.ctrl}>
           <Icon name="next" size={24} />
         </Tap>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Tap accessibilityRole="button" accessibilityLabel={`Playback speed ${formatSpeed(p.speed)}. Tap to change`} onPress={p.cycleSpeed} style={styles.pill}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Playback speed {speed}. Tap to change', { speed: formatSpeed(p.speed) })} onPress={p.cycleSpeed} style={styles.pill}>
           <Text style={[styles.pillText, { fontFamily: Fonts.sansBold }]}>{formatSpeed(p.speed)}</Text>
         </Tap>
         <Tap
@@ -123,14 +124,14 @@ export default function PlayerScreen() {
           onPress={p.toggleSleep}
           style={[styles.pill, p.sleepOn && { backgroundColor: c.brown, borderColor: c.brown }]}>
           <Icon name="moon" size={16} color={p.sleepOn ? c.cream : c.brownDark} />
-          <Text style={[styles.pillText, p.sleepOn && { color: c.cream }]}>{p.sleepOn ? '30 min' : 'Sleep'}</Text>
+          <Text style={[styles.pillText, p.sleepOn && { color: c.cream }]}>{p.sleepOn ? '30 min' : t('Sleep')}</Text>
         </Tap>
         <Tap
           accessibilityRole="button"
           onPress={() => episode && Share.share({ message: `${episode.title} — ${p.podcast.title}${episode.audioUrl ? ` ${episode.audioUrl}` : ''}` })}
           style={styles.pill}>
           <Icon name="share" size={16} />
-          <Text style={styles.pillText}>Share</Text>
+          <Text style={styles.pillText}>{t('Share')}</Text>
         </Tap>
       </View>
     </View>

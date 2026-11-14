@@ -4,6 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 
 import { podcast as samplePodcast } from '@/content/sample';
 import { Episode, parsePodcastRss, Podcast } from '@/lib/podcast';
+import { downloadedUri, loadDownloads } from '@/state/downloads';
 
 /**
  * The podcast: its episodes (from the RSS feed) and the audio player.
@@ -16,6 +17,7 @@ import { Episode, parsePodcastRss, Podcast } from '@/lib/podcast';
  */
 const FEED_URL = process.env.EXPO_PUBLIC_PODCAST_FEED_URL;
 const STORAGE_KEY = 'btg.podcast.progress.v1';
+const FEED_CACHE_KEY = 'btg.podcast.feed.v1';
 const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
 const SLEEP_MS = 30 * 60 * 1000;
 const SAVE_EVERY_S = 10;
@@ -111,15 +113,35 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (parsed.episodes.length === 0) throw new Error('Podcast feed has no episodes');
       setPodcast(parsed);
       setFeedStatus('ready');
+      AsyncStorage.setItem(FEED_CACHE_KEY, JSON.stringify(parsed)).catch(() => {});
     } catch (err) {
       console.warn('Could not load the podcast feed', err);
       setFeedStatus((s) => (s === 'ready' ? s : 'error'));
     }
   }, []);
 
+  // Show the last copy of the feed straight away (it also works offline), then fetch the latest.
   useEffect(() => {
+    let cancelled = false;
+    loadDownloads();
+    if (FEED_URL) {
+      AsyncStorage.getItem(FEED_CACHE_KEY)
+        .then((raw) => {
+          if (!cancelled && raw) {
+            const cached = JSON.parse(raw) as typeof podcast;
+            if (cached?.episodes?.length) {
+              setPodcast((p) => (p === sample ? cached : p));
+              setFeedStatus('ready');
+            }
+          }
+        })
+        .catch(() => {});
+    }
     const t = setTimeout(loadFeed, 0);
-    return () => clearTimeout(t);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [loadFeed]);
 
   /* ---------- saving progress ---------- */
@@ -189,7 +211,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const saved = store.episodes[ep.id];
       pendingSeek.current = saved && !saved.finished && saved.position > 5 ? saved.position : null;
       lastSaved.current = pendingSeek.current ?? 0;
-      player.replace({ uri: ep.audioUrl });
+      // A downloaded episode plays from the phone, with no data used.
+      player.replace({ uri: downloadedUri(ep.id) ?? ep.audioUrl });
       player.setPlaybackRate(speed);
       player.play();
       player.setActiveForLockScreen(

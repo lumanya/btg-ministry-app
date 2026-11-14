@@ -7,6 +7,7 @@ import { LiveBadge } from '@/components/ui';
 import { Fonts, Palette } from '@/constants/theme';
 import type { ArtTone } from '@/content/sample';
 import type { FeedVideo } from '@/lib/video';
+import { smallThumbnail, useDataSaver } from '@/state/data-saver';
 import { useColors, useStyles } from '@/state/theme';
 
 /**
@@ -32,6 +33,7 @@ export function VideoThumb({
 }) {
   const c = useColors();
   const styles = useStyles(createStyles);
+  const saving = useDataSaver().active;
   const playSize = height >= 160 ? 56 : 40;
   const playButton =
     play === 'none' ? null : (
@@ -71,7 +73,7 @@ export function VideoThumb({
 
   return (
     <View style={[{ height, borderRadius: radius, overflow: 'hidden', backgroundColor: c.artDeep }, style]}>
-      <Image source={{ uri: video.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
+      <Image source={{ uri: smallThumbnail(video.thumbnail, saving) ?? video.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
       {badges}
       {playButton}
     </View>

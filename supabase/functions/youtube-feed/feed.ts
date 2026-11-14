@@ -28,6 +28,8 @@ export type FeedVideo = {
   kind: FeedVideoKind;
   /** For upcoming streams: when it is scheduled to start. */
   scheduledStart: string | null;
+  /** YouTube view count, when YouTube shares it. */
+  views?: number | null;
 };
 
 export type Feed = {
@@ -75,6 +77,7 @@ export type YouTubeVideoItem = {
     thumbnails?: Record<string, { url: string; width?: number; height?: number } | undefined>;
   };
   contentDetails?: { duration?: string };
+  statistics?: { viewCount?: string; likeCount?: string };
   liveStreamingDetails?: {
     scheduledStartTime?: string;
     actualStartTime?: string;
@@ -142,6 +145,7 @@ export function toFeedVideo(item: YouTubeVideoItem): FeedVideo {
     duration: kind === 'live' || kind === 'upcoming' ? null : formatDuration(durationSeconds(item.contentDetails?.duration)),
     kind,
     scheduledStart: lsd?.scheduledStartTime ?? null,
+    views: item.statistics?.viewCount ? Number(item.statistics.viewCount) : null,
   };
 }
 

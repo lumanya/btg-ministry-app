@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { EventCard } from '@/components/event-card';
 import { Appear } from '@/components/motion';
@@ -22,10 +23,10 @@ export default function EventsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: ScreenPadding, paddingBottom: insets.bottom + 32, gap: 16 }}>
-        <Title size={38}>Events</Title>
+        <Title size={38}>{t('Events')}</Title>
         {events.length ? (
           events.map((e, i) => (
             <Appear key={e.id} index={i}>
@@ -36,9 +37,9 @@ export default function EventsScreen() {
           <View style={styles.empty}>
             <Eagle height={54} />
             <Title size={24} style={{ textAlign: 'center' }}>
-              No events announced yet
+              {t('No events announced yet')}
             </Title>
-            <Body style={{ textAlign: 'center' }}>Conferences and special services will appear here. Turn on event notifications in Settings to hear first.</Body>
+            <Body style={{ textAlign: 'center' }}>{t('Conferences and special services will appear here. Turn on event notifications in Settings to hear first.')}</Body>
           </View>
         )}
       </ScrollView>

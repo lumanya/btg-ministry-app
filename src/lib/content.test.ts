@@ -28,6 +28,20 @@ test('splits a body into paragraphs at blank lines', () => {
   assert.deepEqual(paragraphs(''), []);
 });
 
+test('picks Kiswahili devotional text when it exists', () => {
+  const row = { slug: 'a', title: 'Grace', title_sw: 'Neema', subtitle: null, scripture_ref: 'John 1:1', scripture_text: 'In the beginning', scripture_text_sw: 'Hapo mwanzo', excerpt: 'Short', body: 'Body', body_sw: 'Mwili', audio_url: null, publish_on: '2026-11-15', series: null };
+  const sw = mapDevotional(row, 'sw');
+  assert.equal(sw.title, 'Neema');
+  assert.equal(sw.body, 'Mwili');
+  assert.equal(sw.lang, 'sw');
+  assert.equal(sw.scripture?.text, 'Hapo mwanzo');
+  const en = mapDevotional(row, 'en');
+  assert.equal(en.title, 'Grace');
+  assert.equal(en.lang, 'en');
+  // Only a title in Kiswahili: the body stays English, so the reader shows the English Bible version.
+  assert.equal(mapDevotional({ ...row, body_sw: null }, 'sw').lang, 'en');
+});
+
 test('formats weekly services', () => {
   assert.equal(formatTime('9:5:00'), '09:05');
   assert.deepEqual(mapService({ id: '1', name: 'Sunday Service', weekday: 0, start_time: '09:00:00', venue: 'Dar es Salaam', livestreamed: true }), {
@@ -36,7 +50,13 @@ test('formats weekly services', () => {
     time: '09:00',
     name: 'Sunday Service',
     meta: 'Dar es Salaam · Livestreamed',
+    weekday: 0,
+    venue: 'Dar es Salaam',
+    livestreamed: true,
   });
+  const sw = { id: '3', name: 'Sunday Service', name_sw: 'Ibada ya Jumapili', weekday: 0, start_time: '09:00', venue: null, livestreamed: false };
+  assert.equal(mapService(sw, 'sw').name, 'Ibada ya Jumapili');
+  assert.equal(mapService(sw, 'en').name, 'Sunday Service');
   assert.equal(mapService({ id: '2', name: 'Prayer', weekday: 3, start_time: '18:00', venue: null, livestreamed: false }).meta, '');
 });
 

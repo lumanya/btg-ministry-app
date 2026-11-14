@@ -194,6 +194,7 @@ const services: Config = {
   intro: 'Shown under “Coming up” in the app when no livestream is scheduled on YouTube. Times are Tanzania time.',
   columns: [
     { key: 'name', label: 'Name', kind: 'text', required: true, width: 180 },
+    { key: 'name_sw', label: 'Name in Kiswahili', kind: 'text', width: 180, placeholder: 'Ibada ya Jumapili' },
     { key: 'weekday', label: 'Day', kind: 'weekday' },
     { key: 'start_time', label: 'Starts', kind: 'time', required: true },
     { key: 'venue', label: 'Venue', kind: 'text', width: 180 },
@@ -242,9 +243,10 @@ const quotes: Config = {
   table: 'quotes',
   eyebrow: 'Home screen',
   title: 'Word for today',
-  intro: 'Short quotes from the teaching. The app shows a different one each day.',
+  intro: 'Short quotes from the teaching. The app shows a different one each day, in Kiswahili when you add it.',
   columns: [
     { key: 'text', label: 'Quote', kind: 'longtext', required: true },
+    { key: 'text_sw', label: 'In Kiswahili', kind: 'longtext' },
     { key: 'attribution', label: 'By', kind: 'text', required: true, width: 160 },
     { key: 'active', label: 'Show', kind: 'bool' },
   ],

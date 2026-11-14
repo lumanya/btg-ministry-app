@@ -43,7 +43,8 @@ export type IconName =
   | 'pin'
   | 'clock'
   | 'image'
-  | 'link';
+  | 'link'
+  | 'gift';
 
 type Props = {
   name: IconName;
@@ -236,6 +237,15 @@ export function Icon({ name, size = 22, color: colorProp, filled = false, dot = 
         <>
           <Path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" {...stroke} />
           <Path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" {...stroke} />
+        </>
+      );
+      break;
+    case 'gift':
+      body = (
+        <>
+          <Path d="M4 9h16v4H4z" {...stroke} />
+          <Path d="M5.5 13v7h13v-7M12 9v11" {...stroke} />
+          <Path d="M12 9S10.5 4 8 4a2.5 2.5 0 0 0 0 5M12 9s1.5-5 4-5a2.5 2.5 0 0 1 0 5" {...stroke} />
         </>
       );
       break;

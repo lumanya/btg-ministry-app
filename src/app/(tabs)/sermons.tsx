@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { t } from '@/i18n';
 import { Icon } from '@/components/icon';
 import { PlaylistCard } from '@/components/playlist-card';
 import { Eyebrow, Screen, Tap, Title } from '@/components/ui';
@@ -36,16 +37,16 @@ export default function Sermons() {
 
   return (
     <Screen gap={18} refreshing={refreshing} onRefresh={refresh}>
-      <Title>Sermons</Title>
+      <Title>{t('Sermons')}</Title>
 
       <View style={styles.search}>
         <Icon name="search" size={20} color={c.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search sermons and teachings"
+          placeholder={t('Search sermons and teachings')}
           placeholderTextColor={c.textSubtle}
-          accessibilityLabel="Search sermons"
+          accessibilityLabel={t('Search sermons')}
           returnKeyType="search"
           style={styles.searchInput}
         />
@@ -65,7 +66,7 @@ export default function Sermons() {
               accessibilityState={{ selected: on }}
               onPress={() => setFilter(f.id)}
               style={[styles.chip, on && styles.chipOn]}>
-              <Text style={[styles.chipText, on && { color: c.cream }]}>{f.label}</Text>
+              <Text style={[styles.chipText, on && { color: c.cream }]}>{t(f.label)}</Text>
             </Tap>
           );
         })}
@@ -73,7 +74,7 @@ export default function Sermons() {
 
       {status === 'error' ? (
         <Text style={styles.notice} accessibilityLiveRegion="polite">
-          Couldn’t reach YouTube. Pull down to try again.
+          {t('Couldn’t reach YouTube. Pull down to try again.')}
         </Text>
       ) : null}
 
@@ -90,8 +91,8 @@ export default function Sermons() {
       {playlists.length && !q && filter === 'all' ? (
         <View style={{ gap: 10 }}>
           <View style={styles.listHeader}>
-            <Eyebrow>Series</Eyebrow>
-            <Text style={styles.meta}>{playlists.length === 1 ? '1 series' : `${playlists.length} series`}</Text>
+            <Eyebrow>{t('Series')}</Eyebrow>
+            <Text style={styles.meta}>{playlists.length === 1 ? t('1 series') : t('{n} series', { n: playlists.length })}</Text>
           </View>
           <ScrollView
             horizontal
@@ -108,9 +109,9 @@ export default function Sermons() {
       ) : null}
 
       <View style={styles.listHeader}>
-        <Eyebrow>{filter === 'all' ? 'Recent' : filters.find((f) => f.id === filter)!.label}</Eyebrow>
+        <Eyebrow>{filter === 'all' ? t('Recent') : filters.find((f) => f.id === filter)!.label}</Eyebrow>
         <Text style={styles.meta} accessibilityLiveRegion="polite">
-          {matches.length === 1 ? '1 sermon' : `${matches.length} sermons`}
+          {matches.length === 1 ? t('1 sermon') : t('{n} sermons', { n: matches.length })}
         </Text>
       </View>
 
@@ -127,7 +128,7 @@ export default function Sermons() {
         ))}
         {matches.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.meta}>{q ? 'No sermons match that search.' : 'No sermons here yet.'}</Text>
+            <Text style={styles.meta}>{q ? t('No sermons match that search.') : t('No sermons here yet.')}</Text>
           </View>
         ) : null}
       </View>

@@ -1,3 +1,5 @@
+import { getLang, monthName } from '@/i18n';
+
 /**
  * Sample content for the first version of the app.
  *
@@ -92,6 +94,8 @@ export type Devotional = {
   /** A recording of the devotional being read. */
   audioUrl?: string;
   series?: string;
+  /** Which language the text is in (Kiswahili when a translation was shown). */
+  lang?: 'en' | 'sw';
 };
 
 export const devotionals: Devotional[] = [
@@ -215,10 +219,9 @@ export function findDevotional(id: string) {
   return devotionals.find((d) => d.id === id);
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** "2025-10-11" -> "Oct 11, 2025" */
+/** "2025-10-11" -> "Oct 11, 2025" (or "11 Okt 2025" in Kiswahili). */
 export function formatDate(iso: string) {
   const [y, m, d] = iso.split('-').map(Number);
-  return `${MONTHS[m - 1]} ${d}, ${y}`;
+  const month = monthName(m - 1, true);
+  return getLang() === 'sw' ? `${d} ${month} ${y}` : `${month} ${d}, ${y}`;
 }

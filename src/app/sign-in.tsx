@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { t } from '@/i18n';
 import { AuthScreen, Field, FormMessage, TextLink } from '@/components/form';
 import { Button } from '@/components/ui';
 import { checkEmail, cleanEmail } from '@/lib/auth-messages';
@@ -17,7 +18,7 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    const next = { email: checkEmail(email), password: password ? null : 'Enter your password.' };
+    const next = { email: checkEmail(email), password: password ? null : t('Enter your password.') };
     setErrors(next);
     if (next.email || next.password) return;
     setBusy(true);
@@ -33,12 +34,12 @@ export default function SignIn() {
   };
 
   return (
-    <AuthScreen title="Welcome back." subtitle="Sign in to keep your reading streak, saved sermons and prayer requests on every phone.">
-      {!auth.configured ? <FormMessage tone="info">Accounts aren’t switched on in this version yet. You can still use everything as a guest.</FormMessage> : null}
+    <AuthScreen title={t('Welcome back.')} subtitle={t('Sign in to keep your reading streak, saved sermons and prayer requests on every phone.')}>
+      {!auth.configured ? <FormMessage tone="info">{t('Accounts aren’t switched on in this version yet. You can still use everything as a guest.')}</FormMessage> : null}
       {errors.form ? <FormMessage>{errors.form}</FormMessage> : null}
       <View style={{ gap: 18 }}>
         <Field
-          label="Email"
+          label={t('Email')}
           value={email}
           onChangeText={setEmail}
           error={errors.email}
@@ -50,7 +51,7 @@ export default function SignIn() {
           returnKeyType="next"
         />
         <Field
-          label="Password"
+          label={t('Password')}
           value={password}
           onChangeText={setPassword}
           error={errors.password}
@@ -60,11 +61,11 @@ export default function SignIn() {
           returnKeyType="go"
           onSubmitEditing={submit}
         />
-        <TextLink label="Forgot your password?" onPress={() => router.push({ pathname: '/forgot-password', params: { email } })} />
+        <TextLink label={t('Forgot your password?')} onPress={() => router.push({ pathname: '/forgot-password', params: { email } })} />
       </View>
       <View style={{ gap: 6 }}>
-        <Button label={busy ? 'Signing in…' : 'Sign in'} onPress={busy ? undefined : submit} />
-        <Button label="Create an account" variant="outline" onPress={() => router.replace('/sign-up')} style={{ borderColor: 'transparent' }} />
+        <Button label={busy ? t('Signing in…') : t('Sign in')} onPress={busy ? undefined : submit} />
+        <Button label={t('Create an account')} variant="outline" onPress={() => router.replace('/sign-up')} style={{ borderColor: 'transparent' }} />
       </View>
     </AuthScreen>
   );

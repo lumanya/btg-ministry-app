@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { compact, t } from '@/i18n';
 import { Eagle } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
@@ -12,6 +13,7 @@ import { YouTubePlayer } from '@/components/youtube-player';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
 import { videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
+import { recordView, toggleLike, useStat } from '@/state/engagement';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
@@ -26,6 +28,10 @@ export default function SermonScreen() {
   const { feed, findVideo, playlistVideos } = useFeed();
   const lib = useLibrary();
   const video = findVideo(id) ?? lib.savedVideos.find((v) => v.id === id) ?? feed.videos[0];
+  const stat = useStat('video', video?.youtubeId ? video.id : undefined);
+  useEffect(() => {
+    if (video?.youtubeId) recordView('video', video.id);
+  }, [video?.id, video?.youtubeId]);
 
   // Reset the player state when moving to another sermon.
   const [state, setState] = useState({ id, playing: false, more: false });
@@ -35,9 +41,9 @@ export default function SermonScreen() {
   if (!video) {
     return (
       <View style={[styles.missing, { paddingTop: insets.top + 60 }]}>
-        <Title size={28}>This sermon isn’t available.</Title>
+        <Title size={28}>{t('This sermon isn’t available.')}</Title>
         <Tap accessibilityRole="button" onPress={() => router.replace('/sermons')}>
-          <Text style={styles.link}>Back to sermons</Text>
+          <Text style={styles.link}>{t('Back to sermons')}</Text>
         </Tap>
       </View>
     );
@@ -52,25 +58,34 @@ export default function SermonScreen() {
   const upNext = at >= 0 ? series.slice(at + 1, at + 4) : feed.videos.filter((v) => v.id !== video.id).slice(0, 3);
   const longDescription = video.description.length > 220;
 
-  const actions: { icon: IconName; label: string; onPress: () => void; on?: boolean }[] = [
-    { icon: 'bookmark', label: lib.isVideoSaved(video.id) ? 'Saved' : 'Save', onPress: () => lib.toggleVideo(video), on: lib.isVideoSaved(video.id) },
-    { icon: 'share', label: 'Share', onPress: () => Share.share({ message: `${video.title} — BTG Ministry ${watchUrl}` }) },
+  const liked = !!stat?.liked;
+  const likes = stat?.likes ?? 0;
+  const actions: { icon: IconName; label: string; onPress: () => void; on?: boolean; a11y?: string }[] = [
+    {
+      icon: 'heart',
+      label: likes ? compact(likes) : t('Like'),
+      a11y: `${liked ? t('Remove your like') : t('Like this sermon')}, ${likes === 1 ? t('1 like') : t('{n} likes', { n: likes })}`,
+      onPress: () => (video.youtubeId ? toggleLike('video', video.id) : undefined),
+      on: liked,
+    },
+    { icon: 'bookmark', label: lib.isVideoSaved(video.id) ? t('Saved') : t('Save'), onPress: () => lib.toggleVideo(video), on: lib.isVideoSaved(video.id) },
+    { icon: 'share', label: t('Share'), onPress: () => Share.share({ message: `${video.title} — BTG Ministry ${watchUrl}` }) },
     { icon: 'sermons', label: 'YouTube', onPress: () => WebBrowser.openBrowserAsync(watchUrl) },
-    { icon: 'heart', label: 'Give', onPress: () => router.push('/give') },
+    { icon: 'gift', label: t('Give'), onPress: () => router.push('/give') },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
-        <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
-        <Eyebrow style={{ fontSize: 13 }}>{video.kind === 'stream' || video.kind === 'live' ? 'Livestream' : 'Sermon'}</Eyebrow>
+        <IconButton icon="back" label={t('Back')} variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
+        <Eyebrow style={{ fontSize: 13 }}>{video.kind === 'stream' || video.kind === 'live' ? t('Livestream') : t('Sermon')}</Eyebrow>
         <View style={{ width: 44 }} />
       </View>
 
       {current.playing && video.youtubeId ? (
         <YouTubePlayer youtubeId={video.youtubeId} style={{ height: playerHeight }} />
       ) : (
-        <Tap accessibilityRole="button" accessibilityLabel={`Play ${video.title}`} onPress={play}>
+        <Tap accessibilityRole="button" accessibilityLabel={t('Play {title}', { title: video.title })} onPress={play}>
           <VideoThumb video={video} height={playerHeight} titleSize={28} radius={0} play="center" style={{ backgroundColor: c.night }} />
         </Tap>
       )}
@@ -83,7 +98,7 @@ export default function SermonScreen() {
             {videoMeta(video)}
             {video.duration ? ` · ${video.duration}` : ''}
           </Text>
-          {!video.youtubeId ? <Text style={styles.meta}>This is sample content; the video isn’t on YouTube yet.</Text> : null}
+          {!video.youtubeId ? <Text style={styles.meta}>{t('This is sample content; the video isn’t on YouTube yet.')}</Text> : null}
         </View>
 
         <View style={styles.speaker}>
@@ -92,20 +107,23 @@ export default function SermonScreen() {
           </View>
           <View style={{ gap: 2 }}>
             <Text style={styles.speakerName}>Iman Mwakanyamale</Text>
-            <Text style={styles.meta}>General Overseer</Text>
+            <Text style={styles.meta}>{t('General Overseer')}</Text>
           </View>
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {actions.map((a) => (
             <Tap
-              key={a.label}
+              key={a.icon}
               accessibilityRole="button"
+              accessibilityLabel={a.a11y}
               accessibilityState={a.on === undefined ? undefined : { selected: a.on }}
               onPress={a.onPress}
               style={[styles.action, a.on && { backgroundColor: c.brown, borderColor: c.brown }]}>
               <Icon name={a.icon} size={20} color={a.on ? c.cream : c.brownDark} filled={a.on} />
-              <Text style={[styles.actionText, a.on && { color: c.cream }]}>{a.label}</Text>
+              <Text style={[styles.actionText, a.on && { color: c.cream }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                {a.label}
+              </Text>
             </Tap>
           ))}
         </View>
@@ -115,7 +133,7 @@ export default function SermonScreen() {
             <Body>{longDescription && !current.more ? `${video.description.slice(0, 220).trimEnd()}…` : video.description}</Body>
             {longDescription ? (
               <Tap accessibilityRole="button" onPress={() => update({ more: !current.more })} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
-                <Text style={styles.link}>{current.more ? 'Show less' : 'Show more'}</Text>
+                <Text style={styles.link}>{current.more ? t('Show less') : t('Show more')}</Text>
               </Tap>
             ) : null}
           </View>
@@ -123,7 +141,7 @@ export default function SermonScreen() {
 
         {upNext.length ? (
           <View style={{ gap: 14 }}>
-            <Eyebrow>{at >= 0 ? 'Next in this series' : 'Up next'}</Eyebrow>
+            <Eyebrow>{at >= 0 ? t('Next in this series') : t('Up next')}</Eyebrow>
             {upNext.map((v, i) => (
               <Tap
                 key={v.id}
@@ -176,6 +194,7 @@ const createStyles = (c: Palette) =>
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    paddingHorizontal: 4,
   },
   actionText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.brownDark },
 });

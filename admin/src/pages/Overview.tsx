@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { addDays, formatDay, formatMoment, friendlyError, plural, todayInTanzania } from '../lib';
-import { db } from '../supabase';
+import { db, FEED_URL } from '../supabase';
 import { Loading, PageHead } from '../ui';
 
 type Stats = {
@@ -16,12 +16,52 @@ type Stats = {
   last_published_on: string | null;
 };
 
+type Top = { item_id: string; likes: number; views: number };
+type Loved = { id: string; title: string; href: string; likes: number; views: number; kind: 'Devotional' | 'Sermon' };
+
+/** The most liked devotionals and sermons in the app over the last 30 days, with their titles. */
+async function mostLoved(): Promise<Loved[]> {
+  const [d, v] = await Promise.all([db().rpc('top_items', { stat_kind: 'devotional' }), db().rpc('top_items', { stat_kind: 'video' })]);
+  const devs = (d.data as Top[] | null) ?? [];
+  const vids = (v.data as Top[] | null) ?? [];
+  const titles = new Map<string, { title: string; id?: string }>();
+  if (devs.length) {
+    const { data } = await db().from('devotionals').select('id,slug,title').in('slug', devs.map((x) => x.item_id));
+    for (const r of (data as { id: string; slug: string; title: string }[] | null) ?? []) titles.set(`d:${r.slug}`, { title: r.title, id: r.id });
+  }
+  if (vids.length) {
+    try {
+      const feed = (await (await fetch(FEED_URL)).json()) as { videos?: { id: string; title: string }[] };
+      for (const x of feed.videos ?? []) titles.set(`v:${x.id}`, { title: x.title });
+    } catch {
+      // Titles are a nicety; fall back to the YouTube id.
+    }
+  }
+  return [
+    ...devs.map((x): Loved => {
+      const m = titles.get(`d:${x.item_id}`);
+      return { id: `d:${x.item_id}`, title: m?.title ?? x.item_id, href: m?.id ? `#/devotionals/${m.id}` : '#/devotionals', likes: Number(x.likes), views: Number(x.views), kind: 'Devotional' };
+    }),
+    ...vids.map((x): Loved => ({
+      id: `v:${x.item_id}`,
+      title: titles.get(`v:${x.item_id}`)?.title ?? `YouTube video ${x.item_id}`,
+      href: `https://www.youtube.com/watch?v=${encodeURIComponent(x.item_id)}`,
+      likes: Number(x.likes),
+      views: Number(x.views),
+      kind: 'Sermon',
+    })),
+  ]
+    .sort((a, b) => b.likes - a.likes || b.views - a.views)
+    .slice(0, 6);
+}
+
 type Prayer = { id: string; message: string; name: string | null; created_at: string; user_id: string | null };
 
 export default function Overview() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [prayers, setPrayers] = useState<Prayer[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loved, setLoved] = useState<Loved[] | null>(null);
   const today = todayInTanzania();
   const tomorrow = addDays(today, 1);
 
@@ -34,6 +74,9 @@ export default function Overview() {
       else setStats(s.data as Stats);
       setPrayers((p.data as Prayer[]) ?? []);
     });
+    mostLoved()
+      .then(setLoved)
+      .catch(() => setLoved([]));
   }, []);
 
   if (error) return <div className="notice error">{error}</div>;
@@ -102,6 +145,32 @@ export default function Overview() {
             </span>
           </a>
         </div>
+
+        <section className="stack tight">
+          <div className="row spread">
+            <h2>Most loved this month</h2>
+            <span className="small muted">Likes and views in the app, last 30 days</span>
+          </div>
+          {loved === null ? (
+            <p className="muted">Loading…</p>
+          ) : loved.length ? (
+            <div className="list">
+              {loved.map((x) => (
+                <a key={x.id} className="list-row" href={x.href} {...(x.kind === 'Sermon' ? { target: '_blank', rel: 'noreferrer' } : {})}>
+                  <span className="date">{x.kind}</span>
+                  <span className="grow" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {x.title}
+                  </span>
+                  <span className="small muted">
+                    ♥ {x.likes} · {plural(x.views, x.kind === 'Devotional' ? 'read' : 'view')}
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No likes yet. When members tap the heart on a sermon or devotional, the favourites show here.</p>
+          )}
+        </section>
 
         <section className="stack tight">
           <div className="row spread">

@@ -3,6 +3,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { logoImage } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Button, Eyebrow } from '@/components/ui';
@@ -42,31 +43,31 @@ export default function Welcome() {
           source={logoImage}
           style={styles.logo}
           contentFit="contain"
-          accessibilityLabel="The BTG Ministry emblem: an eagle alighting on a bound scroll, with the words Building the Temple of God Ministry"
+          accessibilityLabel={t('The BTG Ministry emblem: an eagle alighting on a bound scroll, with the words Building the Temple of God Ministry')}
         />
       </View>
 
       <View style={{ gap: 14 }}>
         <Eyebrow>BTG Ministry</Eyebrow>
         <Text style={styles.headline} accessibilityRole="header">
-          Revealing Christ. <Text style={styles.headlineEm}>Awakening</Text> the spirit of man.
+          {t('Revealing Christ.')} <Text style={styles.headlineEm}>{t('Awakening')}</Text> the spirit of man.
         </Text>
-        <Body style={{ fontSize: 16 }}>Sermons, livestreams, audio teachings and the daily devotional, together in one place.</Body>
+        <Body style={{ fontSize: 16 }}>{t('Sermons, livestreams, audio teachings and the daily devotional, together in one place.')}</Body>
       </View>
 
       <View style={styles.features}>
         {features.map((f) => (
           <View key={f.label} style={styles.feature}>
             <Icon name={f.icon} color={c.accent} />
-            <Text style={styles.featureLabel}>{f.label}</Text>
+            <Text style={styles.featureLabel}>{t(f.label)}</Text>
           </View>
         ))}
       </View>
 
       <View style={{ gap: 6 }}>
-        <Button label="Create an account" icon="arrow" onPress={() => router.push('/sign-up')} />
-        <Button label="Sign in" variant="outline" onPress={() => router.push('/sign-in')} />
-        <Button label="Continue as a guest" variant="outline" onPress={guest} style={{ borderColor: 'transparent', minHeight: 46 }} />
+        <Button label={t('Create an account')} icon="arrow" onPress={() => router.push('/sign-up')} />
+        <Button label={t('Sign in')} variant="outline" onPress={() => router.push('/sign-in')} />
+        <Button label={t('Continue as a guest')} variant="outline" onPress={guest} style={{ borderColor: 'transparent', minHeight: 46 }} />
       </View>
     </View>
   );

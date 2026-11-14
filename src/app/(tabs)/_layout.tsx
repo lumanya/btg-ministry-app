@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 
+import { t } from '@/i18n';
 import { TabBar } from '@/components/tab-bar';
 import { useColors } from '@/state/theme';
 
@@ -15,8 +16,8 @@ export default function TabLayout() {
   const c = useColors();
   return (
     <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.ivory } }}>
-      {tabs.map((t) => (
-        <Tabs.Screen key={t.name} name={t.name} options={{ title: t.title }} />
+      {tabs.map((tab) => (
+        <Tabs.Screen key={tab.name} name={tab.name} options={{ title: t(tab.title) }} />
       ))}
     </Tabs>
   );

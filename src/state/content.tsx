@@ -24,6 +24,8 @@ import {
   ServiceRow,
 } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
+import { getLang } from '@/i18n';
+import { useDataSaver } from '@/state/data-saver';
 
 /**
  * Devotionals, series, weekly services, giving details and quotes.
@@ -32,9 +34,12 @@ import { supabase } from '@/lib/supabase';
  * dashboard) and a copy is kept on the phone for offline use. Without it, the
  * built-in sample content is shown.
  */
-const CACHE_KEY = 'btg.content.v2';
+// One saved copy per language, since the content differs.
+const cacheKey = () => `btg.content.v3.${getLang()}`;
 /** Check for new content when the app comes back to the front, at most this often. */
 const REFRESH_AFTER_MS = 15 * 60 * 1000;
+/** With data saver on. */
+const SAVER_REFRESH_AFTER_MS = 60 * 60 * 1000;
 
 type Snapshot = {
   devotionals: Devotional[];
@@ -81,22 +86,22 @@ async function fetchSnapshot(): Promise<Snapshot> {
   const [devotionals, series, services, giving, quotes, events, playlists] = await Promise.all([
     supabase.from('devotionals').select(DEVOTIONAL_COLUMNS).order('publish_on', { ascending: false }).limit(90),
     supabase.from('series').select('name,tone').order('sort').order('name'),
-    supabase.from('services').select('id,name,weekday,start_time,venue,livestreamed').order('sort').order('weekday'),
+    supabase.from('services').select('id,name,name_sw,weekday,start_time,venue,livestreamed').order('sort').order('weekday'),
     supabase.from('giving_methods').select('id,label,number,account_name').order('sort'),
-    supabase.from('quotes').select('text').order('created_at'),
+    supabase.from('quotes').select('text,text_sw').order('created_at'),
     supabase.from('events').select(EVENT_COLUMNS).gte('starts_at', since).order('starts_at').limit(30),
     supabase.from('playlists').select('youtube_id,title,visible,sort'),
   ]);
   const failed = [devotionals, series, services, giving, quotes].find((r) => r.error);
   if (failed?.error) throw failed.error;
   return {
-    devotionals: ((devotionals.data ?? []) as unknown as DevotionalRow[]).map(mapDevotional),
+    devotionals: ((devotionals.data ?? []) as unknown as DevotionalRow[]).map((r) => mapDevotional(r, getLang())),
     series: (series.data ?? []).map(mapSeries),
-    services: ((services.data ?? []) as ServiceRow[]).map(mapService),
+    services: ((services.data ?? []) as ServiceRow[]).map((r) => mapService(r, getLang())),
     giving: ((giving.data ?? []) as GivingRow[]).map(mapGiving),
-    quotes: (quotes.data ?? []).map((q: { text: string }) => q.text),
+    quotes: (quotes.data ?? []).map((q: { text: string; text_sw?: string | null }) => (getLang() === 'sw' && q.text_sw?.trim() ? q.text_sw : q.text)),
     // Newer tables: an error here (e.g. not set up yet) just means none to show.
-    events: ((events.data ?? []) as EventRow[]).map(mapEvent),
+    events: ((events.data ?? []) as EventRow[]).map((r) => mapEvent(r, getLang())),
     playlistSettings: (playlists.data ?? []) as PlaylistSetting[],
   };
 }
@@ -106,6 +111,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ContentState['status']>(supabase ? 'loading' : 'sample');
   const [refreshing, setRefreshing] = useState(false);
   const lastFetch = useRef(0);
+  const saving = useDataSaver().active;
+  const savingRef = useRef(saving);
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
 
   const load = useCallback(async () => {
     if (!supabase) return;
@@ -114,7 +124,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       lastFetch.current = Date.now();
       setSnapshot(fresh);
       setStatus('live');
-      AsyncStorage.setItem(CACHE_KEY, JSON.stringify(fresh)).catch(() => {});
+      AsyncStorage.setItem(cacheKey(), JSON.stringify(fresh)).catch(() => {});
     } catch {
       setStatus((s) => (s === 'live' ? 'live' : 'offline'));
     }
@@ -124,7 +134,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
     let cancelled = false;
-    AsyncStorage.getItem(CACHE_KEY)
+    AsyncStorage.getItem(cacheKey())
       .then((raw) => {
         if (!cancelled && raw) {
           setSnapshot({ ...sampleSnapshot, ...(JSON.parse(raw) as Partial<Snapshot>) });
@@ -136,7 +146,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         if (!cancelled) load();
       });
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && Date.now() - lastFetch.current > REFRESH_AFTER_MS) load();
+      if (state === 'active' && Date.now() - lastFetch.current > (savingRef.current ? SAVER_REFRESH_AFTER_MS : REFRESH_AFTER_MS)) load();
     });
     return () => {
       cancelled = true;

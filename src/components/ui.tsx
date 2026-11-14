@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '@/i18n';
 import { Icon, IconName } from '@/components/icon';
 import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { success, tap, tick } from '@/lib/haptics';
@@ -236,9 +237,9 @@ export function ProgressBar({ value, track, fill }: { value: number; track?: str
 export function LiveBadge() {
   const styles = useStyles(createStyles);
   return (
-    <View style={styles.liveBadge} accessibilityLabel="Live now">
+    <View style={styles.liveBadge} accessibilityLabel={t('Live now')}>
       <View style={styles.liveDot} />
-      <Text style={styles.liveText}>LIVE</Text>
+      <Text style={styles.liveText}>{t('LIVE')}</Text>
     </View>
   );
 }

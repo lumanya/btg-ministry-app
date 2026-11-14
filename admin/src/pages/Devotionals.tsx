@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { addDays, devotionalState, DevotionalState, formatDay, friendlyError, todayInTanzania } from '../lib';
+import { addDays, devotionalState, DevotionalState, formatDay, friendlyError, plural, todayInTanzania } from '../lib';
 import { db } from '../supabase';
 import { Empty, Loading, PageHead, Segment } from '../ui';
 
 type Row = { id: string; slug: string; title: string; publish_on: string; status: string; series: { name: string } | null };
 type Filter = 'all' | DevotionalState;
+type Stat = { item_id: string; likes: number; views: number };
 
 export const STATE_LABEL: Record<DevotionalState, string> = { live: 'Published', scheduled: 'Scheduled', draft: 'Draft' };
 
@@ -14,6 +15,7 @@ export default function Devotionals() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
+  const [stats, setStats] = useState<Map<string, Stat>>(new Map());
   const today = todayInTanzania();
 
   useEffect(() => {
@@ -24,7 +26,14 @@ export default function Devotionals() {
       .limit(500)
       .then(({ data, error }) => {
         if (error) setError(friendlyError(error));
-        else setRows(data as unknown as Row[]);
+        else {
+          const list = data as unknown as Row[];
+          setRows(list);
+          // Likes and reads from the app, for the newest 200.
+          db()
+            .rpc('item_stats', { stat_kind: 'devotional', items: list.slice(0, 200).map((r) => r.slug) })
+            .then(({ data: s }) => setStats(new Map(((s as Stat[] | null) ?? []).map((x) => [x.item_id, x]))));
+        }
       });
   }, []);
 
@@ -82,6 +91,11 @@ export default function Devotionals() {
                       <span className="title">{r.title}</span>
                       {r.series ? <span className="small muted">{r.series.name}</span> : null}
                     </span>
+                    {stats.get(r.slug)?.likes || stats.get(r.slug)?.views ? (
+                      <span className="small muted" title="Likes and reads in the app">
+                        ♥ {stats.get(r.slug)!.likes} · {plural(Number(stats.get(r.slug)!.views), 'read')}
+                      </span>
+                    ) : null}
                     {r.publish_on === today && state === 'live' ? <span className="pill new">Today</span> : null}
                     <span className={`pill ${state}`}>{STATE_LABEL[state]}</span>
                   </a>
