@@ -5,7 +5,9 @@
   "dependencies": {
     "@expo-google-fonts/cormorant-garamond": "^0.4.1",
     "@expo-google-fonts/instrument-sans": "^0.4.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~58.0.25",
+    "expo-audio": "~58.0.12",
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.16",
     "expo-font": "~58.0.12",
@@ -16,6 +18,7 @@
     "expo-status-bar": "~58.0.5",
     "expo-system-ui": "~58.0.7",
     "expo-web-browser": "~58.0.8",
+    "fast-xml-parser": "^5.12.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
@@ -41,7 +44,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test:feed": "node --experimental-strip-types --no-warnings --test supabase/functions/youtube-feed/feed.test.ts"
+    "test:feed": "node --experimental-strip-types --no-warnings --test supabase/functions/youtube-feed/feed.test.ts",
+    "test:podcast": "node --experimental-strip-types --no-warnings --test src/lib/podcast.test.ts",
+    "test": "npm run -s test:feed && npm run -s test:podcast"
   },
   "private": true
 }

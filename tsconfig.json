@@ -19,7 +19,7 @@
   ],
   "exclude": [
     "supabase/**/index.ts",
-    "supabase/**/*.test.ts",
+    "**/*.test.ts",
     "node_modules"
   ]
 }

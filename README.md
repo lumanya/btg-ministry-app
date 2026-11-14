@@ -28,8 +28,8 @@ To preview in a web browser instead, run `npm run web`.
 | Sermons (search, filters, featured, list) | `src/app/(tabs)/sermons.tsx` | Done; reads the YouTube feed |
 | Sermon detail | `src/app/sermon/[id].tsx` | Done; plays inside the app |
 | Live (player, prayer request, service reminders) | `src/app/(tabs)/live.tsx` | Done; shows "Live now" or the next stream automatically |
-| Podcast (series, episodes, mini player) | `src/app/(tabs)/podcast.tsx` | Screens done; audio not connected yet |
-| Now playing | `src/app/player.tsx` | Screens done; audio not connected yet |
+| Podcast (series, episodes, progress, mini player) | `src/app/(tabs)/podcast.tsx` | Done; reads the podcast's RSS feed |
+| Now playing (seek bar, skip, speed, sleep timer) | `src/app/player.tsx` | Done; background play and lock-screen controls |
 | Daily devotional (week strip, series, archive) | `src/app/(tabs)/devotional.tsx` | Done, sample content |
 | Devotional reader (text size, bookmark, mark as read) | `src/app/devotional/[id].tsx` | Done; full text comes from the website later |
 | Give (M-Pesa and CRDB with copy buttons) | `src/app/give.tsx` | Done |
@@ -84,6 +84,29 @@ Restart `npm start`. The Home, Sermons and Live screens now show the real channe
 
 To test the function's logic: `npm run test:feed`.
 
+## Connect the podcast
+
+The Podcast tab plays episodes from the podcast's **RSS feed**, the same feed Spotify and Apple Podcasts read. Any podcast host gives you one when you upload episodes; it usually ends in `.xml` or `/rss`.
+
+Add it to `.env`:
+
+```
+EXPO_PUBLIC_PODCAST_FEED_URL=https://<your podcast host>/<your feed>.xml
+```
+
+Restart `npm start`. Until then the tab lists sample episodes with no audio.
+
+**What the player does**
+
+- Plays with the screen locked and in silent mode, with play/pause and skip buttons on the lock screen.
+- Remembers where each episode stopped, so episodes resume and Home shows **Continue listening** with the time left.
+- Speeds 0.75×–2×, a 30-minute sleep timer, and a draggable position bar.
+- Groups episodes into series using the feed's season numbers (`itunes:season`).
+
+**Testing on a phone:** episodes play in Expo Go. Background play and lock-screen controls need the app's own build, because they change the app's native settings. Make a test build with `npx eas-cli@latest build --profile development`.
+
+To test the feed reader: `npm run test:podcast`.
+
 ## Project layout
 
 ```
@@ -93,8 +116,8 @@ src/
   components/     icon.tsx, ui.tsx (buttons, text, cards), art.tsx (arch artwork, scroll)
   constants/      theme.ts: brand colours, fonts, spacing
   content/        sample.ts: temporary content until live sources are connected
-  lib/            video.ts: date and label helpers for videos
-  state/          feed.tsx: the YouTube feed; player.tsx: shared "now playing" state
+  lib/            video.ts: video labels; podcast.ts: RSS reader and time formats
+  state/          feed.tsx: the YouTube feed; player.tsx: the podcast and audio player
 assets/images/    app icon, splash, eagle emblem, full logo
 supabase/
   functions/youtube-feed/   server function that reads the YouTube channel
@@ -108,7 +131,7 @@ supabase/
 ## Next steps
 
 1. **YouTube connection** — built; follow "Connect the YouTube channel" above to switch it on.
-2. **Podcast audio** — real playback with `expo-audio`: background play, lock-screen controls, speed and sleep timer.
+2. **Podcast audio** — built; add the RSS feed as in "Connect the podcast" above.
 3. **Devotionals feed** — load devotionals from the website so they are published once.
 4. **Accounts and backend** (Supabase) — reading streaks, saved items, prayer requests, reminders.
 5. **Notifications** — "We're live", the daily devotional and service reminders.
@@ -119,5 +142,5 @@ supabase/
 ```bash
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
-npm run test:feed   # YouTube feed logic
+npm test            # YouTube feed logic and podcast feed reader
 ```

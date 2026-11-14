@@ -8,7 +8,9 @@ import { VideoThumb } from '@/components/video-thumb';
 import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
 import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
+import { formatLength } from '@/lib/podcast';
 import { useFeed } from '@/state/feed';
+import { usePlayer } from '@/state/player';
 
 function greeting() {
   const h = new Date().getHours();
@@ -28,6 +30,16 @@ export default function Home() {
   const feature = live ?? feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
   const latestVideos = feed.videos.filter((v) => v.id !== feature?.id).slice(0, 4);
   const today = findDevotional(todaysDevotionalId)!;
+
+  const player = usePlayer();
+  const resume = player.resume;
+  const listen = resume?.episode ?? player.podcast.episodes[0];
+  const remaining = resume && resume.duration > 0 ? resume.duration - resume.position : 0;
+  const listenMeta = resume
+    ? remaining > 60
+      ? `${formatLength(remaining)} left`
+      : 'Continue where you stopped'
+    : [player.podcast.title, formatLength(listen?.duration ?? null)].filter(Boolean).join(' · ');
   const quote = quotes[new Date().getDate() % quotes.length];
 
   // Sample streak until reading history is stored in the backend.
@@ -119,22 +131,34 @@ export default function Home() {
         </View>
       </Card>
 
-      <View style={{ gap: 8 }}>
-        <SectionHeader title="Continue listening" />
-        <Tap accessibilityRole="button" accessibilityLabel="Continue The Soul: Consciousness" onPress={() => router.push('/player')} style={[styles.listenRow]}>
-          <View style={styles.listenArt}>
-            <Eagle height={54} light />
+      {listen ? (
+        <View style={{ gap: 8 }}>
+          <SectionHeader title={resume ? 'Continue listening' : 'Listen'} action="Podcast" onAction={() => router.navigate('/podcast')} />
+          <View style={styles.listenRow}>
+            <Tap
+              accessibilityRole="button"
+              accessibilityLabel={`Open the player: ${listen.title}`}
+              onPress={() => router.push('/player')}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={styles.listenArt}>
+                <Eagle height={54} light />
+              </View>
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={styles.listenTitle} numberOfLines={2}>{listen.title}</Text>
+                <Text style={styles.metaText}>{listenMeta}</Text>
+                {resume && resume.duration > 0 ? <ProgressBar value={resume.position / resume.duration} /> : null}
+              </View>
+            </Tap>
+            <IconButton
+              icon={player.playing ? 'pause' : 'play'}
+              label={player.playing ? 'Pause' : `Play ${listen.title}`}
+              variant="solid"
+              iconSize={18}
+              onPress={() => (player.episode ? player.toggle() : player.play(listen))}
+            />
           </View>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={styles.listenTitle}>The Soul: Consciousness</Text>
-            <Text style={styles.metaText}>Audio teaching · 18 min left</Text>
-            <ProgressBar value={0.58} />
-          </View>
-          <View style={styles.playSmall}>
-            <Icon name="play" size={18} color={Colors.cream} />
-          </View>
-        </Tap>
-      </View>
+        </View>
+      ) : null}
 
       <View style={{ gap: 8 }}>
         <SectionHeader title="Latest sermons" action="See all" onAction={() => router.navigate('/sermons')} />
@@ -216,7 +240,6 @@ const styles = StyleSheet.create({
   listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   listenTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 22, color: Colors.text },
   metaText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
-  playSmall: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'center' },
   sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: Colors.text },
 
   quote: { gap: 14, padding: 20, paddingTop: 24, borderRadius: Radius.lg, backgroundColor: Colors.sand },
