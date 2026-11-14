@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Field, FormMessage } from '@/components/form';
@@ -14,6 +14,7 @@ import { checkName } from '@/lib/auth-messages';
 import { goHome } from '@/lib/navigation';
 import { useAuth } from '@/state/auth';
 import { useLibrary } from '@/state/library';
+import { TOPICS, useNotifications } from '@/state/notifications';
 import { ThemePreference, useColors, useStyles, useTheme } from '@/state/theme';
 
 const THEMES: { id: ThemePreference; label: string; icon: IconName }[] = [
@@ -25,6 +26,8 @@ const THEMES: { id: ThemePreference; label: string; icon: IconName }[] = [
 export default function Profile() {
   const router = useRouter();
   const lib = useLibrary();
+  const notify = useNotifications();
+  const [notifyError, setNotifyError] = useState<string | null>(null);
   const savedCount = lib.savedVideos.length + lib.savedDevotionals.length;
   const savedLabel = savedCount ? `Saved · ${savedCount} ${savedCount === 1 ? 'item' : 'items'}` : 'Saved sermons and devotionals';
   const insets = useSafeAreaInsets();
@@ -140,10 +143,60 @@ export default function Profile() {
           <Text style={styles.meta}>“Phone” follows your phone’s light or dark setting.</Text>
         </View>
 
+        {/* Notifications */}
+        <View style={{ gap: 4 }}>
+          <Eyebrow style={{ marginBottom: 6 }}>Notifications</Eyebrow>
+          {notify.unsupported ? (
+            <Text style={styles.meta}>{notify.unsupported}</Text>
+          ) : (
+            <>
+              <View style={styles.switchRow}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.switchLabel}>Allow notifications</Text>
+                  <Text style={styles.meta}>Choose what you’d like to hear about.</Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Allow notifications"
+                  value={notify.enabled}
+                  disabled={notify.busy}
+                  onValueChange={async (on) => {
+                    setNotifyError(null);
+                    if (on) {
+                      const res = await notify.enable();
+                      if (!res.ok) setNotifyError(res.error);
+                    } else notify.disable();
+                  }}
+                  trackColor={{ false: c.rail, true: c.brown }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              {notifyError ? <FormMessage>{notifyError}</FormMessage> : null}
+              {notify.enabled
+                ? TOPICS.map((t) => (
+                    <View key={t.id} style={styles.switchRow}>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={styles.switchLabel}>{t.label}</Text>
+                        <Text style={styles.meta}>{t.hint}</Text>
+                      </View>
+                      <Switch
+                        accessibilityLabel={t.label}
+                        value={notify.topics.includes(t.id)}
+                        onValueChange={(on) => notify.setTopic(t.id, on)}
+                        trackColor={{ false: c.rail, true: c.brown }}
+                        thumbColor="#FFFFFF"
+                      />
+                    </View>
+                  ))
+                : null}
+            </>
+          )}
+        </View>
+
         {/* Library */}
         <View style={{ gap: 4 }}>
           <Eyebrow style={{ marginBottom: 6 }}>Your library</Eyebrow>
           <Row icon="bookmark" label={savedLabel} onPress={() => router.push('/saved')} />
+          <Row icon="calendar" label="Events" onPress={() => router.push('/events')} />
           <Row icon="flame" label={lib.streak ? `${lib.streak}-day reading streak · best ${lib.bestStreak}` : 'Start a reading streak'} onPress={() => router.navigate('/devotional')} />
         </View>
 
@@ -194,6 +247,8 @@ function Row({ icon, label, onPress, danger = false }: { icon: IconName; label: 
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
+    switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.line },
+    switchLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
     topBar: { paddingHorizontal: 12, paddingBottom: 4 },
     card: { gap: 16, padding: 18, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
     avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },

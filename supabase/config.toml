@@ -10,6 +10,10 @@ verify_jwt = false
 [functions.delete-account]
 verify_jwt = false
 
+# Runs every few minutes from pg_cron; safe to call repeatedly (each notification is sent once).
+[functions.send-notifications]
+verify_jwt = false
+
 [auth]
 # Accounts are confirmed with a code from the email.
 enable_signup = true

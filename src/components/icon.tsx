@@ -38,7 +38,12 @@ export type IconName =
   | 'monitor'
   | 'eye'
   | 'eyeOff'
-  | 'globe';
+  | 'globe'
+  | 'calendar'
+  | 'pin'
+  | 'clock'
+  | 'image'
+  | 'link';
 
 type Props = {
   name: IconName;
@@ -189,6 +194,49 @@ export function Icon({ name, size = 22, color: colorProp, filled = false, dot = 
           {...stroke}
           fill={filled ? color : 'none'}
         />
+      );
+      break;
+    case 'calendar':
+      body = (
+        <>
+          <Rect x={3.5} y={5} width={17} height={15.5} rx={3} {...stroke} />
+          <Path d="M3.5 10h17" {...stroke} />
+          <Path d="M8 3v4" {...stroke} />
+          <Path d="M16 3v4" {...stroke} />
+        </>
+      );
+      break;
+    case 'pin':
+      body = (
+        <>
+          <Path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" {...stroke} />
+          <Circle cx={12} cy={9.5} r={2.5} {...stroke} />
+        </>
+      );
+      break;
+    case 'clock':
+      body = (
+        <>
+          <Circle cx={12} cy={12} r={8.5} {...stroke} />
+          <Path d="M12 7.5V12l3 2" {...stroke} />
+        </>
+      );
+      break;
+    case 'image':
+      body = (
+        <>
+          <Rect x={3.5} y={4.5} width={17} height={15} rx={3} {...stroke} />
+          <Circle cx={9} cy={10} r={1.6} {...stroke} />
+          <Path d="M4 17l4.5-4.5 3.5 3.5 3-3 5 5" {...stroke} />
+        </>
+      );
+      break;
+    case 'link':
+      body = (
+        <>
+          <Path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" {...stroke} />
+          <Path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" {...stroke} />
+        </>
       );
       break;
     case 'download':

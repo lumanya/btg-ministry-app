@@ -69,3 +69,21 @@ export function friendlyError(error: { message?: string; code?: string } | null 
 export function plural(n: number, word: string): string {
   return `${n} ${n === 1 ? word : `${word}s`}`;
 }
+
+/** "2026-12-12T18:30" typed in Tanzania time -> ISO timestamp. */
+export function eatInputToIso(value: string): string {
+  return new Date(`${value}:00+03:00`).toISOString();
+}
+
+/** ISO timestamp -> "2026-12-12T18:30" for a datetime-local input, in Tanzania time. */
+export function isoToEatInput(iso: string): string {
+  return new Date(Date.parse(iso) + 3 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
+/** "Sat 12 Dec, 18:30" in Tanzania time. */
+export function formatEat(iso: string): string {
+  const d = new Date(Date.parse(iso) + 3 * 3600 * 1000);
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${WEEKDAYS[d.getUTCDay()].slice(0, 3)} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${hh}:${mm}`;
+}

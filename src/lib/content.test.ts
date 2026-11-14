@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { formatTime, mapDevotional, mapService, paragraphs } from './content.ts';
+import { arrangePlaylists, eventWhen, formatTime, mapDevotional, mapService, paragraphs, upcomingEvents } from './content.ts';
 
 test('maps a devotional row for the app', () => {
   const d = mapDevotional({
@@ -38,4 +38,28 @@ test('formats weekly services', () => {
     meta: 'Dar es Salaam · Livestreamed',
   });
   assert.equal(mapService({ id: '2', name: 'Prayer', weekday: 3, start_time: '18:00', venue: null, livestreamed: false }).meta, '');
+});
+
+
+test('arranges playlists by staff settings', () => {
+  const lists = [
+    { id: 'a', title: 'A' },
+    { id: 'b', title: 'B' },
+    { id: 'c', title: 'C' },
+  ];
+  const out = arrangePlaylists(lists, [
+    { youtube_id: 'b', title: 'Better B', visible: true, sort: 1 },
+    { youtube_id: 'c', title: null, visible: false, sort: 0 },
+  ]);
+  assert.deepEqual(out.map((p) => p.title), ['Better B', 'A']);
+});
+
+test('upcoming events and their dates', () => {
+  const now = new Date('2026-11-14T12:00:00Z');
+  const ev = (id: string, startsAt: string, endsAt: string | null = null) => ({
+    id, title: id, startsAt, endsAt, locationName: null, address: null, description: '', imageUrl: null, registrationUrl: null, livestreamed: false,
+  });
+  const list = upcomingEvents([ev('later', '2026-12-01T07:00:00Z'), ev('past', '2026-11-01T07:00:00Z'), ev('today', '2026-11-14T10:00:00Z')], now);
+  assert.deepEqual(list.map((e) => e.id), ['today', 'later']);
+  assert.equal(eventWhen({ startsAt: '2026-12-12T07:00:00Z', endsAt: '2026-12-14T13:00:00Z' }).multiDay, true);
 });

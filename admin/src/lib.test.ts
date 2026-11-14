@@ -31,3 +31,11 @@ test('friendly errors', () => {
   assert.match(friendlyError({ code: '42501', message: 'x' }), /isn’t allowed/);
   assert.equal(friendlyError({ code: 'P0001', message: 'The ministry needs at least one admin.' }), 'The ministry needs at least one admin.');
 });
+
+import { eatInputToIso, formatEat, isoToEatInput } from './lib.ts';
+
+test('Tanzania date-time inputs', () => {
+  assert.equal(eatInputToIso('2026-12-12T18:30'), '2026-12-12T15:30:00.000Z');
+  assert.equal(isoToEatInput('2026-12-12T15:30:00.000Z'), '2026-12-12T18:30');
+  assert.equal(formatEat('2026-12-12T15:30:00.000Z'), 'Sat 12 Dec, 18:30');
+});

@@ -7,6 +7,12 @@ import type { Devotional } from '@/content/sample';
 import {
   DEVOTIONAL_COLUMNS,
   DevotionalRow,
+  EVENT_COLUMNS,
+  EventRow,
+  mapEvent,
+  MinistryEvent,
+  PlaylistSetting,
+  upcomingEvents,
   GivingMethod,
   GivingRow,
   mapDevotional,
@@ -26,7 +32,7 @@ import { supabase } from '@/lib/supabase';
  * dashboard) and a copy is kept on the phone for offline use. Without it, the
  * built-in sample content is shown.
  */
-const CACHE_KEY = 'btg.content.v1';
+const CACHE_KEY = 'btg.content.v2';
 /** Check for new content when the app comes back to the front, at most this often. */
 const REFRESH_AFTER_MS = 15 * 60 * 1000;
 
@@ -36,6 +42,8 @@ type Snapshot = {
   services: Service[];
   giving: GivingMethod[];
   quotes: string[];
+  events: MinistryEvent[];
+  playlistSettings: PlaylistSetting[];
 };
 
 export type PrayerInput = { message: string; name?: string; contact?: string };
@@ -48,6 +56,9 @@ type ContentState = Snapshot & {
   /** Today's devotional (the newest one published up to today). */
   today: Devotional;
   findDevotional: (id: string) => Devotional | undefined;
+  /** Events that haven't finished yet, soonest first. */
+  upcoming: MinistryEvent[];
+  findEvent: (id: string) => MinistryEvent | undefined;
   /** Sends a prayer request to the ministry. Throws an Error with a message to show. */
   sendPrayer: (input: PrayerInput) => Promise<void>;
 };
@@ -58,18 +69,23 @@ const sampleSnapshot: Snapshot = {
   services: sample.services,
   giving: sample.giving,
   quotes: sample.quotes,
+  events: [],
+  playlistSettings: [],
 };
 
 const ContentContext = createContext<ContentState | null>(null);
 
 async function fetchSnapshot(): Promise<Snapshot> {
   if (!supabase) throw new Error('Not connected');
-  const [devotionals, series, services, giving, quotes] = await Promise.all([
+  const since = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString();
+  const [devotionals, series, services, giving, quotes, events, playlists] = await Promise.all([
     supabase.from('devotionals').select(DEVOTIONAL_COLUMNS).order('publish_on', { ascending: false }).limit(90),
     supabase.from('series').select('name,tone').order('sort').order('name'),
     supabase.from('services').select('id,name,weekday,start_time,venue,livestreamed').order('sort').order('weekday'),
     supabase.from('giving_methods').select('id,label,number,account_name').order('sort'),
     supabase.from('quotes').select('text').order('created_at'),
+    supabase.from('events').select(EVENT_COLUMNS).gte('starts_at', since).order('starts_at').limit(30),
+    supabase.from('playlists').select('youtube_id,title,visible,sort'),
   ]);
   const failed = [devotionals, series, services, giving, quotes].find((r) => r.error);
   if (failed?.error) throw failed.error;
@@ -79,6 +95,9 @@ async function fetchSnapshot(): Promise<Snapshot> {
     services: ((services.data ?? []) as ServiceRow[]).map(mapService),
     giving: ((giving.data ?? []) as GivingRow[]).map(mapGiving),
     quotes: (quotes.data ?? []).map((q: { text: string }) => q.text),
+    // Newer tables: an error here (e.g. not set up yet) just means none to show.
+    events: ((events.data ?? []) as EventRow[]).map(mapEvent),
+    playlistSettings: (playlists.data ?? []) as PlaylistSetting[],
   };
 }
 
@@ -163,6 +182,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       refresh,
       today,
       findDevotional: (id) => devotionals.find((d) => d.id === id),
+      upcoming: upcomingEvents(snapshot.events),
+      findEvent: (id) => snapshot.events.find((e) => e.id === id),
       sendPrayer,
     };
   }, [snapshot, status, refreshing, refresh, sendPrayer]);

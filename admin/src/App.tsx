@@ -4,7 +4,10 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { friendlyError } from './lib';
 import DevotionalEditor from './pages/DevotionalEditor';
 import Devotionals from './pages/Devotionals';
+import { EventEditor, EventsList } from './pages/Events';
+import Notifications from './pages/Notifications';
 import Overview from './pages/Overview';
+import Playlists from './pages/Playlists';
 import Prayer from './pages/Prayer';
 import Staff from './pages/Staff';
 import { GivingPage, QuotesPage, SeriesPage, ServicesPage } from './pages/Lists';
@@ -76,7 +79,10 @@ export default function App() {
 const NAV: { to: string; label: string; adminOnly?: boolean }[] = [
   { to: '', label: 'Overview' },
   { to: 'devotionals', label: 'Devotionals' },
+  { to: 'events', label: 'Events' },
+  { to: 'notifications', label: 'Notifications' },
   { to: 'prayer', label: 'Prayer requests' },
+  { to: 'playlists', label: 'Sermon series' },
   { to: 'services', label: 'Services' },
   { to: 'giving', label: 'Giving' },
   { to: 'series', label: 'Series' },
@@ -106,6 +112,10 @@ function Shell({ role, email }: { role: StaffRole; email: string }) {
   let page;
   if (section === 'devotionals' && id) page = <DevotionalEditor key={`${id}?${route.query}`} id={id === 'new' ? null : id} query={route.query} />;
   else if (section === 'devotionals') page = <Devotionals />;
+  else if (section === 'events' && id) page = <EventEditor key={id} id={id === 'new' ? null : id} />;
+  else if (section === 'events') page = <EventsList />;
+  else if (section === 'notifications') page = <Notifications />;
+  else if (section === 'playlists') page = <Playlists />;
   else if (section === 'prayer') page = <Prayer onChange={countPrayers} />;
   else if (section === 'services') page = <ServicesPage />;
   else if (section === 'giving') page = <GivingPage />;

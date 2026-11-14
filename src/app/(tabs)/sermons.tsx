@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/icon';
+import { PlaylistCard } from '@/components/playlist-card';
 import { Eyebrow, Screen, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
@@ -22,13 +23,13 @@ export default function Sermons() {
   const c = useColors();
   const styles = useStyles(createStyles);
   const router = useRouter();
-  const { feed, status, refreshing, refresh } = useFeed();
+  const { feed, status, refreshing, refresh, playlists } = useFeed();
   const [filter, setFilter] = useState<FilterId>('all');
   const [query, setQuery] = useState('');
 
   const q = query.trim().toLowerCase();
   const matches = feed.videos.filter(
-    (v) => (filter === 'all' || v.kind === filter) && (!q || `${v.title} ${v.description}`.toLowerCase().includes(q)),
+    (v) => (filter === 'all' || v.kind === filter) && (!q || `${v.title} ${v.subtitle ?? ''} ${v.description}`.toLowerCase().includes(q)),
   );
   const [featured, ...rest] = matches;
   const open = (v: FeedVideo) => router.push({ pathname: '/sermon/[id]', params: { id: v.id } });
@@ -86,6 +87,26 @@ export default function Sermons() {
         </Tap>
       ) : null}
 
+      {playlists.length && !q && filter === 'all' ? (
+        <View style={{ gap: 10 }}>
+          <View style={styles.listHeader}>
+            <Eyebrow>Series</Eyebrow>
+            <Text style={styles.meta}>{playlists.length === 1 ? '1 series' : `${playlists.length} series`}</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToInterval={220 + 14}
+            style={{ marginHorizontal: -ScreenPadding }}
+            contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 14 }}>
+            {playlists.map((p) => (
+              <PlaylistCard key={p.id} playlist={p} onPress={() => router.push({ pathname: '/playlist/[id]', params: { id: p.id } })} />
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={styles.listHeader}>
         <Eyebrow>{filter === 'all' ? 'Recent' : filters.find((f) => f.id === filter)!.label}</Eyebrow>
         <Text style={styles.meta} accessibilityLiveRegion="polite">
@@ -99,6 +120,7 @@ export default function Sermons() {
             <VideoThumb video={v} height={72} titleSize={13} tone={videoTone(i + 1)} radius={12} style={{ width: 124, gap: 8 }} />
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.itemTitle} numberOfLines={3}>{v.title}</Text>
+              {v.subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{v.subtitle}</Text> : null}
               <Text style={styles.meta}>{videoMeta(v)}</Text>
             </View>
           </Tap>
@@ -141,6 +163,7 @@ const createStyles = (c: Palette) =>
   notice: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: c.parchment },
   itemTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  subtitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: c.eyebrow },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   empty: { padding: 28, borderRadius: Radius.lg, backgroundColor: c.parchment, alignItems: 'center' },

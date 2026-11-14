@@ -205,3 +205,9 @@ table.edit textarea.input { min-height: 64px; min-width: 320px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } .btn { transition: none; } }
 .center { display: grid; place-items: center; min-height: 40vh; }
+
+/* ---------- Notification preview ---------- */
+.push-preview { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 20px; background: rgba(255, 255, 255, 0.92); border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(43, 29, 18, 0.1); }
+.push-preview img { width: 36px; height: 36px; object-fit: contain; padding: 4px; border-radius: 9px; background: var(--panel); }
+.push-title { font-weight: 600; margin-top: 2px; overflow-wrap: anywhere; }
+.push-body { color: var(--muted); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

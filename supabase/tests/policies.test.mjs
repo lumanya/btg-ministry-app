@@ -224,3 +224,71 @@ describe('storage', () => {
     await rows(EDITOR, `insert into storage.objects (bucket_id, name) values ('media', 'devotionals/a.mp3')`);
   });
 });
+
+describe('notifications', () => {
+  const TOKEN = 'ExponentPushToken[abc123]';
+
+  test('anyone can register their phone, but nobody can read the device list', async () => {
+    await rows(null, `select public.register_push_device($1, 'android', array['live','devotional'])`, [TOKEN]);
+    await fails(null, `select * from public.push_devices`, [], /permission denied/);
+    await fails(MEMBER, `select * from public.push_devices`, [], /permission denied/);
+    const [d] = await db.query(`select user_id, topics from public.push_devices where token = $1`, [TOKEN]).then((r) => r.rows);
+    assert.equal(d.user_id, null);
+    assert.deepEqual(d.topics, ['live', 'devotional']);
+  });
+
+  test('registering again updates topics and links a signed-in member', async () => {
+    await rows(MEMBER, `select public.register_push_device($1, 'android', array['announcements'])`, [TOKEN]);
+    const [d] = (await db.query(`select user_id, topics from public.push_devices where token = $1`, [TOKEN])).rows;
+    assert.equal(d.user_id, MEMBER);
+    assert.deepEqual(d.topics, ['announcements']);
+  });
+
+  test('bad tokens and unknown topics are refused', async () => {
+    await fails(null, `select public.register_push_device('not-a-token', 'android', array['live'])`, [], /check constraint/);
+    await fails(null, `select public.register_push_device('ExponentPushToken[x]', 'android', array['spam'])`, [], /check constraint/);
+  });
+
+  test('only staff queue announcements, and only as plain queued items', async () => {
+    await fails(MEMBER, `insert into public.notifications (title, body) values ('Hi', 'There')`, [], /row-level security/);
+    await fails(null, `insert into public.notifications (title, body) values ('Hi', 'There')`, [], /row-level security|permission denied/);
+    await fails(EDITOR, `insert into public.notifications (title, body, status) values ('Hi', 'There', 'sent')`, [], /row-level security/);
+    await fails(EDITOR, `insert into public.notifications (title, body, dedupe_key) values ('Hi', 'There', 'live:x')`, [], /row-level security/);
+    const [n] = await rows(EDITOR, `insert into public.notifications (title, body, url) values ('Sunday service', 'Join us at 9:00', '/live') returning id, created_by`);
+    assert.equal(n.created_by, EDITOR);
+    assert.equal((await rows(MEMBER, `select * from public.notifications`)).length, 0);
+    // Can cancel while queued, but not mark it as sent.
+    await fails(EDITOR, `update public.notifications set status = 'sent' where id = $1`, [n.id], /row-level security/);
+    assert.equal((await rows(EDITOR, `update public.notifications set status = 'cancelled' where id = $1 returning id`, [n.id])).length, 1);
+    assert.equal((await rows(EDITOR, `update public.notifications set title = 'Changed' where id = $1 returning id`, [n.id])).length, 0);
+  });
+
+  test('the audience count is for staff', async () => {
+    await fails(MEMBER, `select public.push_audience()`, [], /Only staff/);
+    const [{ push_audience: a }] = await rows(EDITOR, `select public.push_audience()`);
+    assert.equal(a.devices, 1);
+    assert.equal(a.announcements, 1);
+  });
+
+  test('a phone can turn its notifications off', async () => {
+    await rows(null, `select public.unregister_push_device($1)`, [TOKEN]);
+    assert.equal((await db.query(`select 1 from public.push_devices`)).rows.length, 0);
+  });
+});
+
+describe('playlists and events', () => {
+  test('guests read playlist settings; only staff change them', async () => {
+    await rows(EDITOR, `insert into public.playlists (youtube_id, visible, sort) values ('PL123', false, 2)`);
+    assert.equal((await rows(null, `select * from public.playlists`)).length, 1);
+    await fails(MEMBER, `insert into public.playlists (youtube_id) values ('PL999')`, [], /row-level security/);
+    assert.equal((await rows(MEMBER, `update public.playlists set visible = true returning youtube_id`)).length, 0);
+  });
+
+  test('guests see published events only; staff see drafts', async () => {
+    await rows(EDITOR, `insert into public.events (title, starts_at, status) values ('Conference', now() + interval '10 days', 'published'), ('Planning', now() + interval '20 days', 'draft')`);
+    assert.deepEqual((await rows(null, `select title from public.events`)).map((r) => r.title), ['Conference']);
+    assert.equal((await rows(EDITOR, `select title from public.events`)).length, 2);
+    await fails(MEMBER, `insert into public.events (title, starts_at) values ('X', now())`, [], /row-level security/);
+    await fails(EDITOR, `insert into public.events (title, starts_at, ends_at) values ('X', now(), now() - interval '1 hour')`, [], /check constraint/);
+  });
+});

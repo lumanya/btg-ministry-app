@@ -2,7 +2,9 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { AppState } from 'react-native';
 
 import { sampleVideos } from '@/content/sample';
-import type { Feed } from '@/lib/video';
+import { arrangePlaylists } from '@/lib/content';
+import { type Feed, type FeedPlaylist, type FeedVideo, findVideo as findInFeed, type PlaylistPage } from '@/lib/video';
+import { useContent } from '@/state/content';
 
 /**
  * The YouTube feed: what is live, what is coming up, and past sermons.
@@ -22,6 +24,14 @@ type FeedState = {
   status: FeedStatus;
   refreshing: boolean;
   refresh: () => Promise<void>;
+  /** The channel's playlists, as staff arranged them in the dashboard. */
+  playlists: FeedPlaylist[];
+  /** One page of a playlist (50 videos), in the order arranged on YouTube. */
+  loadPlaylist: (id: string, pageToken?: string | null) => Promise<PlaylistPage>;
+  /** Finds a video in the feed or in any playlist page loaded so far. */
+  findVideo: (id: string) => FeedVideo | undefined;
+  /** The videos of a playlist loaded so far, in order. */
+  playlistVideos: (id: string) => FeedVideo[];
 };
 
 const sampleFeed: Feed = {
@@ -39,6 +49,10 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<FeedStatus>(FEED_URL ? 'loading' : 'sample');
   const [refreshing, setRefreshing] = useState(false);
   const inFlight = useRef(false);
+  const content = useContent();
+  // Videos seen in playlist pages, so their sermon pages open without the main feed.
+  const [seen, setSeen] = useState<Record<string, FeedVideo>>({});
+  const [orders, setOrders] = useState<Record<string, string[]>>({});
 
   const load = useCallback(async () => {
     if (!FEED_URL || inFlight.current) return;
@@ -84,7 +98,37 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [load]);
 
-  const value = useMemo(() => ({ feed, status, refreshing, refresh }), [feed, status, refreshing, refresh]);
+  const loadPlaylist = useCallback(async (id: string, pageToken?: string | null): Promise<PlaylistPage> => {
+    if (!FEED_URL) return { playlist: null, videos: [], nextPageToken: null };
+    const url = `${FEED_URL}?playlist=${encodeURIComponent(id)}${pageToken ? `&page=${encodeURIComponent(pageToken)}` : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Playlist returned ${res.status}`);
+    const page = (await res.json()) as PlaylistPage;
+    if (!Array.isArray(page.videos)) throw new Error('Playlist has an unexpected shape');
+    setSeen((s) => {
+      const next = { ...s };
+      for (const v of page.videos) next[v.id] = v;
+      return next;
+    });
+    setOrders((o) => ({ ...o, [id]: [...(pageToken ? (o[id] ?? []) : []), ...page.videos.map((v) => v.id)] }));
+    return page;
+  }, []);
+
+  const playlists = useMemo(() => arrangePlaylists(feed.playlists ?? [], content.playlistSettings), [feed.playlists, content.playlistSettings]);
+
+  const value = useMemo(
+    () => ({
+      feed,
+      status,
+      refreshing,
+      refresh,
+      playlists,
+      loadPlaylist,
+      findVideo: (id: string) => findInFeed(feed, id) ?? seen[id],
+      playlistVideos: (id: string) => (orders[id] ?? []).map((v) => seen[v]).filter((v): v is FeedVideo => !!v),
+    }),
+    [feed, status, refreshing, refresh, playlists, loadPlaylist, seen, orders],
+  );
   return <FeedContext.Provider value={value}>{children}</FeedContext.Provider>;
 }
 

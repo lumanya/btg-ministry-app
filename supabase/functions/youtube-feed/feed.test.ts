@@ -71,3 +71,40 @@ test('an empty channel gives an empty feed', () => {
   assert.deepEqual(feed.upcoming, []);
   assert.deepEqual(feed.videos, []);
 });
+
+import { buildPlaylists, buildPlaylistVideos, tidyTitle } from './feed.ts';
+
+test('tidies capitalised YouTube titles', () => {
+  assert.deepEqual(tidyTitle('FRIDAY SERVICE || 13 TH NOV 2026 || BTG MINISTRY'), { title: 'Friday Service', subtitle: null });
+  assert.deepEqual(tidyTitle('HEAVENS OR GALAXIES? PART 2 || INTERPRETATION OF BIBLICAL PROPHECY || 11TH NOV 2026 || BTG MINISTRY'), {
+    title: 'Heavens or Galaxies? Part 2',
+    subtitle: 'Interpretation of Biblical Prophecy',
+  });
+  assert.deepEqual(tidyTitle('CIVILIZATION OF SPIRITS IN BODIES ||  lAWS OF EXISTENCE || 08TH OCT 2026 || BTG MINISTRY'), {
+    title: 'Civilization of Spirits in Bodies',
+    subtitle: 'Laws of Existence',
+  });
+  assert.deepEqual(tidyTitle('Consciousness & Realities of Realms'), { title: 'Consciousness & Realities of Realms', subtitle: null });
+  assert.equal(tidyTitle('BTG MINISTRY || SUNDAY SERVICE II || 2ND MAY 2025').title, 'Sunday Service II');
+});
+
+test('keeps public, non-empty playlists', () => {
+  const lists = buildPlaylists([
+    { id: 'PL1', snippet: { title: 'THE SOUL', thumbnails: { high: { url: 'https://i.ytimg.com/1.jpg' } } }, contentDetails: { itemCount: 4 } },
+    { id: 'PL2', snippet: { title: 'Empty' }, contentDetails: { itemCount: 0 } },
+    { id: 'PL3', snippet: { title: 'Private' }, contentDetails: { itemCount: 3 }, status: { privacyStatus: 'private' } },
+  ]);
+  assert.deepEqual(lists, [{ id: 'PL1', title: 'The Soul', description: '', thumbnail: 'https://i.ytimg.com/1.jpg', count: 4 }]);
+});
+
+test('playlist videos keep the playlist order and skip missing or upcoming ones', () => {
+  const vids = buildPlaylistVideos(
+    ['b', 'gone', 'a', 'soon'],
+    [
+      { id: 'a', snippet: { title: 'PART 2', publishedAt: '2026-01-02T00:00:00Z' }, contentDetails: { duration: 'PT40M' } },
+      { id: 'b', snippet: { title: 'PART 1', publishedAt: '2026-01-01T00:00:00Z' }, contentDetails: { duration: 'PT40M' } },
+      { id: 'soon', snippet: { title: 'Next', liveBroadcastContent: 'upcoming' }, liveStreamingDetails: { scheduledStartTime: '2030-01-01T00:00:00Z' } },
+    ],
+  );
+  assert.deepEqual(vids.map((v) => [v.id, v.title]), [['b', 'Part 1'], ['a', 'Part 2']]);
+});

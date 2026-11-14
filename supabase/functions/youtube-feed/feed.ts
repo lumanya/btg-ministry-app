@@ -4,13 +4,21 @@
  * this file directly.
  */
 
+import { tidyTitle } from './title.ts';
+
+export { tidyTitle };
+
 export type FeedVideoKind = 'live' | 'upcoming' | 'stream' | 'video';
 
 export type FeedVideo = {
   /** Route id in the app. Equals youtubeId for videos from YouTube. */
   id: string;
   youtubeId: string | null;
+  /** Tidied for display ("Friday Service"); the original is in `youtubeTitle`. */
   title: string;
+  /** Second part of the YouTube title, e.g. the series ("Laws of Existence"). */
+  subtitle?: string | null;
+  youtubeTitle?: string;
   description: string;
   /** ISO timestamp: the stream's start for livestreams, the upload time otherwise. */
   date: string;
@@ -28,7 +36,32 @@ export type Feed = {
   upcoming: FeedVideo[];
   /** Past livestreams and uploaded videos, newest first. */
   videos: FeedVideo[];
+  /** The channel's public playlists (series of teachings). */
+  playlists?: FeedPlaylist[];
   fetchedAt: string;
+};
+
+export type FeedPlaylist = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string | null;
+  count: number;
+};
+
+/** One page of a playlist's videos, in the order arranged on YouTube. */
+export type PlaylistPage = {
+  playlist: FeedPlaylist | null;
+  videos: FeedVideo[];
+  nextPageToken: string | null;
+};
+
+/** The parts of a `playlists.list` item this feed reads. */
+export type YouTubePlaylistItem = {
+  id: string;
+  snippet?: { title?: string; description?: string; thumbnails?: Record<string, { url: string } | undefined> };
+  contentDetails?: { itemCount?: number };
+  status?: { privacyStatus?: string };
 };
 
 /** The parts of a `videos.list` item this feed reads. */
@@ -95,10 +128,14 @@ export function toFeedVideo(item: YouTubeVideoItem): FeedVideo {
   const kind = classify(item);
   const lsd = item.liveStreamingDetails;
   const date = lsd?.actualStartTime ?? lsd?.scheduledStartTime ?? item.snippet?.publishedAt ?? new Date(0).toISOString();
+  const raw = item.snippet?.title?.trim() || 'Untitled';
+  const { title, subtitle } = tidyTitle(raw);
   return {
     id: item.id,
     youtubeId: item.id,
-    title: item.snippet?.title?.trim() || 'Untitled',
+    title,
+    subtitle,
+    youtubeTitle: raw,
     description: item.snippet?.description?.trim() ?? '',
     date,
     thumbnail: bestThumbnail(item),
@@ -131,4 +168,36 @@ export function buildFeed(channelId: string, items: YouTubeVideoItem[], now: Dat
     .sort(byDateDesc);
 
   return { channelId, live, upcoming, videos, fetchedAt: now.toISOString() };
+}
+
+export function toPlaylist(item: YouTubePlaylistItem): FeedPlaylist {
+  const t = item.snippet?.thumbnails ?? {};
+  const thumb = (t.maxres ?? t.standard ?? t.high ?? t.medium ?? t.default)?.url ?? null;
+  return {
+    id: item.id,
+    title: tidyTitle(item.snippet?.title?.trim() || 'Untitled').title,
+    description: item.snippet?.description?.trim() ?? '',
+    thumbnail: thumb,
+    count: item.contentDetails?.itemCount ?? 0,
+  };
+}
+
+/** Public playlists with at least one video, in the channel's order. */
+export function buildPlaylists(items: YouTubePlaylistItem[]): FeedPlaylist[] {
+  return items
+    .filter((p) => (p.status?.privacyStatus ?? 'public') === 'public' && (p.contentDetails?.itemCount ?? 0) > 0)
+    .map(toPlaylist);
+}
+
+/**
+ * Videos of one playlist page, keeping the playlist's order. Private, deleted
+ * and not-yet-started videos are left out.
+ */
+export function buildPlaylistVideos(orderedIds: string[], items: YouTubeVideoItem[]): FeedVideo[] {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  return orderedIds
+    .map((id) => byId.get(id))
+    .filter((i): i is YouTubeVideoItem => !!i)
+    .map(toFeedVideo)
+    .filter((v) => v.kind === 'video' || v.kind === 'stream');
 }

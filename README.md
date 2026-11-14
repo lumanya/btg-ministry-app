@@ -208,6 +208,22 @@ npm run dev               # opens on http://localhost:5173
 - The app keeps a copy of the latest content, so it still works without a connection.
 - Prayer requests are limited to 3 an hour per member, and 30 a minute across the app, to stop floods.
 
+## Notifications, series, share cards and events
+
+**Push notifications.** Members turn them on from the card on Home or in Settings, and choose topics: *We're live*, *Daily devotional* (from 06:00), *Service reminders* (30 minutes before), *Events* (the day before and an hour before) and *Announcements*. Staff send or schedule announcements from the dashboard's **Notifications** page. Everything else goes out automatically: the `send-notifications` function runs every 5 minutes, adds what's due to the outbox (each item once) and sends it through Expo's push service.
+
+Setup, once:
+1. Run `supabase/migrations/20261114230000_engagement.sql` in the SQL Editor (or `npx supabase db push`).
+2. Deploy the functions: `npx supabase functions deploy youtube-feed send-notifications` (JWT verification off for both).
+3. Run `supabase/cron.sql` in the SQL Editor to start the 5-minute schedule.
+4. Push notifications need the app built with EAS: run `npx eas-cli init` (adds the project ID to `app.json`), then add Android (Firebase FCM) and iOS (Apple push key) credentials with `npx eas-cli credentials`. Until then the app explains that notifications switch on in the store build. They don't work in Expo Go on Android.
+
+**Sermon series.** YouTube playlists appear as series on the Sermons tab, with each teaching in the order arranged on YouTube. The dashboard's **Sermon series** page hides, renames or reorders them. YouTube titles written in capitals with `||` are tidied for display ("FRIDAY SERVICE || 13 TH NOV 2026 || BTG MINISTRY" becomes "Friday Service").
+
+**Share cards.** The quote on Home, the devotional reader and events share as branded images (Ivory, Latte or Night; a square-ish post or a full-screen status), ready for WhatsApp.
+
+**Events.** Staff add conferences and special services on the dashboard's **Events** page (date, place, picture, registration link). The next one shows on Home; members can register, get directions, set a reminder and invite friends with a share card.
+
 ## Light and dark mode
 
 The app follows the phone's light or dark setting. Members can override it under **Settings → Appearance** (Phone, Light or Dark), and the choice is remembered. Colours for both modes are in `src/constants/theme.ts`; screens read them with `useColors()` and `useStyles()` from `src/state/theme.tsx`.

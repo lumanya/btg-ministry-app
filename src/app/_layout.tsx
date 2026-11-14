@@ -20,6 +20,7 @@ import { AuthProvider } from '@/state/auth';
 import { ContentProvider } from '@/state/content';
 import { FeedProvider } from '@/state/feed';
 import { LibraryProvider } from '@/state/library';
+import { NotificationsProvider } from '@/state/notifications';
 import { PlayerProvider } from '@/state/player';
 import { ThemeProvider, useTheme } from '@/state/theme';
 
@@ -50,7 +51,9 @@ export default function RootLayout() {
           <FeedProvider>
             <PlayerProvider>
               <LibraryProvider>
-                <AppStack />
+                <NotificationsProvider>
+                  <AppStack />
+                </NotificationsProvider>
               </LibraryProvider>
             </PlayerProvider>
           </FeedProvider>
@@ -80,6 +83,10 @@ function AppStack() {
         <Stack.Screen name="give" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="saved" />
+        <Stack.Screen name="playlist/[id]" />
+        <Stack.Screen name="events/index" />
+        <Stack.Screen name="events/[id]" />
+        <Stack.Screen name="share" options={{ presentation: 'modal' }} />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="sign-up" />
         <Stack.Screen name="verify" />

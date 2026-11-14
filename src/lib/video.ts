@@ -1,8 +1,8 @@
 import type { ArtTone } from '@/content/sample';
 
-import type { Feed, FeedVideo } from '../../supabase/functions/youtube-feed/feed';
+import type { Feed, FeedPlaylist, FeedVideo, PlaylistPage } from '../../supabase/functions/youtube-feed/feed';
 
-export type { Feed, FeedVideo };
+export type { Feed, FeedPlaylist, FeedVideo, PlaylistPage };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

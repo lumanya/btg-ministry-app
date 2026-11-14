@@ -1,7 +1,10 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Eagle, ScrollCard } from '@/components/art';
+import { EventCard } from '@/components/event-card';
+import { FormMessage } from '@/components/form';
 import { Icon } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
@@ -15,6 +18,7 @@ import { useAuth } from '@/state/auth';
 import { useContent } from '@/state/content';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
+import { useNotifications } from '@/state/notifications';
 import { usePlayer } from '@/state/player';
 import { useColors, useStyles } from '@/state/theme';
 
@@ -36,6 +40,9 @@ export default function Home() {
   const auth = useAuth();
   const lib = useLibrary();
   const content = useContent();
+  const notify = useNotifications();
+  const [promptError, setPromptError] = useState<string | null>(null);
+  const nextEvent = content.upcoming[0];
   const { feed, status, refreshing, refresh } = useFeed();
   const refreshAll = () => {
     refresh();
@@ -141,6 +148,41 @@ export default function Home() {
           </Tap>
         ) : null}
       </Appear>
+
+      {notify.showPrompt ? (
+        <Appear index={2}>
+          <View style={styles.prompt}>
+            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+              <View style={styles.promptIcon}>
+                <Icon name="bell" color={c.accent} />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.cardTitle}>Never miss a service</Text>
+                <Text style={styles.metaText}>Get a notification when we go live, when today’s devotional is posted, and before events.</Text>
+              </View>
+            </View>
+            {promptError ? <FormMessage>{promptError}</FormMessage> : null}
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button
+                label={notify.busy ? 'Turning on…' : 'Turn on'}
+                onPress={async () => {
+                  const res = await notify.enable();
+                  if (!res.ok) setPromptError(res.error);
+                }}
+                style={{ flex: 1, minHeight: 46 }}
+              />
+              <Button label="Not now" variant="outline" onPress={notify.dismissPrompt} style={{ flex: 1, minHeight: 46 }} />
+            </View>
+          </View>
+        </Appear>
+      ) : null}
+
+      {nextEvent ? (
+        <Appear index={2} style={{ gap: 4 }}>
+          <SectionHeader title="Coming up" action={content.upcoming.length > 1 ? 'All events' : undefined} onAction={() => router.push('/events')} />
+          <EventCard event={nextEvent} onPress={() => router.push({ pathname: '/events/[id]', params: { id: nextEvent.id } })} />
+        </Appear>
+      ) : null}
 
       <Appear index={2} style={{ gap: 4 }}>
         <SectionHeader title="Today's devotional" action="See all" onAction={() => router.navigate('/devotional')} />
@@ -280,7 +322,7 @@ export default function Home() {
               icon="share"
               label="Share this word"
               iconSize={18}
-              onPress={() => Share.share({ message: `“${quote}” — Iman Mwakanyamale, BTG Ministry` })}
+              onPress={() => router.push({ pathname: '/share', params: { kind: 'quote', text: quote, attribution: 'Iman Mwakanyamale' } })}
               style={{ backgroundColor: 'transparent', borderColor: c.accent }}
             />
           </View>
@@ -349,6 +391,8 @@ const createStyles = (c: Palette) =>
     metaText: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: c.textMuted },
     sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
 
+    prompt: { gap: 14, padding: 18, borderRadius: Radius.lg, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
+    promptIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' },
     quote: { gap: 14, padding: 20, paddingTop: 24, borderRadius: Radius.lg, backgroundColor: c.sand },
     quoteText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 29, color: c.brownDark },
   });

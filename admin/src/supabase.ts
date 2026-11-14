@@ -9,6 +9,9 @@ const key = import.meta.env.VITE_SUPABASE_KEY as string | undefined;
 
 export const supabase: SupabaseClient | null = url && key ? createClient(url, key) : null;
 
+/** The YouTube feed function (playlists, videos), on the same Supabase project. */
+export const FEED_URL = `${url ?? ''}/functions/v1/youtube-feed`;
+
 /** Use inside pages, which only render once the client exists. */
 export function db(): SupabaseClient {
   if (!supabase) throw new Error('Supabase is not configured');

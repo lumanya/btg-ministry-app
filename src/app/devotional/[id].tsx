@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import Animated, { FadeIn, ZoomIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Eagle } from '@/components/art';
@@ -47,6 +47,14 @@ export default function Reader() {
   });
   const progressStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
 
+  const shareCard = () =>
+    router.push({
+      pathname: '/share',
+      params: d.scripture?.text
+        ? { kind: 'verse', text: d.scripture.text, attribution: `${d.scripture.ref} · KJV` }
+        : { kind: 'devotional', title: d.title, text: d.excerpt, attribution: d.scripture?.ref ?? 'Iman Mwakanyamale' },
+    });
+
   const markRead = () => {
     success();
     lib.markRead(d.id);
@@ -83,7 +91,7 @@ export default function Reader() {
           selected={bookmarked}
           onPress={toggleBookmark}
         />
-        <IconButton icon="share" label="Share this devotional" variant="plain" onPress={() => Share.share({ message: `${d.title} — BTG Ministry daily devotional` })} />
+        <IconButton icon="share" label="Share this devotional" variant="plain" onPress={shareCard} />
       </View>
 
       <View style={styles.progressTrack} pointerEvents="none">

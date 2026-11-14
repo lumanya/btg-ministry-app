@@ -11,7 +11,7 @@ import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
-import { findVideo, videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
+import { videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
@@ -19,17 +19,17 @@ import { useColors, useStyles } from '@/state/theme';
 export default function SermonScreen() {
   const c = useColors();
   const styles = useStyles(createStyles);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, playlist } = useLocalSearchParams<{ id: string; playlist?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { feed } = useFeed();
-  const video = findVideo(feed, id) ?? feed.videos[0];
+  const { feed, findVideo, playlistVideos } = useFeed();
+  const lib = useLibrary();
+  const video = findVideo(id) ?? lib.savedVideos.find((v) => v.id === id) ?? feed.videos[0];
 
   // Reset the player state when moving to another sermon.
   const [state, setState] = useState({ id, playing: false, more: false });
   const current = state.id === id ? state : { id, playing: false, more: false };
-  const lib = useLibrary();
   const update = (patch: Partial<typeof current>) => setState({ ...current, ...patch });
 
   if (!video) {
@@ -46,7 +46,10 @@ export default function SermonScreen() {
   const watchUrl = youtubeWatchUrl(video) ?? links.youtubeChannel;
   const playerHeight = Math.round(Math.min(width, 700) * (9 / 16));
   const play = () => (video.youtubeId ? update({ playing: true }) : WebBrowser.openBrowserAsync(links.youtubeChannel));
-  const upNext = feed.videos.filter((v) => v.id !== video.id).slice(0, 3);
+  // From a playlist: the next teachings in its order. Otherwise: the latest sermons.
+  const series = playlist ? playlistVideos(playlist) : [];
+  const at = series.findIndex((v) => v.id === video.id);
+  const upNext = at >= 0 ? series.slice(at + 1, at + 4) : feed.videos.filter((v) => v.id !== video.id).slice(0, 3);
   const longDescription = video.description.length > 220;
 
   const actions: { icon: IconName; label: string; onPress: () => void; on?: boolean }[] = [
@@ -75,6 +78,7 @@ export default function SermonScreen() {
       <ScrollView contentContainerStyle={{ padding: ScreenPadding, paddingBottom: insets.bottom + 32, gap: 20 }} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 8 }}>
           <Title size={30}>{video.title}</Title>
+          {video.subtitle ? <Text style={styles.subtitle}>{video.subtitle}</Text> : null}
           <Text style={styles.meta}>
             {videoMeta(video)}
             {video.duration ? ` · ${video.duration}` : ''}
@@ -119,13 +123,13 @@ export default function SermonScreen() {
 
         {upNext.length ? (
           <View style={{ gap: 14 }}>
-            <Eyebrow>Up next</Eyebrow>
+            <Eyebrow>{at >= 0 ? 'Next in this series' : 'Up next'}</Eyebrow>
             {upNext.map((v, i) => (
               <Tap
                 key={v.id}
                 accessibilityRole="button"
                 accessibilityLabel={`${v.title}, ${videoMeta(v)}`}
-                onPress={() => router.replace({ pathname: '/sermon/[id]', params: { id: v.id } })}
+                onPress={() => router.replace({ pathname: '/sermon/[id]', params: at >= 0 && playlist ? { id: v.id, playlist } : { id: v.id } })}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <VideoThumb video={v} height={72} titleSize={13} tone={videoTone(i + 1)} radius={12} style={{ width: 124, gap: 8 }} />
                 <View style={{ flex: 1, gap: 4 }}>
@@ -147,6 +151,7 @@ const createStyles = (c: Palette) =>
   missing: { flex: 1, backgroundColor: c.ivory, paddingHorizontal: ScreenPadding, gap: 16 },
   link: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.accent },
   meta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
+  subtitle: { fontFamily: Fonts.displayItalic, fontSize: 20, lineHeight: 24, color: c.textMuted },
   speaker: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: c.parchment },
   avatar: {
     width: 44,
