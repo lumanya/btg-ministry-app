@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
-import { giving } from '@/content/sample';
+import { useContent } from '@/state/content';
 import { useColors, useStyles } from '@/state/theme';
 
 /**
@@ -33,10 +33,7 @@ export default function Give() {
     timer.current = setTimeout(() => setCopied(null), 2000);
   };
 
-  const rows = [
-    { key: 'mpesa', ...giving.mpesa },
-    { key: 'bank', ...giving.bank },
-  ];
+  const rows = useContent().giving;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>

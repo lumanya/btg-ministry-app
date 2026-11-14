@@ -153,6 +153,61 @@ These two are safe to put in the app. Never put the **service role** or secret k
 
 **What members get:** create an account (name, email, password), confirm with a code, sign in, reset a forgotten password with a code, change their name, choose light or dark mode, sign out, and delete their account. Guests can do everything except keep things across phones. Until the keys are set, the sign-in screens say accounts aren't switched on yet.
 
+## Backend and admin dashboard (Supabase)
+
+Everything the ministry posts lives in Supabase and is managed from the **admin dashboard** (`admin/`), a website for staff.
+
+| What | Where in the app | Managed in the dashboard |
+|---|---|---|
+| Daily devotionals (text, scripture, optional recording) | Home, Devotional tab, reader | Devotionals: write, schedule for a date, publish, save drafts |
+| Prayer requests | Live tab → Prayer request | Prayer requests: mark as prayed for, archive |
+| Weekly services | Live tab → Coming up | Services |
+| M-Pesa and bank details | Give | Giving |
+| Series tiles | Devotional tab | Series |
+| “Word for today” quotes | Home | Word for today |
+| Staff access | — | Staff (admins only) |
+
+Members' reading streaks and saved items are also stored in their account, so they follow them to a new phone. Sermons and the livestream still come from YouTube, and podcast episodes from the podcast's RSS feed.
+
+**Who can do what** is enforced by the database itself (row-level security in `supabase/migrations/`), not by the app or the dashboard: guests and members can only read published content and send prayer requests; members can only see their own streak and saved items; only staff can read prayer requests or change content; only admins can add staff. `npm run test:db` checks these rules.
+
+### Set it up
+
+**1. Create the database tables** (needs the Supabase CLI login from the steps above)
+
+```bash
+npx supabase db push
+```
+
+Then open **SQL Editor** in the Supabase dashboard, paste the contents of `supabase/seed.sql` and run it. That adds the devotionals, series, giving details and quotes from btgministry.org so the app isn't empty on day one. (No CLI? Paste each file in `supabase/migrations/` into the SQL Editor in date order instead, then the seed.)
+
+**2. Make yourself the first admin.** Create an account in the app with your email, then run this once in the SQL Editor:
+
+```sql
+insert into public.staff (user_id, role)
+select id, 'admin' from auth.users where email = 'you@example.org';
+```
+
+After that, add other staff from the dashboard's **Staff** page. They sign up in the app first, then you add their email as an *editor* (posts content, answers prayer requests) or *admin* (also manages staff).
+
+**3. Run the dashboard**
+
+```bash
+cd admin
+cp .env.example .env      # paste the same URL and publishable key as the app
+npm install
+npm run dev               # opens on http://localhost:5173
+```
+
+**4. Put the dashboard online** (free on Netlify, Vercel or Cloudflare Pages): connect the GitHub repository, set the base folder to `admin`, the build command to `npm run build` and the output folder to `dist`, and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY` as environment variables. A web address such as `admin.btgministry.org` works well.
+
+**Good to know**
+
+- A devotional published for a future date appears automatically at midnight Tanzania time. The Overview page warns when nothing is scheduled for tomorrow.
+- Write the devotional with a blank line between paragraphs. Recordings (MP3) uploaded on the devotional page give members a *Listen* button.
+- The app keeps a copy of the latest content, so it still works without a connection.
+- Prayer requests are limited to 3 an hour per member, and 30 a minute across the app, to stop floods.
+
 ## Light and dark mode
 
 The app follows the phone's light or dark setting. Members can override it under **Settings → Appearance** (Phone, Light or Dark), and the choice is remembered. Colours for both modes are in `src/constants/theme.ts`; screens read them with `useColors()` and `useStyles()` from `src/state/theme.tsx`.
@@ -174,15 +229,19 @@ src/
     (tabs)/       the five tabs: home, sermons, live, podcast, devotional
   components/     icon.tsx, ui.tsx (buttons, text, cards), art.tsx (arch artwork, scroll)
   constants/      theme.ts: brand colours, fonts, spacing
-  content/        sample.ts: temporary content until live sources are connected
-  lib/            video.ts, podcast.ts, supabase.ts, auth-messages.ts (form checks and error wording)
-  state/          auth.tsx: accounts; theme.tsx: light/dark; feed.tsx: YouTube; player.tsx: podcast audio
+  content/        sample.ts: built-in content, shown until Supabase is connected
+  lib/            video.ts, podcast.ts, supabase.ts, content.ts (database rows -> screens), library-sync.ts, streak.ts
+  state/          auth.tsx: accounts; content.tsx: devotionals, services, giving, prayer requests;
+                  library.tsx: streak and saved items; theme.tsx; feed.tsx: YouTube; player.tsx: audio
 assets/images/    app icon, splash, eagle emblem, full logo
 supabase/
   functions/youtube-feed/     reads the YouTube channel
   functions/delete-account/   deletes a member's account on request
-  migrations/                 the profiles table
+  migrations/                 tables and access rules (profiles, content, prayer, staff, member data)
+  seed.sql                    starting content from btgministry.org
+  tests/policies.test.mjs     checks the access rules in a local Postgres
   templates/                  emails that send a 6-digit code
+admin/                        the staff dashboard (React + Vite website)
 ```
 
 ## Brand
@@ -195,8 +254,8 @@ supabase/
 
 1. **YouTube connection** — built; follow "Connect the YouTube channel" above to switch it on.
 2. **Podcast audio** — built; add the RSS feed as in "Connect the podcast" above.
-3. **Devotionals feed** — load devotionals from the website so they are published once.
-4. **Accounts** — built; follow "Accounts (sign-in)" above. Next: save reading streaks, saved items and prayer requests to the account.
+3. **Backend and dashboard** — built; follow "Backend and admin dashboard" above.
+4. **Accounts** — built, with streaks and saved items stored in the account.
 5. **Notifications** — "We're live", the daily devotional and service reminders.
 6. **Publishing** — build with EAS (`npx eas-cli build`) and submit to the Play Store and App Store.
 
@@ -205,5 +264,6 @@ supabase/
 ```bash
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
-npm test            # YouTube feed, podcast reader, sign-in form checks
+npm test            # YouTube feed, podcast reader, sign-in checks, streaks, sync, database access rules
+cd admin && npm run typecheck && npm test   # the dashboard
 ```

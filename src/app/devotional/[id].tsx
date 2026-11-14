@@ -9,7 +9,10 @@ import { Icon } from '@/components/icon';
 import { Pop } from '@/components/motion';
 import { Button, IconButton, Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
-import { devotionals, findDevotional, formatDate } from '@/content/sample';
+import { formatDate } from '@/content/sample';
+import { devotionalEpisode, paragraphs } from '@/lib/content';
+import { useContent } from '@/state/content';
+import { usePlayer } from '@/state/player';
 import { success, tap } from '@/lib/haptics';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
@@ -22,7 +25,10 @@ export default function Reader() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const d = findDevotional(id) ?? devotionals[0];
+  const content = useContent();
+  const player = usePlayer();
+  const devotionals = content.devotionals;
+  const d = content.findDevotional(id) ?? content.today;
   const index = devotionals.findIndex((x) => x.id === d.id);
   const newer = devotionals[index - 1];
   const older = devotionals[index + 1];
@@ -52,7 +58,9 @@ export default function Reader() {
   const streakLine =
     lib.streak > 1 ? `${lib.streak}-day streak` : lib.streak === 1 ? 'Day one of your streak' : 'Read and remembered';
 
-  const [first, ...rest] = d.excerpt;
+  // The full text when the ministry has posted it; otherwise the short excerpt.
+  const [opening = d.excerpt, ...more] = paragraphs(d.body);
+  const [first, ...rest] = opening;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.paper }}>
@@ -97,17 +105,26 @@ export default function Reader() {
           </View>
         ) : null}
 
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: fontSize }}>
           <Text style={[styles.body, { fontSize, lineHeight: fontSize * 1.7 }]}>
             <Text style={styles.dropCap}>{first}</Text>
             {rest.join('')}
           </Text>
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>[Full devotional text continues here, loaded from the devotionals published on the website]</Text>
-          </View>
+          {more.map((p, i) => (
+            <Text key={i} style={[styles.body, { fontSize, lineHeight: fontSize * 1.7 }]}>
+              {p}
+            </Text>
+          ))}
         </View>
 
-        <Tap accessibilityRole="button" onPress={() => router.push('/player')} style={styles.listen}>
+        {d.audioUrl ? (
+        <Tap
+          accessibilityRole="button"
+          onPress={() => {
+            player.play(devotionalEpisode(d));
+            router.push('/player');
+          }}
+          style={styles.listen}>
           <View style={styles.listenDisc}>
             <Icon name="play" size={18} color={c.cream} />
           </View>
@@ -116,6 +133,7 @@ export default function Reader() {
             <Text style={styles.listenMeta}>Read aloud by the ministry</Text>
           </View>
         </Tap>
+        ) : null}
 
         {done ? (
           <Animated.View entering={FadeIn.duration(250)} style={styles.done} accessibilityLiveRegion="polite">
@@ -178,8 +196,6 @@ const createStyles = (c: Palette) =>
   verseRef: { fontFamily: Fonts.sansBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
   body: { fontFamily: Fonts.sans, color: c.text },
   dropCap: { fontFamily: Fonts.display, fontSize: 40, color: c.accent },
-  placeholder: { padding: 18, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: c.inputBorder },
-  placeholderText: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 21, color: c.textMuted },
   listen: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,8 +9,10 @@ import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/compone
 import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { links, services } from '@/content/sample';
+import { FormMessage } from '@/components/form';
+import { links } from '@/content/sample';
 import { formatStart, videoMeta, youtubeWatchUrl } from '@/lib/video';
+import { useContent } from '@/state/content';
 import { useFeed } from '@/state/feed';
 import { useColors, useStyles } from '@/state/theme';
 
@@ -32,6 +34,23 @@ export default function Live() {
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
   const [prayer, setPrayer] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [prayerError, setPrayerError] = useState<string | null>(null);
+  const content = useContent();
+
+  const sendPrayer = async () => {
+    if (sending) return;
+    setPrayerError(null);
+    setSending(true);
+    try {
+      await content.sendPrayer({ message: prayer });
+      setSent(true);
+    } catch (e) {
+      setPrayerError(e instanceof Error ? e.message : 'We couldn’t send your request. Try again.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   const playerHeight = Math.round((Math.min(width, 700) - ScreenPadding * 2) * (9 / 16));
   const watching = !!live?.youtubeId && watchingId === live.id;
@@ -50,7 +69,7 @@ export default function Live() {
           meta: formatStart(v.scheduledStart!),
         };
       })
-    : services;
+    : content.services;
 
   const actions: { icon: IconName; label: string; onPress: () => void; primary?: boolean }[] = [
     { icon: 'chat', label: 'Prayer', onPress: () => setPanel('prayer') },
@@ -207,7 +226,11 @@ export default function Live() {
               </Text>
               <TextInput
                 value={prayer}
-                onChangeText={setPrayer}
+                onChangeText={(t) => {
+                  setPrayer(t);
+                  if (prayerError) setPrayerError(null);
+                }}
+                maxLength={2000}
                 multiline
                 accessibilityLabelledBy="prayerLabel"
                 accessibilityLabel="Your prayer request"
@@ -215,7 +238,9 @@ export default function Live() {
                 placeholderTextColor={c.textSubtle}
                 style={styles.textArea}
               />
-              <Button label="Send to the prayer team" onPress={() => prayer.trim() && setSent(true)} />
+              {prayerError ? <FormMessage>{prayerError}</FormMessage> : null}
+              <Button label={sending ? 'Sending…' : 'Send to the prayer team'} onPress={sendPrayer} />
+              <Text style={styles.metaSmall}>Only the ministry’s prayer team can read your request.</Text>
             </View>
           )}
         </View>

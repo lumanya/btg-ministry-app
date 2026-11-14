@@ -35,6 +35,7 @@
     "react-native-worklets": "0.13.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
@@ -49,9 +50,11 @@
     "typecheck": "tsc --noEmit",
     "test:feed": "node --experimental-strip-types --no-warnings --test supabase/functions/youtube-feed/feed.test.ts",
     "test:podcast": "node --experimental-strip-types --no-warnings --test src/lib/podcast.test.ts",
-    "test": "npm run -s test:feed && npm run -s test:podcast && npm run -s test:auth && npm run -s test:streak",
+    "test": "npm run -s test:feed && npm run -s test:podcast && npm run -s test:auth && npm run -s test:streak && npm run -s test:sync && npm run -s test:db",
     "test:auth": "node --experimental-strip-types --no-warnings --test src/lib/auth-messages.test.ts",
-    "test:streak": "node --experimental-strip-types --no-warnings --test src/lib/streak.test.ts"
+    "test:streak": "node --experimental-strip-types --no-warnings --test src/lib/streak.test.ts",
+    "test:db": "node --test supabase/tests/policies.test.mjs",
+    "test:sync": "node --experimental-strip-types --no-warnings --test src/lib/library-sync.test.ts src/lib/content.test.ts"
   },
   "private": true
 }

@@ -7,10 +7,12 @@ import { Appear, Pop, Skeleton } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
+import { formatDate } from '@/content/sample';
+import { devotionalEpisode } from '@/lib/content';
 import { formatLength } from '@/lib/podcast';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
 import { useAuth } from '@/state/auth';
+import { useContent } from '@/state/content';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
 import { usePlayer } from '@/state/player';
@@ -33,7 +35,12 @@ export default function Home() {
   const router = useRouter();
   const auth = useAuth();
   const lib = useLibrary();
+  const content = useContent();
   const { feed, status, refreshing, refresh } = useFeed();
+  const refreshAll = () => {
+    refresh();
+    content.refresh();
+  };
   const player = usePlayer();
 
   const now = new Date();
@@ -46,7 +53,7 @@ export default function Home() {
   const latestVideos = feed.videos.filter((v) => v.id !== feature?.id).slice(0, 4);
   const loading = status === 'loading';
 
-  const today = findDevotional(todaysDevotionalId)!;
+  const today = content.today;
   const readToday = lib.isRead(today.id);
   const openToday = () => router.push({ pathname: '/devotional/[id]', params: { id: today.id } });
 
@@ -59,7 +66,7 @@ export default function Home() {
       : 'Continue where you stopped'
     : [player.podcast.title, formatLength(listen?.duration ?? null)].filter(Boolean).join(' · ');
 
-  const quote = quotes[now.getDate() % quotes.length];
+  const quote = content.quotes[now.getDate() % content.quotes.length];
 
   const streakTitle = lib.streak > 0 ? `${lib.streak}-day reading streak` : 'Start a reading streak';
   const streakText = lib.readToday
@@ -69,7 +76,7 @@ export default function Home() {
       : 'Read today’s devotional to begin.';
 
   return (
-    <Screen gap={28} refreshing={refreshing} onRefresh={refresh}>
+    <Screen gap={28} refreshing={refreshing || content.refreshing} onRefresh={refreshAll}>
       <View style={styles.topBar}>
         <View style={styles.brand}>
           <Eagle height={40} />
@@ -155,13 +162,18 @@ export default function Home() {
           <Body>{today.excerpt}</Body>
           <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
             <Button label={readToday ? 'Read again' : 'Read now'} variant={readToday ? 'outline' : 'primary'} onPress={openToday} style={{ flex: 1, minHeight: 46 }} />
-            <IconButton
-              icon="podcast"
-              label="Listen to this devotional"
-              size={46}
-              onPress={() => router.push('/player')}
-              style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
-            />
+            {today.audioUrl ? (
+              <IconButton
+                icon="podcast"
+                label="Listen to this devotional"
+                size={46}
+                onPress={() => {
+                  player.play(devotionalEpisode(today));
+                  router.push('/player');
+                }}
+                style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
+              />
+            ) : null}
           </View>
         </ScrollCard>
       </Appear>

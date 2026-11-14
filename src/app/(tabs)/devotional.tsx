@@ -7,14 +7,17 @@ import { Icon } from '@/components/icon';
 import { Pop } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
-import { devotionals, formatDate, podcast, todaysDevotionalId } from '@/content/sample';
+import { Devotional, formatDate } from '@/content/sample';
+import { devotionalEpisode } from '@/lib/content';
+import { useContent } from '@/state/content';
+import { usePlayer } from '@/state/player';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** The seven days ending on the newest devotional, so the strip always has content. */
-function buildWeek() {
+function buildWeek(devotionals: Devotional[]) {
   const newest = new Date(`${devotionals[0].date}T12:00:00`);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(newest);
@@ -32,9 +35,13 @@ export default function DevotionalTab() {
   const toneSet = useTones();
   const router = useRouter();
   const lib = useLibrary();
-  const week = buildWeek();
-  const [selectedId, setSelectedId] = useState(todaysDevotionalId);
-  const selected = devotionals.find((d) => d.id === selectedId)!;
+  const content = useContent();
+  const player = usePlayer();
+  const devotionals = content.devotionals;
+  const week = buildWeek(devotionals);
+  const [picked, setSelectedId] = useState<string | null>(null);
+  const selected = devotionals.find((d) => d.id === picked) ?? content.today;
+  const selectedId = selected.id;
   const [y, m] = week[6].iso.split('-').map(Number);
   const weekIds = new Set(week.map((w) => w.devotional?.id));
   const earlier = devotionals.filter((d) => !weekIds.has(d.id));
@@ -42,7 +49,7 @@ export default function DevotionalTab() {
   const open = (id: string) => router.push({ pathname: '/devotional/[id]', params: { id } });
 
   return (
-    <Screen gap={22}>
+    <Screen gap={22} refreshing={content.refreshing} onRefresh={content.status === 'sample' ? undefined : content.refresh}>
       <View style={styles.header}>
         <Title size={34}>Daily devotional</Title>
         <Pop trigger={lib.streak} style={styles.streak}>
@@ -100,13 +107,18 @@ export default function DevotionalTab() {
           <Body>{selected.excerpt}</Body>
           <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
             <Button label={lib.isRead(selected.id) ? 'Read again' : 'Read'} variant={lib.isRead(selected.id) ? 'outline' : 'primary'} onPress={() => open(selected.id)} style={{ flex: 1, minHeight: 46 }} />
-            <IconButton
-              icon="podcast"
-              label="Listen to this devotional"
-              size={46}
-              onPress={() => router.push('/player')}
-              style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
-            />
+            {selected.audioUrl ? (
+              <IconButton
+                icon="podcast"
+                label="Listen to this devotional"
+                size={46}
+                onPress={() => {
+                  player.play(devotionalEpisode(selected));
+                  router.push('/player');
+                }}
+                style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
+              />
+            ) : null}
           </View>
         </ScrollCard>
       </View>
@@ -114,7 +126,7 @@ export default function DevotionalTab() {
       <View style={{ gap: 12 }}>
         <Eyebrow>Series</Eyebrow>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          {podcast.series.map((s) => {
+          {content.series.map((s) => {
             const t = toneSet[s.tone];
             const first = devotionals.find((d) => d.series === s.name);
             return (

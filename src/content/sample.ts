@@ -1,9 +1,10 @@
 /**
  * Sample content for the first version of the app.
  *
- * Everything here is temporary and will be replaced by live sources:
+ * Shown until the live sources are connected, and whenever they can't be reached:
  * - sermons and the livestream  -> the youtube-feed server function (src/state/feed.tsx)
- * - devotionals                 -> the devotionals published on btgministry.org
+ * - devotionals, series, services, giving and quotes -> Supabase (src/state/content.tsx),
+ *   managed from the admin dashboard (admin/)
  * - podcast episodes            -> the podcast RSS feed
  *
  * Titles, dates and scripture references are taken from BTG Ministry's own
@@ -86,6 +87,10 @@ export type Devotional = {
   subtitle?: string;
   scripture?: { ref: string; text?: string };
   excerpt: string;
+  /** The full text, paragraphs separated by a blank line. */
+  body?: string;
+  /** A recording of the devotional being read. */
+  audioUrl?: string;
   series?: string;
 };
 
@@ -195,10 +200,10 @@ export const quotes = [
   'Unless you learn the consciousness of Christ, you won’t grasp the flow of revelation, as consciousness is what renews your mind.',
 ];
 
-export const giving = {
-  mpesa: { label: 'M-Pesa · Vodacom Lipa number', number: '50492190', name: 'Building the Temple of God Ministry' },
-  bank: { label: 'CRDB Bank · Account number', number: '0152647614000', name: 'Iman Christopher Mwakanyamale' },
-};
+export const giving = [
+  { key: 'mpesa', label: 'M-Pesa · Vodacom Lipa number', number: '50492190', name: 'Building the Temple of God Ministry' },
+  { key: 'bank', label: 'CRDB Bank · Account number', number: '0152647614000', name: 'Iman Christopher Mwakanyamale' },
+];
 
 export const links = {
   youtubeChannel: 'https://www.youtube.com/@imanmwakanyamale',

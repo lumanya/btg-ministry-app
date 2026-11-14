@@ -9,7 +9,8 @@ import { Appear } from '@/components/motion';
 import { Body, Button, IconButton, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { findDevotional, formatDate } from '@/content/sample';
+import { formatDate } from '@/content/sample';
+import { useContent } from '@/state/content';
 import { videoMeta, videoTone } from '@/lib/video';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
@@ -23,9 +24,10 @@ export default function Saved() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const lib = useLibrary();
+  const content = useContent();
   const [section, setSection] = useState<Section>(lib.savedVideos.length || !lib.savedDevotionals.length ? 'sermons' : 'devotionals');
 
-  const devotionals = lib.savedDevotionals.map((id) => findDevotional(id)).filter((d): d is NonNullable<typeof d> => !!d);
+  const devotionals = lib.savedDevotionals.map((id) => content.findDevotional(id)).filter((d): d is NonNullable<typeof d> => !!d);
   const counts = { sermons: lib.savedVideos.length, devotionals: devotionals.length };
 
   return (
