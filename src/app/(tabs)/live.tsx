@@ -1,73 +1,122 @@
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Eagle } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
-import { Body, Button, IconButton, LiveBadge, Screen, Tap, Title } from '@/components/ui';
-import { Colors, Fonts, Radius } from '@/constants/theme';
+import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
+import { VideoThumb } from '@/components/video-thumb';
+import { YouTubePlayer } from '@/components/youtube-player';
+import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
 import { links, services } from '@/content/sample';
+import { formatStart, videoMeta, youtubeWatchUrl } from '@/lib/video';
+import { useFeed } from '@/state/feed';
 
 type Panel = 'upcoming' | 'prayer';
 
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default function Live() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const { feed, refreshing, refresh } = useFeed();
+  const live = feed.live;
+  const latest = feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
+
+  const [watchingId, setWatchingId] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>('upcoming');
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
   const [prayer, setPrayer] = useState('');
   const [sent, setSent] = useState(false);
 
-  // Until the YouTube connection is built, the stream opens on YouTube.
-  const watch = () => WebBrowser.openBrowserAsync(links.youtubeStreams);
+  const playerHeight = Math.round((Math.min(width, 700) - ScreenPadding * 2) * (9 / 16));
+  const watching = !!live?.youtubeId && watchingId === live.id;
+  const liveUrl = (live && youtubeWatchUrl(live)) ?? links.youtubeStreams;
   const anyReminder = Object.values(reminders).some(Boolean);
+
+  // Streams scheduled on YouTube come first; otherwise the regular services.
+  const schedule = feed.upcoming.length
+    ? feed.upcoming.map((v) => {
+        const d = new Date(v.scheduledStart!);
+        return {
+          id: v.id,
+          day: DAYS[d.getDay()],
+          time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+          name: v.title,
+          meta: formatStart(v.scheduledStart!),
+        };
+      })
+    : services;
 
   const actions: { icon: IconName; label: string; onPress: () => void; primary?: boolean }[] = [
     { icon: 'chat', label: 'Prayer', onPress: () => setPanel('prayer') },
     { icon: 'heart', label: 'Give', onPress: () => router.push('/give'), primary: true },
-    { icon: 'podcast', label: 'Audio only', onPress: watch },
+    { icon: 'sermons', label: 'YouTube', onPress: () => WebBrowser.openBrowserAsync(liveUrl) },
   ];
 
   return (
-    <Screen gap={20}>
+    <Screen gap={20} refreshing={refreshing} onRefresh={refresh}>
       <View style={styles.header}>
         <Title>Live</Title>
         <IconButton
           icon="share"
           label="Share the livestream"
           iconSize={18}
-          onPress={() => Share.share({ message: `Join the BTG Ministry livestream: ${links.youtubeStreams}` })}
+          onPress={() => Share.share({ message: `Join the BTG Ministry livestream: ${liveUrl}` })}
         />
       </View>
 
-      <Tap accessibilityRole="button" accessibilityLabel="Watch the livestream" onPress={watch} style={styles.player}>
-        <View style={styles.watermark}>
-          <Eagle height={164} light />
-        </View>
-        <View style={{ position: 'absolute', top: 12, left: 12 }}>
-          <LiveBadge />
-        </View>
-        <View style={styles.playDisc}>
-          <Icon name="play" size={26} color={Colors.brown} />
-        </View>
-        <View style={styles.controls}>
-          <View style={styles.liveLine} />
-          <Text style={styles.controlText}>Live</Text>
-          <Icon name="expand" size={18} color={Colors.cream} />
-        </View>
-      </Tap>
-
-      <View style={{ gap: 8 }}>
-        <Title size={32}>Sunday Service</Title>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={styles.avatar}>
-            <Eagle height={26} />
+      {live ? (
+        <>
+          {watching ? (
+            <YouTubePlayer youtubeId={live.youtubeId!} style={{ height: playerHeight, borderRadius: 18 }} />
+          ) : (
+            <Tap accessibilityRole="button" accessibilityLabel={`Watch the livestream: ${live.title}`} onPress={() => setWatchingId(live.id)}>
+              <VideoThumb video={live} height={playerHeight} radius={18} play="center" />
+            </Tap>
+          )}
+          <View style={{ gap: 8 }}>
+            <Title size={30}>{live.title}</Title>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.avatar}>
+                <Eagle height={26} />
+              </View>
+              <Text style={styles.meta}>
+                <Text style={{ fontFamily: Fonts.sansSemiBold, color: Colors.text }}>Iman Mwakanyamale</Text> · Streaming now
+              </Text>
+            </View>
           </View>
-          <Text style={styles.meta}>
-            <Text style={{ fontFamily: Fonts.sansSemiBold, color: Colors.text }}>Iman Mwakanyamale</Text> · Streaming now
-          </Text>
+        </>
+      ) : (
+        <View style={styles.offline}>
+          <View style={styles.offlineArt}>
+            <Eagle height={64} light />
+          </View>
+          <View style={{ gap: 6 }}>
+            <Title size={28}>We’re not live right now.</Title>
+            <Body>
+              {feed.upcoming[0]?.scheduledStart
+                ? `The next livestream starts ${formatStart(feed.upcoming[0].scheduledStart)}. Turn on a reminder below.`
+                : 'Turn on a reminder below and we’ll let you know when the next service begins.'}
+            </Body>
+          </View>
+          {latest ? (
+            <Tap
+              accessibilityRole="button"
+              accessibilityLabel={`Watch the latest service: ${latest.title}`}
+              onPress={() => router.push({ pathname: '/sermon/[id]', params: { id: latest.id } })}
+              style={styles.latest}>
+              <VideoThumb video={latest} height={68} titleSize={12} radius={10} style={{ width: 120, gap: 6 }} />
+              <View style={{ flex: 1, gap: 3 }}>
+                <Eyebrow style={{ fontSize: 11 }}>Latest service</Eyebrow>
+                <Text style={styles.latestTitle} numberOfLines={2}>{latest.title}</Text>
+                <Text style={styles.metaSmall}>{videoMeta(latest)}</Text>
+              </View>
+            </Tap>
+          ) : null}
         </View>
-      </View>
+      )}
 
       <View style={styles.actions}>
         {actions.map((a) => (
@@ -100,7 +149,7 @@ export default function Live() {
 
       {panel === 'upcoming' ? (
         <View style={{ gap: 10 }}>
-          {services.map((s) => {
+          {schedule.map((s) => {
             const on = !!reminders[s.id];
             return (
               <View key={s.id} style={styles.service}>
@@ -109,8 +158,8 @@ export default function Live() {
                   <Text style={styles.timeText}>{s.time}</Text>
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={styles.serviceName}>{s.name}</Text>
-                  <Text style={styles.meta}>{s.meta}</Text>
+                  <Text style={styles.serviceName} numberOfLines={2}>{s.name}</Text>
+                  <Text style={styles.metaSmall}>{s.meta}</Text>
                 </View>
                 <IconButton
                   icon="bell"
@@ -125,7 +174,7 @@ export default function Live() {
               </View>
             );
           })}
-          <Text style={styles.meta} accessibilityLiveRegion="polite">
+          <Text style={styles.metaSmall} accessibilityLiveRegion="polite">
             {anyReminder ? 'We will notify you when the stream starts.' : ' '}
           </Text>
         </View>
@@ -174,25 +223,13 @@ export default function Live() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  player: { height: 200, borderRadius: 18, backgroundColor: Colors.night, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  watermark: { position: 'absolute', opacity: 0.16 },
-  playDisc: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
-  controls: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    backgroundColor: 'rgba(31,19,10,0.55)',
-  },
-  liveLine: { flex: 1, height: 3, borderRadius: 2, backgroundColor: Colors.live },
-  controlText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: Colors.cream },
   avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.sand, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2, overflow: 'hidden' },
   meta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted },
+  metaSmall: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
+  offline: { gap: 16, padding: 18, borderRadius: Radius.xl, backgroundColor: Colors.parchment, borderWidth: 1, borderColor: Colors.line },
+  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.brown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  latest: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: Radius.md, backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.line },
+  latestTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 19, color: Colors.text },
   actions: { flexDirection: 'row', gap: 10 },
   action: {
     flex: 1,

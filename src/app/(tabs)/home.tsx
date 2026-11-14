@@ -1,11 +1,14 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
-import { Eagle, ScrollCard, SermonArt } from '@/components/art';
+import { Eagle, ScrollCard } from '@/components/art';
 import { Icon } from '@/components/icon';
-import { Body, Button, Card, Eyebrow, IconButton, LiveBadge, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
+import { Body, Button, Card, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
+import { VideoThumb } from '@/components/video-thumb';
 import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
-import { findDevotional, formatDate, quotes, sermons, todaysDevotionalId } from '@/content/sample';
+import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
+import { formatStart, videoMeta, videoTone } from '@/lib/video';
+import { useFeed } from '@/state/feed';
 
 function greeting() {
   const h = new Date().getHours();
@@ -18,6 +21,12 @@ const WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function Home() {
   const router = useRouter();
+  const { feed, refreshing, refresh } = useFeed();
+  const live = feed.live;
+  const next = feed.upcoming[0];
+  // While live, feature the stream; otherwise the most recent service.
+  const feature = live ?? feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
+  const latestVideos = feed.videos.filter((v) => v.id !== feature?.id).slice(0, 4);
   const today = findDevotional(todaysDevotionalId)!;
   const quote = quotes[new Date().getDate() % quotes.length];
 
@@ -26,7 +35,7 @@ export default function Home() {
   const streak = Math.min(3, todayIndex);
 
   return (
-    <Screen gap={28}>
+    <Screen gap={28} refreshing={refreshing} onRefresh={refresh}>
       <View style={styles.topBar}>
         <View style={styles.brand}>
           <Eagle height={40} />
@@ -40,28 +49,27 @@ export default function Home() {
         <Title size={38}>Grace and peace to you.</Title>
       </View>
 
-      <Tap accessibilityRole="button" accessibilityLabel="Join the Sunday Service livestream" onPress={() => router.navigate('/live')} style={styles.liveCard}>
-        <View style={styles.liveVideo}>
-          <View style={styles.liveWatermark}>
-            <Eagle height={190} light />
+      {feature ? (
+        <Tap
+          accessibilityRole="button"
+          accessibilityLabel={live ? `Join the livestream: ${feature.title}` : `Watch the latest service: ${feature.title}`}
+          onPress={() => (live ? router.navigate('/live') : router.push({ pathname: '/sermon/[id]', params: { id: feature.id } }))}
+          style={styles.liveCard}>
+          <VideoThumb video={feature} height={176} play="center" />
+          <View style={styles.liveFooter}>
+            <View style={{ gap: 4, flex: 1 }}>
+              {!live ? <Eyebrow onDark style={{ fontSize: 11 }}>Latest service</Eyebrow> : null}
+              <Text style={styles.liveTitle} numberOfLines={2}>{feature.title}</Text>
+              <Text style={styles.liveMeta}>
+                {live ? 'Iman Mwakanyamale · Streaming now' : next?.scheduledStart ? `Next live: ${formatStart(next.scheduledStart)}` : videoMeta(feature)}
+              </Text>
+            </View>
+            <View style={styles.joinPill}>
+              <Text style={styles.joinText}>{live ? 'Join' : 'Watch'}</Text>
+            </View>
           </View>
-          <View style={{ position: 'absolute', top: 12, left: 12 }}>
-            <LiveBadge />
-          </View>
-          <View style={styles.playDisc}>
-            <Icon name="play" size={24} color={Colors.brown} />
-          </View>
-        </View>
-        <View style={styles.liveFooter}>
-          <View style={{ gap: 4, flex: 1 }}>
-            <Text style={styles.liveTitle}>Sunday Service</Text>
-            <Text style={styles.liveMeta}>Iman Mwakanyamale · Streaming now</Text>
-          </View>
-          <View style={styles.joinPill}>
-            <Text style={styles.joinText}>Join</Text>
-          </View>
-        </View>
-      </Tap>
+        </Tap>
+      ) : null}
 
       <View style={{ gap: 4 }}>
         <SectionHeader title="Today's devotional" action="See all" onAction={() => router.navigate('/devotional')} />
@@ -135,17 +143,17 @@ export default function Home() {
           showsHorizontalScrollIndicator={false}
           style={{ marginHorizontal: -ScreenPadding }}
           contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 14 }}>
-          {sermons.slice(0, 4).map((s) => (
+          {latestVideos.map((v, i) => (
             <Tap
-              key={s.id}
+              key={v.id}
               accessibilityRole="button"
-              accessibilityLabel={`${s.title}, ${s.meta}`}
-              onPress={() => router.push({ pathname: '/sermon/[id]', params: { id: s.id } })}
+              accessibilityLabel={`${v.title}, ${videoMeta(v)}`}
+              onPress={() => router.push({ pathname: '/sermon/[id]', params: { id: v.id } })}
               style={{ width: 236, gap: 10 }}>
-              <SermonArt title={s.shortTitle} tone={s.tone} />
+              <VideoThumb video={v} height={132} tone={videoTone(i)} />
               <View style={{ gap: 2 }}>
-                <Text style={styles.sermonTitle} numberOfLines={2}>{s.title}</Text>
-                <Text style={styles.metaText}>{s.meta}</Text>
+                <Text style={styles.sermonTitle} numberOfLines={2}>{v.title}</Text>
+                <Text style={styles.metaText}>{videoMeta(v)}</Text>
               </View>
             </Tap>
           ))}
@@ -178,9 +186,6 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 
   liveCard: { backgroundColor: Colors.brown, borderRadius: Radius.xl, padding: 14, paddingBottom: 18, gap: 14 },
-  liveVideo: { height: 176, borderRadius: Radius.md, backgroundColor: Colors.night, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  liveWatermark: { position: 'absolute', right: -10, bottom: -18, opacity: 0.18 },
-  playDisc: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
   liveFooter: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 4 },
   liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: Colors.cream },
   liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.creamMuted },

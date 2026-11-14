@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import {
   Pressable,
   PressableProps,
+  RefreshControl,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -144,17 +145,27 @@ export function Screen({
   gap = 24,
   background = Colors.ivory,
   contentStyle,
+  refreshing,
+  onRefresh,
 }: {
   children: ReactNode;
   gap?: number;
   background?: string;
   contentStyle?: StyleProp<ViewStyle>;
+  /** Pull-to-refresh: pass both to enable it. */
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: background }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={Colors.brown} colors={[Colors.brown]} progressViewOffset={insets.top} />
+        ) : undefined
+      }
       contentContainerStyle={[
         { paddingTop: insets.top + 12, paddingHorizontal: ScreenPadding, paddingBottom: 32, gap },
         contentStyle,

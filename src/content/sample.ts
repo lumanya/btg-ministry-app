@@ -2,7 +2,7 @@
  * Sample content for the first version of the app.
  *
  * Everything here is temporary and will be replaced by live sources:
- * - sermons and the livestream  -> YouTube Data API (channel UC0wRGjSLCWbmVqMfvX3PIiw)
+ * - sermons and the livestream  -> the youtube-feed server function (src/state/feed.tsx)
  * - devotionals                 -> the devotionals published on btgministry.org
  * - podcast episodes            -> the podcast RSS feed
  *
@@ -11,67 +11,70 @@
  * must be filled in by the ministry.
  */
 
+import type { FeedVideo } from '../../supabase/functions/youtube-feed/feed';
+
 export type ArtTone = 'brown' | 'deep' | 'sand';
 
-export type Sermon = {
-  id: string;
-  title: string;
-  shortTitle: string;
-  kind: 'sunday' | 'teaching';
-  meta: string;
-  description: string;
-  tone: ArtTone;
-  /** YouTube video id when known. */
-  youtubeId?: string;
-};
-
-export const sermons: Sermon[] = [
+/**
+ * Stand-in videos shown until the YouTube feed is connected (see README).
+ * The first is a real Sunday service on the channel; the others reuse
+ * devotional titles and dates and have no video yet.
+ */
+export const sampleVideos: FeedVideo[] = [
   {
-    id: 'consciousness-realities-of-realms',
-    title: 'Consciousness & Realities of Realms',
-    shortTitle: 'Consciousness & Realities of Realms',
-    kind: 'sunday',
-    meta: 'Sunday service · 12 May 2024',
-    description:
-      'You are welcome to Building the Temple of God Ministry. This teaching was streamed live at the Sunday service and is kept here so you can return to it.',
-    tone: 'deep',
+    id: 'pdvLSZRh3N8',
     youtubeId: 'pdvLSZRh3N8',
+    title: 'Consciousness & Realities of Realms',
+    description: 'You are welcome to Building the Temple of God Ministry.',
+    date: '2024-05-12T09:00:00+03:00',
+    thumbnail: 'https://i.ytimg.com/vi/pdvLSZRh3N8/hqdefault.jpg',
+    duration: null,
+    kind: 'stream',
+    scheduledStart: null,
   },
   {
-    id: 'vision-of-paul',
+    id: 'sample-vision-of-paul',
+    youtubeId: null,
     title: 'The Vision of Paul',
-    shortTitle: 'The Vision of Paul',
-    kind: 'teaching',
-    meta: 'Teaching · 2 Corinthians 12:2',
     description: '[SERMON DESCRIPTION]',
-    tone: 'brown',
+    date: '2025-09-30T09:00:00+03:00',
+    thumbnail: null,
+    duration: null,
+    kind: 'video',
+    scheduledStart: null,
   },
   {
-    id: 'power-of-hades',
+    id: 'sample-power-of-hades',
+    youtubeId: null,
     title: 'Power of Hades',
-    shortTitle: 'Power of Hades',
-    kind: 'teaching',
-    meta: 'Teaching · Revelation 20:1–4',
     description: '[SERMON DESCRIPTION]',
-    tone: 'deep',
+    date: '2025-10-08T09:00:00+03:00',
+    thumbnail: null,
+    duration: null,
+    kind: 'video',
+    scheduledStart: null,
   },
   {
-    id: 'spheres-of-life',
+    id: 'sample-spheres-of-life',
+    youtubeId: null,
     title: 'Death: Spheres of Life',
-    shortTitle: 'Spheres of Life',
-    kind: 'teaching',
-    meta: 'Teaching · Hebrews 2:14',
     description: '[SERMON DESCRIPTION]',
-    tone: 'brown',
+    date: '2025-10-07T09:00:00+03:00',
+    thumbnail: null,
+    duration: null,
+    kind: 'video',
+    scheduledStart: null,
   },
   {
-    id: 'the-soul-consciousness',
+    id: 'sample-the-soul',
+    youtubeId: null,
     title: 'The Soul: Consciousness',
-    shortTitle: 'The Soul',
-    kind: 'teaching',
-    meta: 'Teaching · Iman Mwakanyamale',
     description: '[SERMON DESCRIPTION]',
-    tone: 'deep',
+    date: '2025-09-27T09:00:00+03:00',
+    thumbnail: null,
+    duration: null,
+    kind: 'video',
+    scheduledStart: null,
   },
 ];
 
@@ -202,10 +205,6 @@ export const links = {
   youtubeStreams: 'https://www.youtube.com/@imanmwakanyamale/streams',
   website: 'https://btgministry.org',
 };
-
-export function findSermon(id: string) {
-  return sermons.find((s) => s.id === id);
-}
 
 export function findDevotional(id: string) {
   return devotionals.find((d) => d.id === id);

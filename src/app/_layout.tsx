@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { Colors } from '@/constants/theme';
+import { FeedProvider } from '@/state/feed';
 import { PlayerProvider } from '@/state/player';
 
 SplashScreen.preventAutoHideAsync();
@@ -39,6 +40,7 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
+    <FeedProvider>
     <PlayerProvider>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.ivory } }}>
@@ -50,5 +52,6 @@ export default function RootLayout() {
         <Stack.Screen name="give" />
       </Stack>
     </PlayerProvider>
+    </FeedProvider>
   );
 }

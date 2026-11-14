@@ -1,0 +1,7 @@
+# Supabase project settings for the BTG Ministry app.
+# Link this folder to your project with: npx supabase link --project-ref <your-project-ref>
+project_id = "btg-ministry-app"
+
+# The YouTube feed is public data, so the app can call it without signing in.
+[functions.youtube-feed]
+verify_jwt = false

@@ -2,35 +2,36 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { SermonArt } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Eyebrow, Screen, Tap, Title } from '@/components/ui';
+import { VideoThumb } from '@/components/video-thumb';
 import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
-import { Sermon, sermons } from '@/content/sample';
+import { FeedVideo, videoMeta, videoTone } from '@/lib/video';
+import { useFeed } from '@/state/feed';
 
 const filters = [
   { id: 'all', label: 'All' },
-  { id: 'sunday', label: 'Sunday services' },
-  { id: 'teaching', label: 'Teachings' },
+  { id: 'stream', label: 'Livestreams' },
+  { id: 'video', label: 'Videos' },
 ] as const;
 
 type FilterId = (typeof filters)[number]['id'];
 
 export default function Sermons() {
   const router = useRouter();
+  const { feed, status, refreshing, refresh } = useFeed();
   const [filter, setFilter] = useState<FilterId>('all');
   const [query, setQuery] = useState('');
 
   const q = query.trim().toLowerCase();
-  const featured = sermons[0];
-  const list = sermons.filter(
-    (s) => (filter === 'all' || s.kind === filter) && (!q || `${s.title} ${s.meta}`.toLowerCase().includes(q)),
+  const matches = feed.videos.filter(
+    (v) => (filter === 'all' || v.kind === filter) && (!q || `${v.title} ${v.description}`.toLowerCase().includes(q)),
   );
-  const showFeatured = filter !== 'teaching' && !q;
-  const open = (s: Sermon) => router.push({ pathname: '/sermon/[id]', params: { id: s.id } });
+  const [featured, ...rest] = matches;
+  const open = (v: FeedVideo) => router.push({ pathname: '/sermon/[id]', params: { id: v.id } });
 
   return (
-    <Screen gap={18}>
+    <Screen gap={18} refreshing={refreshing} onRefresh={refresh}>
       <Title>Sermons</Title>
 
       <View style={styles.search}>
@@ -66,16 +67,18 @@ export default function Sermons() {
         })}
       </ScrollView>
 
-      {showFeatured ? (
-        <Tap accessibilityRole="button" accessibilityLabel={`Featured: ${featured.title}`} onPress={() => open(featured)} style={{ gap: 12 }}>
-          <SermonArt title={featured.title} tone="deep" height={210} titleSize={30} style={{ borderRadius: 22 }}>
-            <View style={styles.featuredPlay}>
-              <Icon name="play" size={20} color={Colors.brown} />
-            </View>
-          </SermonArt>
+      {status === 'error' ? (
+        <Text style={styles.notice} accessibilityLiveRegion="polite">
+          Couldn’t reach YouTube. Pull down to try again.
+        </Text>
+      ) : null}
+
+      {featured ? (
+        <Tap accessibilityRole="button" accessibilityLabel={`${featured.title}, ${videoMeta(featured)}`} onPress={() => open(featured)} style={{ gap: 12 }}>
+          <VideoThumb video={featured} height={210} titleSize={30} radius={22} play="corner" />
           <View style={{ gap: 2, paddingHorizontal: 4 }}>
             <Text style={styles.itemTitle}>{featured.title}</Text>
-            <Text style={styles.meta}>{featured.meta} · Iman Mwakanyamale</Text>
+            <Text style={styles.meta}>{videoMeta(featured)}</Text>
           </View>
         </Tap>
       ) : null}
@@ -83,23 +86,23 @@ export default function Sermons() {
       <View style={styles.listHeader}>
         <Eyebrow>{filter === 'all' ? 'Recent' : filters.find((f) => f.id === filter)!.label}</Eyebrow>
         <Text style={styles.meta} accessibilityLiveRegion="polite">
-          {list.length === 1 ? '1 sermon' : `${list.length} sermons`}
+          {matches.length === 1 ? '1 sermon' : `${matches.length} sermons`}
         </Text>
       </View>
 
       <View style={{ gap: 14 }}>
-        {list.map((s) => (
-          <Tap key={s.id} accessibilityRole="button" accessibilityLabel={`${s.title}, ${s.meta}`} onPress={() => open(s)} style={styles.row}>
-            <SermonArt title={s.shortTitle} tone={s.tone} height={72} titleSize={13} style={{ width: 124, borderRadius: 12, gap: 8 }} />
+        {rest.map((v, i) => (
+          <Tap key={v.id} accessibilityRole="button" accessibilityLabel={`${v.title}, ${videoMeta(v)}`} onPress={() => open(v)} style={styles.row}>
+            <VideoThumb video={v} height={72} titleSize={13} tone={videoTone(i + 1)} radius={12} style={{ width: 124, gap: 8 }} />
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={styles.itemTitle}>{s.title}</Text>
-              <Text style={styles.meta}>{s.meta}</Text>
+              <Text style={styles.itemTitle} numberOfLines={3}>{v.title}</Text>
+              <Text style={styles.meta}>{videoMeta(v)}</Text>
             </View>
           </Tap>
         ))}
-        {list.length === 0 ? (
+        {matches.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.meta}>No sermons match that search.</Text>
+            <Text style={styles.meta}>{q ? 'No sermons match that search.' : 'No sermons here yet.'}</Text>
           </View>
         ) : null}
       </View>
@@ -131,17 +134,7 @@ const styles = StyleSheet.create({
   },
   chipOn: { backgroundColor: Colors.brown, borderColor: Colors.brown },
   chipText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: Colors.brownDark },
-  featuredPlay: {
-    position: 'absolute',
-    right: 14,
-    bottom: 14,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  notice: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: Colors.parchment },
   itemTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: Colors.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textMuted },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },

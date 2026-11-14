@@ -1,31 +1,53 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Eagle, SermonArt } from '@/components/art';
+import { Eagle } from '@/components/art';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
+import { VideoThumb } from '@/components/video-thumb';
+import { YouTubePlayer } from '@/components/youtube-player';
 import { Colors, Fonts, Radius, ScreenPadding } from '@/constants/theme';
-import { findSermon, links, sermons } from '@/content/sample';
+import { links } from '@/content/sample';
+import { findVideo, videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
+import { useFeed } from '@/state/feed';
 
 export default function SermonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const sermon = findSermon(id) ?? sermons[0];
-  const [saved, setSaved] = useState(false);
+  const { width } = useWindowDimensions();
+  const { feed } = useFeed();
+  const video = findVideo(feed, id) ?? feed.videos[0];
 
-  const url = sermon.youtubeId ? `https://www.youtube.com/watch?v=${sermon.youtubeId}` : links.youtubeChannel;
-  // Opens on YouTube for now; the in-app YouTube player is added with the YouTube connection.
-  const play = () => WebBrowser.openBrowserAsync(url);
-  const upNext = sermons.filter((s) => s.id !== sermon.id).slice(0, 2);
+  // Reset the player and saved state when moving to another sermon.
+  const [state, setState] = useState({ id, playing: false, saved: false, more: false });
+  const current = state.id === id ? state : { id, playing: false, saved: false, more: false };
+  const update = (patch: Partial<typeof current>) => setState({ ...current, ...patch });
+
+  if (!video) {
+    return (
+      <View style={[styles.missing, { paddingTop: insets.top + 60 }]}>
+        <Title size={28}>This sermon isn’t available.</Title>
+        <Tap accessibilityRole="button" onPress={() => router.replace('/sermons')}>
+          <Text style={styles.link}>Back to sermons</Text>
+        </Tap>
+      </View>
+    );
+  }
+
+  const watchUrl = youtubeWatchUrl(video) ?? links.youtubeChannel;
+  const playerHeight = Math.round(Math.min(width, 700) * (9 / 16));
+  const play = () => (video.youtubeId ? update({ playing: true }) : WebBrowser.openBrowserAsync(links.youtubeChannel));
+  const upNext = feed.videos.filter((v) => v.id !== video.id).slice(0, 3);
+  const longDescription = video.description.length > 220;
 
   const actions: { icon: IconName; label: string; onPress: () => void; on?: boolean }[] = [
-    { icon: 'bookmark', label: saved ? 'Saved' : 'Save', onPress: () => setSaved((s) => !s), on: saved },
-    { icon: 'podcast', label: 'Listen', onPress: () => router.push('/player') },
-    { icon: 'download', label: 'Download', onPress: () => {} },
+    { icon: 'bookmark', label: current.saved ? 'Saved' : 'Save', onPress: () => update({ saved: !current.saved }), on: current.saved },
+    { icon: 'share', label: 'Share', onPress: () => Share.share({ message: `${video.title} — BTG Ministry ${watchUrl}` }) },
+    { icon: 'sermons', label: 'YouTube', onPress: () => WebBrowser.openBrowserAsync(watchUrl) },
     { icon: 'heart', label: 'Give', onPress: () => router.push('/give') },
   ];
 
@@ -33,22 +55,26 @@ export default function SermonScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.ivory }}>
       <View style={[styles.topBar, { paddingTop: insets.top + 4 }]}>
         <IconButton icon="back" label="Back" variant="plain" iconSize={22} onPress={() => (router.canGoBack() ? router.back() : router.replace('/sermons'))} />
-        <Eyebrow style={{ fontSize: 13 }}>{sermon.kind === 'sunday' ? 'Sunday service' : 'Teaching'}</Eyebrow>
-        <IconButton icon="share" label="Share this sermon" variant="plain" onPress={() => Share.share({ message: `${sermon.title} — BTG Ministry ${url}` })} />
+        <Eyebrow style={{ fontSize: 13 }}>{video.kind === 'stream' || video.kind === 'live' ? 'Livestream' : 'Sermon'}</Eyebrow>
+        <View style={{ width: 44 }} />
       </View>
 
-      <Tap accessibilityRole="button" accessibilityLabel={`Play ${sermon.title}`} onPress={play}>
-        <SermonArt title={sermon.title} tone="deep" height={220} titleSize={28} style={{ borderRadius: 0, backgroundColor: Colors.night, paddingHorizontal: 24 }}>
-          <View style={styles.playDisc}>
-            <Icon name="play" size={26} color={Colors.brown} />
-          </View>
-        </SermonArt>
-      </Tap>
+      {current.playing && video.youtubeId ? (
+        <YouTubePlayer youtubeId={video.youtubeId} style={{ height: playerHeight }} />
+      ) : (
+        <Tap accessibilityRole="button" accessibilityLabel={`Play ${video.title}`} onPress={play}>
+          <VideoThumb video={video} height={playerHeight} titleSize={28} radius={0} play="center" style={{ backgroundColor: Colors.night }} />
+        </Tap>
+      )}
 
       <ScrollView contentContainerStyle={{ padding: ScreenPadding, paddingBottom: insets.bottom + 32, gap: 20 }} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 8 }}>
-          <Title size={32}>{sermon.title}</Title>
-          <Text style={styles.meta}>{sermon.meta}</Text>
+          <Title size={30}>{video.title}</Title>
+          <Text style={styles.meta}>
+            {videoMeta(video)}
+            {video.duration ? ` · ${video.duration}` : ''}
+          </Text>
+          {!video.youtubeId ? <Text style={styles.meta}>This is sample content; the video isn’t on YouTube yet.</Text> : null}
         </View>
 
         <View style={styles.speaker}>
@@ -64,7 +90,7 @@ export default function SermonScreen() {
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {actions.map((a) => (
             <Tap
-              key={a.icon}
+              key={a.label}
               accessibilityRole="button"
               accessibilityState={a.on === undefined ? undefined : { selected: a.on }}
               onPress={a.onPress}
@@ -75,25 +101,36 @@ export default function SermonScreen() {
           ))}
         </View>
 
-        <Body>{sermon.description}</Body>
+        {video.description ? (
+          <View style={{ gap: 6 }}>
+            <Body>{longDescription && !current.more ? `${video.description.slice(0, 220).trimEnd()}…` : video.description}</Body>
+            {longDescription ? (
+              <Tap accessibilityRole="button" onPress={() => update({ more: !current.more })} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
+                <Text style={styles.link}>{current.more ? 'Show less' : 'Show more'}</Text>
+              </Tap>
+            ) : null}
+          </View>
+        ) : null}
 
-        <View style={{ gap: 14 }}>
-          <Eyebrow>Up next</Eyebrow>
-          {upNext.map((s) => (
-            <Tap
-              key={s.id}
-              accessibilityRole="button"
-              accessibilityLabel={`${s.title}, ${s.meta}`}
-              onPress={() => router.replace({ pathname: '/sermon/[id]', params: { id: s.id } })}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <SermonArt title={s.shortTitle} tone={s.tone} height={72} titleSize={13} style={{ width: 124, borderRadius: 12, gap: 8 }} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={styles.speakerName}>{s.title}</Text>
-                <Text style={styles.meta}>{s.meta}</Text>
-              </View>
-            </Tap>
-          ))}
-        </View>
+        {upNext.length ? (
+          <View style={{ gap: 14 }}>
+            <Eyebrow>Up next</Eyebrow>
+            {upNext.map((v, i) => (
+              <Tap
+                key={v.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${v.title}, ${videoMeta(v)}`}
+                onPress={() => router.replace({ pathname: '/sermon/[id]', params: { id: v.id } })}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <VideoThumb video={v} height={72} titleSize={13} tone={videoTone(i + 1)} radius={12} style={{ width: 124, gap: 8 }} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={styles.speakerName} numberOfLines={3}>{v.title}</Text>
+                  <Text style={styles.meta}>{videoMeta(v)}</Text>
+                </View>
+              </Tap>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -101,17 +138,8 @@ export default function SermonScreen() {
 
 const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingBottom: 8 },
-  playDisc: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  missing: { flex: 1, backgroundColor: Colors.ivory, paddingHorizontal: ScreenPadding, gap: 16 },
+  link: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: Colors.brown },
   meta: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textMuted },
   speaker: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: Colors.parchment },
   avatar: {
