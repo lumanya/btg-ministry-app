@@ -13,6 +13,7 @@ import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
 import { findVideo, videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
 import { useFeed } from '@/state/feed';
+import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
 export default function SermonScreen() {
@@ -25,9 +26,10 @@ export default function SermonScreen() {
   const { feed } = useFeed();
   const video = findVideo(feed, id) ?? feed.videos[0];
 
-  // Reset the player and saved state when moving to another sermon.
-  const [state, setState] = useState({ id, playing: false, saved: false, more: false });
-  const current = state.id === id ? state : { id, playing: false, saved: false, more: false };
+  // Reset the player state when moving to another sermon.
+  const [state, setState] = useState({ id, playing: false, more: false });
+  const current = state.id === id ? state : { id, playing: false, more: false };
+  const lib = useLibrary();
   const update = (patch: Partial<typeof current>) => setState({ ...current, ...patch });
 
   if (!video) {
@@ -48,7 +50,7 @@ export default function SermonScreen() {
   const longDescription = video.description.length > 220;
 
   const actions: { icon: IconName; label: string; onPress: () => void; on?: boolean }[] = [
-    { icon: 'bookmark', label: current.saved ? 'Saved' : 'Save', onPress: () => update({ saved: !current.saved }), on: current.saved },
+    { icon: 'bookmark', label: lib.isVideoSaved(video.id) ? 'Saved' : 'Save', onPress: () => lib.toggleVideo(video), on: lib.isVideoSaved(video.id) },
     { icon: 'share', label: 'Share', onPress: () => Share.share({ message: `${video.title} — BTG Ministry ${watchUrl}` }) },
     { icon: 'sermons', label: 'YouTube', onPress: () => WebBrowser.openBrowserAsync(watchUrl) },
     { icon: 'heart', label: 'Give', onPress: () => router.push('/give') },

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, IconName } from '@/components/icon';
 import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
+import { success, tap, tick } from '@/lib/haptics';
 import { useColors, useStyles } from '@/state/theme';
 
 /* ---------- Text ---------- */
@@ -52,10 +53,24 @@ export function Body({ children, style }: { children: ReactNode; style?: StylePr
 /* ---------- Pressables ---------- */
 
 /** A Pressable that shrinks slightly while pressed. */
-export function Tap({ style, children, ...rest }: PressableProps & { style?: StyleProp<ViewStyle>; children: ReactNode }) {
+export function Tap({
+  style,
+  children,
+  haptic,
+  onPress,
+  ...rest
+}: PressableProps & { style?: StyleProp<ViewStyle>; children: ReactNode; haptic?: 'tap' | 'tick' | 'success' }) {
   const styles = useStyles(createStyles);
+  const press: PressableProps['onPress'] = onPress
+    ? (e) => {
+        if (haptic === 'tap') tap();
+        else if (haptic === 'tick') tick();
+        else if (haptic === 'success') success();
+        onPress(e);
+      }
+    : undefined;
   return (
-    <Pressable {...rest} style={({ pressed }) => [style, pressed && styles.pressed]}>
+    <Pressable {...rest} onPress={press} style={({ pressed }) => [style, pressed && styles.pressed]}>
       {children}
     </Pressable>
   );
@@ -83,6 +98,7 @@ export function Button({
   const v = buttonVariants(c)[variant];
   return (
     <Tap
+      haptic="tap"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
@@ -133,6 +149,7 @@ export function IconButton({
   }[variant];
   return (
     <Tap
+      haptic="tap"
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={selected === undefined ? undefined : { selected }}

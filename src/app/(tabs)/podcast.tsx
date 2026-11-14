@@ -26,7 +26,6 @@ export default function PodcastTab() {
 
   const series = [...new Set(p.podcast.episodes.map((e) => e.series).filter((s): s is string => !!s))];
   const episodes = seriesFilter ? p.podcast.episodes.filter((e) => e.series === seriesFilter) : p.podcast.episodes;
-  const mini = p.episode ?? p.resume?.episode ?? null;
 
   const playEpisode = (e: Episode) => {
     p.play(e);
@@ -139,28 +138,6 @@ export default function PodcastTab() {
         </View>
       </Screen>
 
-      {mini ? (
-        <View style={styles.miniWrap}>
-          <View style={styles.mini}>
-            <Tap
-              accessibilityRole="button"
-              accessibilityLabel={`Open player: ${mini.title}`}
-              onPress={() => router.push('/player')}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
-              <View style={styles.miniArt}>
-                <Eagle height={38} light />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.miniTitle} numberOfLines={1}>{mini.title}</Text>
-                <Text style={styles.miniMeta} numberOfLines={1}>
-                  {p.playing ? 'Playing' : p.episode ? 'Paused' : 'Continue listening'} · {p.podcast.title}
-                </Text>
-              </View>
-            </Tap>
-            <IconButton icon={p.playing ? 'pause' : 'play'} label={p.playing ? 'Pause' : 'Play'} variant="cream" iconSize={18} onPress={p.toggle} />
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -190,9 +167,4 @@ const createStyles = (c: Palette) =>
   episodeSeries: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: c.eyebrow },
   episodeTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: c.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
-  miniWrap: { paddingHorizontal: 10, paddingBottom: 8, backgroundColor: c.ivory },
-  mini: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6, paddingLeft: 8, borderRadius: 18, backgroundColor: c.deep },
-  miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
-  miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
-  miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.creamMuted },
 });

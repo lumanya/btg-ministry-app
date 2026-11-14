@@ -12,6 +12,7 @@
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.16",
     "expo-font": "~58.0.12",
+    "expo-haptics": "~58.0.8",
     "expo-image": "~58.0.18",
     "expo-linking": "~58.0.17",
     "expo-router": "~58.0.31",
@@ -48,8 +49,9 @@
     "typecheck": "tsc --noEmit",
     "test:feed": "node --experimental-strip-types --no-warnings --test supabase/functions/youtube-feed/feed.test.ts",
     "test:podcast": "node --experimental-strip-types --no-warnings --test src/lib/podcast.test.ts",
-    "test": "npm run -s test:feed && npm run -s test:podcast && npm run -s test:auth",
-    "test:auth": "node --experimental-strip-types --no-warnings --test src/lib/auth-messages.test.ts"
+    "test": "npm run -s test:feed && npm run -s test:podcast && npm run -s test:auth && npm run -s test:streak",
+    "test:auth": "node --experimental-strip-types --no-warnings --test src/lib/auth-messages.test.ts",
+    "test:streak": "node --experimental-strip-types --no-warnings --test src/lib/streak.test.ts"
   },
   "private": true
 }

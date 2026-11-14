@@ -4,9 +4,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Eagle, ScrollCard, useTones } from '@/components/art';
 import { Icon } from '@/components/icon';
+import { Pop } from '@/components/motion';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import { devotionals, formatDate, podcast, todaysDevotionalId } from '@/content/sample';
+import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -29,6 +31,7 @@ export default function DevotionalTab() {
   const styles = useStyles(createStyles);
   const toneSet = useTones();
   const router = useRouter();
+  const lib = useLibrary();
   const week = buildWeek();
   const [selectedId, setSelectedId] = useState(todaysDevotionalId);
   const selected = devotionals.find((d) => d.id === selectedId)!;
@@ -42,10 +45,12 @@ export default function DevotionalTab() {
     <Screen gap={22}>
       <View style={styles.header}>
         <Title size={34}>Daily devotional</Title>
-        <View style={styles.streak} accessible accessibilityLabel="3-day reading streak">
-          <Icon name="flame" size={16} color={c.accent} filled />
-          <Text style={styles.streakText}>3</Text>
-        </View>
+        <Pop trigger={lib.streak} style={styles.streak}>
+          <View accessible accessibilityLabel={`${lib.streak}-day reading streak`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="flame" size={16} color={c.accent} filled={lib.streak > 0} />
+            <Text style={styles.streakText}>{lib.streak}</Text>
+          </View>
+        </Pop>
       </View>
 
       <View style={{ gap: 10 }}>
@@ -60,12 +65,16 @@ export default function DevotionalTab() {
                 disabled={!d}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on, disabled: !d }}
-                accessibilityLabel={`${w.weekday} ${w.day}: ${d ? d.title : 'no devotional'}`}
+                accessibilityLabel={`${w.weekday} ${w.day}: ${d ? `${d.title}${lib.isRead(d.id) ? ', read' : ''}` : 'no devotional'}`}
                 onPress={() => d && setSelectedId(d.id)}
                 style={[styles.day, on && styles.dayOn, !d && styles.dayEmpty]}>
                 <Text style={[styles.dayLetter, on && { color: c.cream }]}>{w.weekday.charAt(0)}</Text>
                 <Text style={[styles.dayNum, on && { color: c.cream }, !d && { color: c.textSubtle }]}>{w.day}</Text>
-                <View style={[styles.dayDot, d && { backgroundColor: on ? c.gold : c.accent }]} />
+                {d && lib.isRead(d.id) ? (
+                  <Icon name="check" size={12} color={on ? c.gold : c.accent} />
+                ) : (
+                  <View style={[styles.dayDot, d && { backgroundColor: on ? c.gold : c.accent }]} />
+                )}
               </Tap>
             );
           })}
@@ -76,7 +85,12 @@ export default function DevotionalTab() {
         <ScrollCard>
           <View style={styles.rowBetween}>
             <Eyebrow style={{ fontSize: 12 }}>{formatDate(selected.date)}</Eyebrow>
-            {selected.scripture ? (
+            {lib.isRead(selected.id) ? (
+              <View style={[styles.refChip, styles.readChip]}>
+                <Icon name="check" size={13} color={c.cream} />
+                <Text style={[styles.refText, { color: c.cream }]}>Read</Text>
+              </View>
+            ) : selected.scripture ? (
               <View style={styles.refChip}>
                 <Text style={styles.refText}>{selected.scripture.ref}</Text>
               </View>
@@ -85,7 +99,7 @@ export default function DevotionalTab() {
           <Title size={30}>{selected.title}</Title>
           <Body>{selected.excerpt}</Body>
           <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
-            <Button label="Read" onPress={() => open(selected.id)} style={{ flex: 1, minHeight: 46 }} />
+            <Button label={lib.isRead(selected.id) ? 'Read again' : 'Read'} variant={lib.isRead(selected.id) ? 'outline' : 'primary'} onPress={() => open(selected.id)} style={{ flex: 1, minHeight: 46 }} />
             <IconButton
               icon="podcast"
               label="Listen to this devotional"
@@ -126,6 +140,7 @@ export default function DevotionalTab() {
               <Text style={styles.earlierDate}>{formatDate(d.date)}</Text>
               <Text style={styles.earlierTitle}>{d.title}</Text>
             </View>
+            {lib.isRead(d.id) ? <Icon name="check" size={16} color={c.accent} /> : null}
             <Icon name="chevron" size={18} color={c.accent} />
           </Tap>
         ))}
@@ -167,7 +182,8 @@ const createStyles = (c: Palette) =>
   dayNum: { fontFamily: Fonts.sansBold, fontSize: 18, color: c.text },
   dayDot: { width: 5, height: 5, borderRadius: 3 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  refChip: { borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  readChip: { backgroundColor: c.brown, borderColor: c.brown },
+  refChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
   refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
   series: { flex: 1, height: 92, borderRadius: Radius.md, padding: 12, justifyContent: 'space-between' },
   seriesName: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 20 },

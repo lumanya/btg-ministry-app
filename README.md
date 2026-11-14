@@ -157,6 +157,15 @@ These two are safe to put in the app. Never put the **service role** or secret k
 
 The app follows the phone's light or dark setting. Members can override it under **Settings → Appearance** (Phone, Light or Dark), and the choice is remembered. Colours for both modes are in `src/constants/theme.ts`; screens read them with `useColors()` and `useStyles()` from `src/state/theme.tsx`.
 
+## Reading streak, saved items and the mini player
+
+- **Reading streak.** Marking a devotional as read counts for the day. Home and the Devotional tab show the current streak and this week's days; the streak stays alive through today and ends after a full missed day. Best streak is kept too.
+- **Saved.** The bookmark on a devotional and *Save* on a sermon put them in *Saved* (bookmark button on Home, or *Your library* in Settings).
+- **Mini player.** Once something has played, a small player sits above the tabs on every tab and opens the full player.
+- **Feel.** Sections ease in as a screen opens, placeholders pulse while the feed loads, and buttons give a light tap on phones. Motion is skipped when the phone's *Reduce motion* setting is on.
+
+The streak and saved items are kept on the phone for now (`src/state/library.tsx`). They can move to Supabase later so they follow a member across devices.
+
 ## Project layout
 
 ```

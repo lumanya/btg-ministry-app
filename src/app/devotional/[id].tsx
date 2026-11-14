@@ -1,13 +1,17 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, ZoomIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
+import { Pop } from '@/components/motion';
 import { Button, IconButton, Tap } from '@/components/ui';
 import { Brand, Fonts, Palette, Radius } from '@/constants/theme';
 import { devotionals, findDevotional, formatDate } from '@/content/sample';
+import { success, tap } from '@/lib/haptics';
+import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
 const SIZES = [16, 18, 20, 23];
@@ -24,9 +28,29 @@ export default function Reader() {
   const older = devotionals[index + 1];
 
   const [size, setSize] = useState(1);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [done, setDone] = useState(false);
+  const lib = useLibrary();
+  const bookmarked = lib.isDevotionalSaved(d.id);
+  const done = lib.isRead(d.id);
   const fontSize = SIZES[size];
+
+  // A thin gold line under the top bar shows how far through the reading you are.
+  const progress = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    const max = e.contentSize.height - e.layoutMeasurement.height;
+    progress.value = max > 0 ? Math.min(1, Math.max(0, e.contentOffset.y / max)) : 0;
+  });
+  const progressStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
+
+  const markRead = () => {
+    success();
+    lib.markRead(d.id);
+  };
+  const toggleBookmark = () => {
+    tap();
+    lib.toggleDevotional(d.id);
+  };
+  const streakLine =
+    lib.streak > 1 ? `${lib.streak}-day streak` : lib.streak === 1 ? 'Day one of your streak' : 'Read and remembered';
 
   const [first, ...rest] = d.excerpt;
 
@@ -49,12 +73,16 @@ export default function Reader() {
           variant="plain"
           filled={bookmarked}
           selected={bookmarked}
-          onPress={() => setBookmarked((b) => !b)}
+          onPress={toggleBookmark}
         />
         <IconButton icon="share" label="Share this devotional" variant="plain" onPress={() => Share.share({ message: `${d.title} — BTG Ministry daily devotional` })} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40, gap: 22 }} showsVerticalScrollIndicator={false}>
+      <View style={styles.progressTrack} pointerEvents="none">
+        <Animated.View style={[styles.progressFill, progressStyle]} />
+      </View>
+
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: insets.bottom + 40, gap: 22 }} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 10 }}>
           <Text style={styles.kicker}>Daily devotional · {formatDate(d.date)}</Text>
           <Text style={styles.title} accessibilityRole="header">{d.title}</Text>
@@ -90,20 +118,22 @@ export default function Reader() {
         </Tap>
 
         {done ? (
-          <View style={styles.done} accessibilityLiveRegion="polite">
-            <View style={styles.doneDisc}>
-              <Icon name="flame" color={Brand.brown} filled />
-            </View>
+          <Animated.View entering={FadeIn.duration(250)} style={styles.done} accessibilityLiveRegion="polite">
+            <Animated.View entering={ZoomIn.springify().damping(10)}>
+              <Pop trigger={lib.streak} style={styles.doneDisc}>
+                <Icon name="flame" color={Brand.brown} filled />
+              </Pop>
+            </Animated.View>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={styles.doneTitle}>4-day streak</Text>
+              <Text style={styles.doneTitle}>{streakLine}</Text>
               <Text style={styles.doneMeta}>Well done. Come back tomorrow for the next word.</Text>
             </View>
-            <Tap accessibilityRole="button" accessibilityLabel="Undo mark as read" onPress={() => setDone(false)} style={styles.undo}>
+            <Tap haptic="tick" accessibilityRole="button" accessibilityLabel="Undo mark as read" onPress={() => lib.unmarkRead(d.id)} style={styles.undo}>
               <Text style={styles.undoText}>Undo</Text>
             </Tap>
-          </View>
+          </Animated.View>
         ) : (
-          <Button label="Mark as read" onPress={() => setDone(true)} style={{ minHeight: 56 }} />
+          <Button label="Mark as read" icon="check" onPress={markRead} style={{ minHeight: 56 }} />
         )}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -126,14 +156,16 @@ export default function Reader() {
             ),
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: c.sand },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 8 },
+  progressTrack: { height: 2, backgroundColor: c.sand },
+  progressFill: { height: 2, backgroundColor: c.accent },
   sizeGroup: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill },
   sizeBtn: { width: 44, height: 40, alignItems: 'center', justifyContent: 'center' },
   sizeA: { fontFamily: Fonts.display, color: c.brownDark },

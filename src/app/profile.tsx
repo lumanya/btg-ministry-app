@@ -13,6 +13,7 @@ import { links } from '@/content/sample';
 import { checkName } from '@/lib/auth-messages';
 import { goHome } from '@/lib/navigation';
 import { useAuth } from '@/state/auth';
+import { useLibrary } from '@/state/library';
 import { ThemePreference, useColors, useStyles, useTheme } from '@/state/theme';
 
 const THEMES: { id: ThemePreference; label: string; icon: IconName }[] = [
@@ -23,6 +24,9 @@ const THEMES: { id: ThemePreference; label: string; icon: IconName }[] = [
 
 export default function Profile() {
   const router = useRouter();
+  const lib = useLibrary();
+  const savedCount = lib.savedVideos.length + lib.savedDevotionals.length;
+  const savedLabel = savedCount ? `Saved · ${savedCount} ${savedCount === 1 ? 'item' : 'items'}` : 'Saved sermons and devotionals';
   const insets = useSafeAreaInsets();
   const c = useColors();
   const styles = useStyles(createStyles);
@@ -134,6 +138,13 @@ export default function Profile() {
             })}
           </View>
           <Text style={styles.meta}>“Phone” follows your phone’s light or dark setting.</Text>
+        </View>
+
+        {/* Library */}
+        <View style={{ gap: 4 }}>
+          <Eyebrow style={{ marginBottom: 6 }}>Your library</Eyebrow>
+          <Row icon="bookmark" label={savedLabel} onPress={() => router.push('/saved')} />
+          <Row icon="flame" label={lib.streak ? `${lib.streak}-day reading streak · best ${lib.bestStreak}` : 'Start a reading streak'} onPress={() => router.navigate('/devotional')} />
         </View>
 
         {/* About */}
