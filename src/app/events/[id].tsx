@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,11 +9,13 @@ import { dateNames, t } from '@/i18n';
 import { Arch } from '@/components/art';
 import { FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
+import { LikeButton, StatLine } from '@/components/like-button';
 import { Body, Button, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { dateTile, eventWhen, paragraphs } from '@/lib/content';
 import { success } from '@/lib/haptics';
 import { useContent } from '@/state/content';
+import { recordView, useStat } from '@/state/engagement';
 import { useNotifications } from '@/state/notifications';
 import { useColors, useStyles } from '@/state/theme';
 
@@ -27,6 +29,10 @@ export default function EventScreen() {
   const notify = useNotifications();
   const event = content.findEvent(id);
   const [message, setMessage] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const stat = useStat('event', event?.id);
+  useEffect(() => {
+    if (event?.id) recordView('event', event.id);
+  }, [event?.id]);
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/events'));
 
@@ -102,6 +108,11 @@ export default function EventScreen() {
           <View style={{ gap: 6 }}>
             <Eyebrow>{ended ? t('This event has ended') : t('Event')}</Eyebrow>
             <Title size={34}>{event.title}</Title>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <LikeButton kind="event" id={event.id} label={t('Like this event')} />
+            {stat ? <StatLine likes={0} views={stat.views} viewWord="views" showZero /> : null}
           </View>
 
           <View style={styles.facts}>

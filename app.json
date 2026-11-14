@@ -3,7 +3,7 @@
     "name": "BTG Ministry",
     "slug": "btg-ministry-app",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "btgministry",
     "userInterfaceStyle": "automatic",
@@ -96,6 +96,12 @@
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#8B5A2B",
           "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT_UP"
         }
       ]
     ],

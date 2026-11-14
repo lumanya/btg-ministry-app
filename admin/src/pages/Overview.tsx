@@ -17,14 +17,23 @@ type Stats = {
 };
 
 type Top = { item_id: string; likes: number; views: number };
-type Loved = { id: string; title: string; href: string; likes: number; views: number; kind: 'Devotional' | 'Sermon' };
+type Loved = { id: string; title: string; href: string; likes: number; views: number; kind: 'Devotional' | 'Sermon' | 'Event' };
 
 /** The most liked devotionals and sermons in the app over the last 30 days, with their titles. */
 async function mostLoved(): Promise<Loved[]> {
-  const [d, v] = await Promise.all([db().rpc('top_items', { stat_kind: 'devotional' }), db().rpc('top_items', { stat_kind: 'video' })]);
+  const titles = new Map<string, { title: string; id?: string }>();
+  const [d, v, e] = await Promise.all([
+    db().rpc('top_items', { stat_kind: 'devotional' }),
+    db().rpc('top_items', { stat_kind: 'video' }),
+    db().rpc('top_items', { stat_kind: 'event' }),
+  ]);
   const devs = (d.data as Top[] | null) ?? [];
   const vids = (v.data as Top[] | null) ?? [];
-  const titles = new Map<string, { title: string; id?: string }>();
+  const evs = (e.data as Top[] | null) ?? [];
+  if (evs.length) {
+    const { data } = await db().from('events').select('id,title').in('id', evs.map((x) => x.item_id));
+    for (const r of (data as { id: string; title: string }[] | null) ?? []) titles.set(`e:${r.id}`, { title: r.title, id: r.id });
+  }
   if (devs.length) {
     const { data } = await db().from('devotionals').select('id,slug,title').in('slug', devs.map((x) => x.item_id));
     for (const r of (data as { id: string; slug: string; title: string }[] | null) ?? []) titles.set(`d:${r.slug}`, { title: r.title, id: r.id });
@@ -42,6 +51,14 @@ async function mostLoved(): Promise<Loved[]> {
       const m = titles.get(`d:${x.item_id}`);
       return { id: `d:${x.item_id}`, title: m?.title ?? x.item_id, href: m?.id ? `#/devotionals/${m.id}` : '#/devotionals', likes: Number(x.likes), views: Number(x.views), kind: 'Devotional' };
     }),
+    ...evs.map((x): Loved => ({
+      id: `e:${x.item_id}`,
+      title: titles.get(`e:${x.item_id}`)?.title ?? 'Event',
+      href: `#/events/${x.item_id}`,
+      likes: Number(x.likes),
+      views: Number(x.views),
+      kind: 'Event',
+    })),
     ...vids.map((x): Loved => ({
       id: `v:${x.item_id}`,
       title: titles.get(`v:${x.item_id}`)?.title ?? `YouTube video ${x.item_id}`,
@@ -168,7 +185,7 @@ export default function Overview() {
               ))}
             </div>
           ) : (
-            <p className="muted">No likes yet. When members tap the heart on a sermon or devotional, the favourites show here.</p>
+            <p className="muted">No likes yet. When members tap the heart on a sermon, devotional or event, the favourites show here.</p>
           )}
         </section>
 

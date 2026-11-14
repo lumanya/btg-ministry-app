@@ -22,11 +22,15 @@ let saved: Record<string, Download> = {};
 const progress = new Map<string, number>();
 const controllers = new Map<string, AbortController>();
 const listeners = new Set<() => void>();
-let version = 0;
 let loaded: Promise<void> | null = null;
 
+// Screens read an immutable copy replaced on every change, so they always re-render.
+type Snapshot = { saved: Record<string, Download>; progress: ReadonlyMap<string, number> };
+let snapshot: Snapshot = { saved, progress: new Map() };
+const getSnapshot = () => snapshot;
+
 function emit() {
-  version++;
+  snapshot = { saved, progress: new Map(progress) };
   listeners.forEach((l) => l());
 }
 
@@ -135,16 +139,16 @@ export function removeDownload(id: string) {
 
 /** Everything downloaded, newest first, with the space it takes. */
 export function useDownloads() {
-  useSyncExternalStore(subscribe, () => version);
+  const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   useEffect(() => {
     loadDownloads();
   }, []);
-  const list = Object.values(saved).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+  const list = Object.values(snap.saved).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
   return {
     list,
     totalBytes: list.reduce((n, d) => n + d.bytes, 0),
     /** 'saved', a number 0–1 while downloading, or null. */
-    stateOf: (id: string): 'saved' | number | null => (saved[id] ? 'saved' : progress.has(id) ? (progress.get(id) ?? 0) : null),
+    stateOf: (id: string): 'saved' | number | null => (snap.saved[id] ? 'saved' : snap.progress.has(id) ? (snap.progress.get(id) ?? 0) : null),
   };
 }
 

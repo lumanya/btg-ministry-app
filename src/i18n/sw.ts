@@ -143,6 +143,7 @@ const sw: Record<string, string> = {
   '{n} likes in the app': 'Wamependa {n} kwenye programu',
   'Like this sermon': 'Penda hubiri hili',
   'Like this devotional': 'Penda tafakari hii',
+  'Like this event': 'Penda tukio hili',
   'Remove your like': 'Ondoa upendo wako',
   '{title} series, {n} teachings': 'Mfululizo wa {title}, mafundisho {n}',
   'Series · {n} teachings': 'Mfululizo · mafundisho {n}',

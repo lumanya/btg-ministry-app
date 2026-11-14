@@ -31,22 +31,28 @@ export function LikeButton({ kind, id, label, style }: { kind: StatKind; id: str
   );
 }
 
-/** "♡ 12 · 340 reads": counts shown under a devotional or in lists. */
-export function StatLine({ likes, views, viewWord }: { likes: number; views: number; viewWord: 'reads' | 'views' }) {
+/** "♥ 12 · 👁 340 reads": counts shown with an item. `showZero` keeps the views part visible at 0. */
+export function StatLine({ likes, views, viewWord, showZero = false }: { likes: number; views: number; viewWord: 'reads' | 'views'; showZero?: boolean }) {
   const c = useColors();
   const styles = useStyles(createStyles);
-  if (!likes && !views) return null;
-  const viewText = viewWord === 'reads' ? (views === 1 ? t('1 read') : t('{n} reads', { n: compact(views) })) : views === 1 ? t('1 view') : t('{n} views', { n: compact(views) });
+  if (!likes && !views && !showZero) return null;
+  const viewText =
+    viewWord === 'reads' ? (views === 1 ? t('1 read') : t('{n} reads', { n: compact(views) })) : views === 1 ? t('1 view') : t('{n} views', { n: compact(views) });
   return (
-    <View style={styles.line}>
+    <View style={styles.line} accessible accessibilityLabel={[likes ? (likes === 1 ? t('1 like') : t('{n} likes', { n: likes })) : null, viewText].filter(Boolean).join(', ')}>
       {likes ? (
         <>
           <Icon name="heart" size={14} color={c.textMuted} filled />
           <Text style={styles.lineText}>{compact(likes)}</Text>
+          {views || showZero ? <Text style={styles.lineText}> · </Text> : null}
         </>
       ) : null}
-      {likes && views ? <Text style={styles.lineText}>·</Text> : null}
-      {views ? <Text style={styles.lineText}>{viewText}</Text> : null}
+      {views || showZero ? (
+        <>
+          <Icon name="eye" size={15} color={c.textMuted} />
+          <Text style={styles.lineText}>{viewText}</Text>
+        </>
+      ) : null}
     </View>
   );
 }

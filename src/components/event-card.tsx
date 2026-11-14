@@ -3,9 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { dateNames } from '@/i18n';
 import { Icon } from '@/components/icon';
+import { StatLine } from '@/components/like-button';
 import { Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import { dateTile, eventWhen, MinistryEvent } from '@/lib/content';
+import { useStat } from '@/state/engagement';
 import { useColors, useStyles } from '@/state/theme';
 
 /** An upcoming event: picture (if any), date tile, title, time and place. */
@@ -14,6 +16,7 @@ export function EventCard({ event, onPress, compact = false }: { event: Ministry
   const styles = useStyles(createStyles);
   const when = eventWhen(event, dateNames());
   const tile = dateTile(event.startsAt, dateNames());
+  const stat = useStat('event', event.id);
   return (
     <Tap
       accessibilityRole="button"
@@ -46,6 +49,7 @@ export function EventCard({ event, onPress, compact = false }: { event: Ministry
               </Text>
             </View>
           ) : null}
+          {stat ? <StatLine likes={stat.likes} views={stat.views} viewWord="views" /> : null}
         </View>
         <Icon name="chevron" size={18} color={c.accent} />
       </View>

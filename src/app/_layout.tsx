@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
+import { keepPortrait } from '@/lib/orientation';
 import { AuthProvider } from '@/state/auth';
 import { DataSaverProvider } from '@/state/data-saver';
 import { LanguageProvider } from '@/state/language';
@@ -42,6 +43,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded || error) SplashScreen.hideAsync();
   }, [loaded, error]);
+
+  // Screens stay upright; only full-screen video turns sideways (src/lib/orientation.ts).
+  useEffect(() => {
+    keepPortrait();
+  }, []);
 
   // Keep the splash screen up until the brand fonts are ready.
   if (!loaded && !error) return null;

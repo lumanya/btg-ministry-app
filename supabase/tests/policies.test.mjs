@@ -315,6 +315,14 @@ describe('likes and views', () => {
     await fails(null, `select public.toggle_like('sermon', 'abc', $1)`, [PHONE], /check constraint/);
   });
 
+  test('events can be liked and viewed', async () => {
+    const [{ toggle_like: e }] = await rows(null, `select public.toggle_like('event', 'conference-2026', $1)`, [PHONE]);
+    assert.deepEqual(e, { liked: true, likes: 1 });
+    await rows(null, `select public.record_view('event', 'conference-2026', $1)`, [PHONE]);
+    const [s] = await rows(null, `select * from public.item_stats('event', array['conference-2026'], $1)`, [PHONE]);
+    assert.deepEqual([Number(s.likes), Number(s.views), s.liked], [1, 1, true]);
+  });
+
   test('a view counts once per person per day', async () => {
     await rows(null, `select public.record_view('devotional', 'on-repentance', $1)`, [PHONE]);
     await rows(null, `select public.record_view('devotional', 'on-repentance', $1)`, [PHONE]);

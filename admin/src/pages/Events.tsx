@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { go } from '../App';
-import { eatInputToIso, formatEat, friendlyError, isoToEatInput } from '../lib';
+import { eatInputToIso, formatEat, friendlyError, isoToEatInput, plural } from '../lib';
 import { db } from '../supabase';
 import { Button, ConfirmButton, Empty, Field, Loading, PageHead, Segment, useToast } from '../ui';
 
@@ -30,6 +30,7 @@ export function EventsList() {
   const [rows, setRows] = useState<EventRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [show, setShow] = useState<'upcoming' | 'past'>('upcoming');
+  const [stats, setStats] = useState<Map<string, { likes: number; views: number }>>(new Map());
 
   useEffect(() => {
     db()
@@ -38,8 +39,15 @@ export function EventsList() {
       .order('starts_at', { ascending: true })
       .limit(300)
       .then(({ data, error }) => {
-        if (error) setError(friendlyError(error));
-        else setRows(data as EventRow[]);
+        if (error) return setError(friendlyError(error));
+        const list = data as EventRow[];
+        setRows(list);
+        // Likes and views in the app.
+        db()
+          .rpc('item_stats', { stat_kind: 'event', items: list.slice(-200).map((r) => r.id) })
+          .then(({ data: s }) =>
+            setStats(new Map(((s as { item_id: string; likes: number; views: number }[] | null) ?? []).map((x) => [x.item_id, { likes: Number(x.likes), views: Number(x.views) }]))),
+          );
       });
   }, []);
 
@@ -83,6 +91,11 @@ export function EventsList() {
                     <span className="title">{r.title}</span>
                     {r.location_name ? <span className="small muted">{r.location_name}</span> : null}
                   </span>
+                  {stats.get(r.id)?.likes || stats.get(r.id)?.views ? (
+                    <span className="small muted" title="Likes and views in the app">
+                      ♥ {stats.get(r.id)!.likes} · {plural(stats.get(r.id)!.views, 'view')}
+                    </span>
+                  ) : null}
                   <span className={`pill ${r.status === 'published' ? 'live' : 'draft'}`}>{r.status === 'published' ? 'Published' : 'Draft'}</span>
                 </a>
               ))}

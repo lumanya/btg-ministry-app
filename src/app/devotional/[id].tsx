@@ -137,7 +137,7 @@ export default function Reader() {
 
         <View style={styles.statsRow}>
           <LikeButton kind="devotional" id={d.id} label={t('Like this devotional')} />
-          <StatLine likes={0} views={stat?.views ?? 0} viewWord="reads" />
+          {stat ? <StatLine likes={0} views={stat.views} viewWord="reads" showZero /> : null}
         </View>
 
         {d.audioUrl ? (
