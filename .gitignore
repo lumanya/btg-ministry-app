@@ -30,8 +30,7 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env
+# local env files (.env holds only the public Supabase URL and publishable key, so it is committed)
 .env*.local
 
 # typescript

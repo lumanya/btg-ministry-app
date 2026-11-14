@@ -9,7 +9,7 @@ import Prayer from './pages/Prayer';
 import Staff from './pages/Staff';
 import { GivingPage, QuotesPage, SeriesPage, ServicesPage } from './pages/Lists';
 import { db, StaffRole, supabase } from './supabase';
-import { Button, Field, Loading } from './ui';
+import { Button, Field, Loading, LOGO } from './ui';
 
 /* ---------- Routing: #/devotionals/123?date=2026-11-15 ---------- */
 
@@ -118,7 +118,7 @@ function Shell({ role, email }: { role: StaffRole; email: string }) {
     <div className="shell">
       <aside className="side">
         <div className="brand">
-          <img src="/eagle.png" alt="" />
+          <img src={LOGO} alt="" />
           <div>
             <strong>BTG Ministry</strong>
             <span>Admin</span>
@@ -174,7 +174,7 @@ function SignIn() {
   return (
     <div className="auth">
       <form className="card" onSubmit={submit} noValidate>
-        <img className="logo" src="/eagle.png" alt="" />
+        <img className="logo" src={LOGO} alt="" />
         <div className="stack tight">
           <span className="eyebrow">BTG Ministry</span>
           <h1>Admin</h1>
@@ -201,7 +201,7 @@ function NotStaff({ email }: { email: string }) {
   return (
     <div className="auth">
       <div className="card">
-        <img className="logo" src="/eagle.png" alt="" />
+        <img className="logo" src={LOGO} alt="" />
         <h2>This account isn’t on the staff list</h2>
         <p className="muted">
           You’re signed in as <strong>{email}</strong>. Ask a ministry admin to add this email under Staff, then sign in again.
@@ -216,7 +216,7 @@ function NotConfigured() {
   return (
     <div className="auth">
       <div className="card">
-        <img className="logo" src="/eagle.png" alt="" />
+        <img className="logo" src={LOGO} alt="" />
         <h2>Connect Supabase</h2>
         <p className="muted">
           Copy <code>.env.example</code> to <code>.env</code> in the <code>admin</code> folder and fill in your project’s URL and publishable key, then restart.

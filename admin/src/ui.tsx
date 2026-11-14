@@ -1,5 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 
+/** The eagle emblem, relative to wherever the dashboard is hosted. */
+export const LOGO = `${import.meta.env.BASE_URL}eagle.png`;
+
 /* ---------- Toasts ---------- */
 
 type Toast = { text: string; tone: 'ok' | 'error' };
@@ -116,7 +119,7 @@ export function PageHead({ eyebrow, title, intro, actions }: { eyebrow?: string;
 export function Empty({ title, text, action }: { title: string; text: string; action?: ReactNode }) {
   return (
     <div className="card empty">
-      <img src="/eagle.png" alt="" />
+      <img src={LOGO} alt="" />
       <h3>{title}</h3>
       <p className="muted">{text}</p>
       {action}
