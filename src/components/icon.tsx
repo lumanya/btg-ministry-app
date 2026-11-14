@@ -30,7 +30,15 @@ export type IconName =
   | 'arrow'
   | 'copy'
   | 'prev'
-  | 'next';
+  | 'next'
+  | 'user'
+  | 'logout'
+  | 'trash'
+  | 'sun'
+  | 'monitor'
+  | 'eye'
+  | 'eyeOff'
+  | 'globe';
 
 type Props = {
   name: IconName;
@@ -243,6 +251,73 @@ export function Icon({ name, size = 22, color: colorProp, filled = false, dot = 
         <>
           <Rect x={9} y={9} width={11} height={11} rx={2} {...stroke} />
           <Path d="M5 15V6a2 2 0 0 1 2-2h9" {...stroke} />
+        </>
+      );
+      break;
+    case 'user':
+      body = (
+        <>
+          <Circle cx={12} cy={8} r={4} {...stroke} />
+          <Path d="M4 21a8 8 0 0 1 16 0" {...stroke} />
+        </>
+      );
+      break;
+    case 'logout':
+      body = (
+        <>
+          <Path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" {...stroke} />
+          <Path d="M15 8l4 4-4 4" {...stroke} />
+          <Path d="M19 12H9" {...stroke} />
+        </>
+      );
+      break;
+    case 'trash':
+      body = (
+        <>
+          <Path d="M4 7h16" {...stroke} />
+          <Path d="M9 7V4h6v3" {...stroke} />
+          <Path d="M6 7l1 13h10l1-13" {...stroke} />
+        </>
+      );
+      break;
+    case 'sun':
+      body = (
+        <>
+          <Circle cx={12} cy={12} r={4} {...stroke} />
+          <Path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" {...stroke} />
+        </>
+      );
+      break;
+    case 'monitor':
+      body = (
+        <>
+          <Rect x={6} y={2} width={12} height={20} rx={3} {...stroke} />
+          <Path d="M11 18h2" {...stroke} />
+        </>
+      );
+      break;
+    case 'eye':
+      body = (
+        <>
+          <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" {...stroke} />
+          <Circle cx={12} cy={12} r={3} {...stroke} />
+        </>
+      );
+      break;
+    case 'eyeOff':
+      body = (
+        <>
+          <Path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.9 3.8M6.5 6.5C3.6 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.5-1.6" {...stroke} />
+          <Path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" {...stroke} />
+          <Path d="M3 3l18 18" {...stroke} />
+        </>
+      );
+      break;
+    case 'globe':
+      body = (
+        <>
+          <Circle cx={12} cy={12} r={9} {...stroke} />
+          <Path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" {...stroke} />
         </>
       );
       break;

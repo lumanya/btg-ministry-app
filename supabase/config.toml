@@ -5,3 +5,25 @@ project_id = "btg-ministry-app"
 # The YouTube feed is public data, so the app can call it without signing in.
 [functions.youtube-feed]
 verify_jwt = false
+
+# Deleting an account checks the caller's sign-in token itself (see the function).
+[functions.delete-account]
+verify_jwt = false
+
+[auth]
+# Accounts are confirmed with a code from the email.
+enable_signup = true
+minimum_password_length = 8
+
+[auth.email]
+enable_confirmations = true
+
+# Emails that send a 6-digit code to type into the app (used when running Supabase locally;
+# for the hosted project, paste the same text in Authentication > Email Templates).
+[auth.email.template.confirmation]
+subject = "Your BTG Ministry code"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your BTG Ministry password"
+content_path = "./supabase/templates/recovery.html"

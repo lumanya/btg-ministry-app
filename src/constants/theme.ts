@@ -35,6 +35,7 @@ export const light = {
   goldLineDeep: '#A8875C', // arch outline on deep
 
   live: '#B42318',
+  danger: '#B42318', // error text and borders
 };
 
 export type Palette = typeof light;
@@ -67,6 +68,7 @@ export const dark: Palette = {
   goldLineDeep: '#A8875C',
 
   live: '#D13A2E',
+  danger: '#FF9D8F',
 };
 
 /** Fixed brand colours for artwork (the scroll, the logo disc) that look the same in both modes. */

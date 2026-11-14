@@ -9,6 +9,7 @@ import { Brand, Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme'
 import { findDevotional, formatDate, quotes, todaysDevotionalId } from '@/content/sample';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
 import { formatLength } from '@/lib/podcast';
+import { useAuth } from '@/state/auth';
 import { useFeed } from '@/state/feed';
 import { usePlayer } from '@/state/player';
 import { useColors, useStyles } from '@/state/theme';
@@ -27,6 +28,7 @@ export default function Home() {
   const styles = useStyles(createStyles);
   const router = useRouter();
   const { feed, refreshing, refresh } = useFeed();
+  const auth = useAuth();
   const live = feed.live;
   const next = feed.upcoming[0];
   // While live, feature the stream; otherwise the most recent service.
@@ -56,7 +58,16 @@ export default function Home() {
           <Eagle height={40} />
           <Text style={styles.brandText}>BTG Ministry</Text>
         </View>
-        <IconButton icon="bell" label="Notifications" />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <IconButton icon="bell" label="Notifications" />
+          {auth.session ? (
+            <Tap accessibilityRole="button" accessibilityLabel="Your account" onPress={() => router.push('/profile')} style={styles.avatar}>
+              <Text style={styles.avatarText}>{(auth.name ?? auth.email ?? '?').charAt(0).toUpperCase()}</Text>
+            </Tap>
+          ) : (
+            <IconButton icon="user" label="Settings and sign in" onPress={() => router.push('/profile')} />
+          )}
+        </View>
       </View>
 
       <View style={{ gap: 4 }}>
@@ -208,6 +219,8 @@ export default function Home() {
 const createStyles = (c: Palette) =>
   StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontFamily: Fonts.display, fontSize: 22, color: c.cream },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandText: { fontFamily: Fonts.display, fontSize: 22, color: c.text },
   greeting: { fontFamily: Fonts.sansMedium, fontSize: 14, color: c.textMuted },

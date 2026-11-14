@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
+import { AuthProvider } from '@/state/auth';
 import { FeedProvider } from '@/state/feed';
 import { PlayerProvider } from '@/state/player';
 import { ThemeProvider, useTheme } from '@/state/theme';
@@ -42,11 +43,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <FeedProvider>
-        <PlayerProvider>
-          <AppStack />
-        </PlayerProvider>
-      </FeedProvider>
+      <AuthProvider>
+        <FeedProvider>
+          <PlayerProvider>
+            <AppStack />
+          </PlayerProvider>
+        </FeedProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
@@ -69,6 +72,11 @@ function AppStack() {
         <Stack.Screen name="devotional/[id]" />
         <Stack.Screen name="player" options={{ presentation: 'modal' }} />
         <Stack.Screen name="give" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="sign-up" />
+        <Stack.Screen name="verify" />
+        <Stack.Screen name="forgot-password" />
       </Stack>
     </>
   );
