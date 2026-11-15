@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "964300148394",
+    "project_id": "btg-ministry-app",
+    "storage_bucket": "btg-ministry-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964300148394:android:0902c996f6fbf96c074ad3",
+        "android_client_info": {
+          "package_name": "org.btgministry.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyaM2k143SKaUHMTsqYsXckAOnHvrHy8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
