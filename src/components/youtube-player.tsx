@@ -32,9 +32,9 @@ const WATCH_FULL_SCREEN = `(function () {
 })();
 true;`;
 
-export function YouTubePlayer({ youtubeId, style }: { youtubeId: string; style?: StyleProp<ViewStyle> }) {
+export function YouTubePlayer({ youtubeId, start = 0, style }: { youtubeId: string; start?: number; style?: StyleProp<ViewStyle> }) {
   const c = useColors();
-  const src = embedUrl(youtubeId);
+  const src = embedUrl(youtubeId, true, start);
   const full = useRef(false);
 
   const onMessage = (e: WebViewMessageEvent) => {

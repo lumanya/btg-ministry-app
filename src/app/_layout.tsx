@@ -21,6 +21,7 @@ import { AuthProvider } from '@/state/auth';
 import { DataSaverProvider } from '@/state/data-saver';
 import { LanguageProvider } from '@/state/language';
 import { ContentProvider } from '@/state/content';
+import { ClipsProvider } from '@/state/clips';
 import { FeedProvider } from '@/state/feed';
 import { LibraryProvider } from '@/state/library';
 import { NotificationsProvider } from '@/state/notifications';
@@ -59,13 +60,15 @@ export default function RootLayout() {
           <AuthProvider>
             <ContentProvider>
               <FeedProvider>
-                <PlayerProvider>
-                  <LibraryProvider>
-                    <NotificationsProvider>
-                      <AppStack />
-                    </NotificationsProvider>
-                  </LibraryProvider>
-                </PlayerProvider>
+                <ClipsProvider>
+                  <PlayerProvider>
+                    <LibraryProvider>
+                      <NotificationsProvider>
+                        <AppStack />
+                      </NotificationsProvider>
+                    </LibraryProvider>
+                  </PlayerProvider>
+                </ClipsProvider>
               </FeedProvider>
             </ContentProvider>
           </AuthProvider>
@@ -90,6 +93,7 @@ function AppStack() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sermon/[id]" />
+        <Stack.Screen name="clips" options={{ animation: 'fade', contentStyle: { backgroundColor: '#120C07' } }} />
         <Stack.Screen name="devotional/[id]" />
         <Stack.Screen name="player" options={{ presentation: 'modal' }} />
         <Stack.Screen name="give" />

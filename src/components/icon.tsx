@@ -44,7 +44,9 @@ export type IconName =
   | 'clock'
   | 'image'
   | 'link'
-  | 'gift';
+  | 'gift'
+  | 'volume'
+  | 'volumeOff';
 
 type Props = {
   name: IconName;
@@ -237,6 +239,23 @@ export function Icon({ name, size = 22, color: colorProp, filled = false, dot = 
         <>
           <Path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" {...stroke} />
           <Path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" {...stroke} />
+        </>
+      );
+      break;
+    case 'volume':
+      body = (
+        <>
+          <Path d="M4 9h4l5-4v14l-5-4H4z" {...stroke} />
+          <Path d="M17 8.5a5 5 0 0 1 0 7" {...stroke} />
+          <Path d="M19.5 6a8.5 8.5 0 0 1 0 12" {...stroke} />
+        </>
+      );
+      break;
+    case 'volumeOff':
+      body = (
+        <>
+          <Path d="M4 9h4l5-4v14l-5-4H4z" {...stroke} />
+          <Path d="M17 9l4 6M21 9l-4 6" {...stroke} />
         </>
       );
       break;

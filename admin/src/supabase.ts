@@ -12,6 +12,9 @@ export const supabase: SupabaseClient | null = url && key ? createClient(url, ke
 /** The YouTube feed function (playlists, videos), on the same Supabase project. */
 export const FEED_URL = `${url ?? ''}/functions/v1/youtube-feed`;
 
+/** The Instagram clips function; `?all=1` lists every video, hidden ones too. */
+export const CLIPS_URL = `${url ?? ''}/functions/v1/instagram-feed`;
+
 /** Use inside pages, which only render once the client exists. */
 export function db(): SupabaseClient {
   if (!supabase) throw new Error('Supabase is not configured');

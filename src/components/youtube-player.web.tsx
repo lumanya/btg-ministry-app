@@ -7,13 +7,13 @@ import { t } from '@/i18n';
 import { useColors } from '@/state/theme';
 
 /** Web version of the player: a plain YouTube iframe. */
-export function YouTubePlayer({ youtubeId, style }: { youtubeId: string; style?: StyleProp<ViewStyle> }) {
+export function YouTubePlayer({ youtubeId, start = 0, style }: { youtubeId: string; start?: number; style?: StyleProp<ViewStyle> }) {
   const c = useColors();
   return (
     <View style={[{ backgroundColor: c.night, overflow: 'hidden' }, style]}>
       <iframe
         title={t('YouTube video player')}
-        src={embedUrl(youtubeId)}
+        src={embedUrl(youtubeId, true, start)}
         style={{ border: 0, width: '100%', height: '100%' }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerPolicy="strict-origin-when-cross-origin"

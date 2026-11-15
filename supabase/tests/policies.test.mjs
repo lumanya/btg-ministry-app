@@ -368,3 +368,35 @@ describe('kiswahili content', () => {
     assert.deepEqual(d, { title: 'On Repentance', title_sw: 'Kuhusu Toba' });
   });
 });
+
+describe('clips', () => {
+  test('anyone reads clip settings; only staff change them', async () => {
+    await rows(EDITOR, `insert into public.clips (instagram_id, sermon_youtube_id, sermon_start_seconds) values ('17900000000000001', 'pdvLSZRh3N8', 760)`);
+    const [c] = await rows(null, `select hidden, sermon_youtube_id, sermon_start_seconds from public.clips where instagram_id = '17900000000000001'`);
+    assert.deepEqual(c, { hidden: false, sermon_youtube_id: 'pdvLSZRh3N8', sermon_start_seconds: 760 });
+    await fails(MEMBER, `insert into public.clips (instagram_id) values ('17900000000000002')`, [], /row-level security/);
+    await fails(null, `update public.clips set hidden = true`, [], /permission denied/);
+    assert.equal((await rows(MEMBER, `update public.clips set hidden = true returning instagram_id`)).length, 0);
+  });
+
+  test('the Instagram key is write-only, and only for staff', async () => {
+    await fails(MEMBER, `select public.set_instagram_token($1)`, ['IGAAexampletoken1234567890'], /Only staff/);
+    await fails(EDITOR, `select public.set_instagram_token('short')`, [], /access token/);
+    await rows(EDITOR, `select public.set_instagram_token($1)`, ['IGAAexampletoken1234567890']);
+    const [{ instagram_status: s }] = await rows(EDITOR, `select public.instagram_status()`);
+    assert.equal(s.connected, true);
+    assert.ok(s.expires_at);
+    assert.equal('access_token' in s, false);
+    await fails(EDITOR, `select * from public.instagram_auth`, [], /permission denied/);
+    await fails(null, `select * from public.instagram_auth`, [], /permission denied/);
+    await fails(MEMBER, `select public.instagram_status()`, [], /Only staff/);
+    await rows(EDITOR, `select public.disconnect_instagram()`);
+    const [{ instagram_status: after }] = await rows(EDITOR, `select public.instagram_status()`);
+    assert.equal(after.connected, false);
+  });
+
+  test('clips can be liked', async () => {
+    const [{ toggle_like: l }] = await rows(null, `select public.toggle_like('clip', '17900000000000001', 'phone-1234-abcd')`);
+    assert.equal(l.liked, true);
+  });
+});

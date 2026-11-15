@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
  * by a random id made once on this phone (it says nothing about the person).
  * Counts are shared by every screen, so liking on one screen updates the others.
  */
-export type StatKind = 'video' | 'devotional' | 'event';
+export type StatKind = 'video' | 'devotional' | 'event' | 'clip';
 export type Stat = { likes: number; views: number; liked: boolean };
 
 const DEVICE_KEY = 'btg.device.v1';

@@ -12,30 +12,42 @@ import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
-import { videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
+import { FeedVideo, videoMeta, videoTone, youtubeWatchUrl } from '@/lib/video';
 import { recordView, toggleLike, useStat } from '@/state/engagement';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
 import { useColors, useStyles } from '@/state/theme';
 
+function olderSermon(youtubeId: string, title: string): FeedVideo {
+  return { id: youtubeId, youtubeId, title, description: '', date: '', thumbnail: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`, duration: null, kind: 'video', scheduledStart: null };
+}
+
 export default function SermonScreen() {
   const c = useColors();
   const styles = useStyles(createStyles);
-  const { id, playlist } = useLocalSearchParams<{ id: string; playlist?: string }>();
+  // `start` (seconds) and `title` come from a clip: open its full sermon at that moment.
+  const { id, playlist, start, title } = useLocalSearchParams<{ id: string; playlist?: string; start?: string; title?: string }>();
+  const startAt = Math.max(0, Number(start) || 0);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { feed, findVideo, playlistVideos } = useFeed();
   const lib = useLibrary();
-  const video = findVideo(id) ?? lib.savedVideos.find((v) => v.id === id) ?? feed.videos[0];
+  const video =
+    findVideo(id) ??
+    lib.savedVideos.find((v) => v.id === id) ??
+    // An older sermon that isn't in the latest feed (linked from a clip).
+    (title && /^[A-Za-z0-9_-]{6,20}$/.test(id) ? olderSermon(id, title) : undefined) ??
+    feed.videos[0];
   const stat = useStat('video', video?.youtubeId ? video.id : undefined);
   useEffect(() => {
     if (video?.youtubeId) recordView('video', video.id);
   }, [video?.id, video?.youtubeId]);
 
   // Reset the player state when moving to another sermon.
-  const [state, setState] = useState({ id, playing: false, more: false });
-  const current = state.id === id ? state : { id, playing: false, more: false };
+  // Opened from a clip at a given moment: start playing straight away.
+  const [state, setState] = useState({ id, playing: startAt > 0, more: false });
+  const current = state.id === id ? state : { id, playing: startAt > 0, more: false };
   const update = (patch: Partial<typeof current>) => setState({ ...current, ...patch });
 
   if (!video) {
@@ -83,7 +95,7 @@ export default function SermonScreen() {
       </View>
 
       {current.playing && video.youtubeId ? (
-        <YouTubePlayer youtubeId={video.youtubeId} style={{ height: playerHeight }} />
+        <YouTubePlayer youtubeId={video.youtubeId} start={startAt} style={{ height: playerHeight }} />
       ) : (
         <Tap accessibilityRole="button" accessibilityLabel={t('Play {title}', { title: video.title })} onPress={play}>
           <VideoThumb video={video} height={playerHeight} titleSize={28} radius={0} play="center" style={{ backgroundColor: c.night }} />

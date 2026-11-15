@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { addDays, devotionalState, formatDay, friendlyError, slugify, todayInTanzania } from './lib.ts';
+import { addDays, devotionalState, formatClock, formatDay, friendlyError, parseClock, slugify, todayInTanzania, youtubeIdFrom } from './lib.ts';
 
 test('slugify makes clean links', () => {
   assert.equal(slugify('On Repentance, part 2!'), 'on-repentance-part-2');
@@ -38,4 +38,23 @@ test('Tanzania date-time inputs', () => {
   assert.equal(eatInputToIso('2026-12-12T18:30'), '2026-12-12T15:30:00.000Z');
   assert.equal(isoToEatInput('2026-12-12T15:30:00.000Z'), '2026-12-12T18:30');
   assert.equal(formatEat('2026-12-12T15:30:00.000Z'), 'Sat 12 Dec, 18:30');
+});
+
+test('clip start times read and print as clock times', () => {
+  assert.equal(parseClock('12:40'), 760);
+  assert.equal(parseClock('1:02:05'), 3725);
+  assert.equal(parseClock('90'), 90);
+  assert.equal(parseClock(''), null);
+  assert.equal(parseClock('12:75'), null);
+  assert.equal(parseClock('abc'), null);
+  assert.equal(formatClock(760), '12:40');
+  assert.equal(formatClock(3725), '1:02:05');
+});
+
+test('YouTube ids come from links or bare ids', () => {
+  assert.equal(youtubeIdFrom('pdvLSZRh3N8'), 'pdvLSZRh3N8');
+  assert.equal(youtubeIdFrom('https://www.youtube.com/watch?v=pdvLSZRh3N8&t=30s'), 'pdvLSZRh3N8');
+  assert.equal(youtubeIdFrom('https://youtu.be/pdvLSZRh3N8'), 'pdvLSZRh3N8');
+  assert.equal(youtubeIdFrom('https://www.youtube.com/live/pdvLSZRh3N8?si=x'), 'pdvLSZRh3N8');
+  assert.equal(youtubeIdFrom('not a link'), null);
 });

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { dayName, monthName, t, weekLetters } from '@/i18n';
 import { Eagle, ScrollCard } from '@/components/art';
+import { ClipsRail } from '@/components/clips-rail';
 import { EventCard } from '@/components/event-card';
 import { FormMessage } from '@/components/form';
 import { Icon } from '@/components/icon';
@@ -16,6 +17,7 @@ import { devotionalEpisode } from '@/lib/content';
 import { formatLength } from '@/lib/podcast';
 import { formatStart, videoMeta, videoTone } from '@/lib/video';
 import { useAuth } from '@/state/auth';
+import { useClips } from '@/state/clips';
 import { useContent } from '@/state/content';
 import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
@@ -52,6 +54,7 @@ export default function Home() {
   const firstName = auth.name?.split(' ')[0];
 
   const live = feed.live;
+  const { clips } = useClips();
   const next = feed.upcoming[0];
   // While live, feature the stream; otherwise the most recent service.
   const feature = live ?? feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
@@ -111,6 +114,12 @@ export default function Home() {
           <Text style={styles.blessing}>{t('Grace and peace to you.')}</Text>
         </View>
       </Appear>
+
+      {clips.length ? (
+        <Appear index={1}>
+          <ClipsRail />
+        </Appear>
+      ) : null}
 
       <Appear index={1}>
         {loading ? (

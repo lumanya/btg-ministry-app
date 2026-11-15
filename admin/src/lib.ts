@@ -87,3 +87,30 @@ export function formatEat(iso: string): string {
   const mm = String(d.getUTCMinutes()).padStart(2, '0');
   return `${WEEKDAYS[d.getUTCDay()].slice(0, 3)} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${hh}:${mm}`;
 }
+
+/** "12:40" -> 760, "1:02:05" -> 3725, "90" -> 90; null when it isn't a time. */
+export function parseClock(text: string): number | null {
+  const t = text.trim();
+  if (!t) return null;
+  if (!/^\d{1,5}(:\d{1,2}){0,2}$/.test(t)) return null;
+  const parts = t.split(':').map(Number);
+  if (parts.slice(1).some((p) => p > 59)) return null;
+  return parts.reduce((total, p) => total * 60 + p, 0);
+}
+
+/** 760 -> "12:40", 3725 -> "1:02:05" */
+export function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+/** The video id from a YouTube link or a bare id; null when there isn't one. */
+export function youtubeIdFrom(text: string): string | null {
+  const t = text.trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:youtu\.be\/|[?&]v=|\/(?:embed|live|shorts)\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}

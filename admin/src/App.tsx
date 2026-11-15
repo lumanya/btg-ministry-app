@@ -8,6 +8,7 @@ import { EventEditor, EventsList } from './pages/Events';
 import Notifications from './pages/Notifications';
 import Overview from './pages/Overview';
 import Playlists from './pages/Playlists';
+import Clips from './pages/Clips';
 import Prayer from './pages/Prayer';
 import Staff from './pages/Staff';
 import { GivingPage, QuotesPage, SeriesPage, ServicesPage } from './pages/Lists';
@@ -83,6 +84,7 @@ const NAV: { to: string; label: string; adminOnly?: boolean }[] = [
   { to: 'notifications', label: 'Notifications' },
   { to: 'prayer', label: 'Prayer requests' },
   { to: 'playlists', label: 'Sermon series' },
+  { to: 'clips', label: 'Clips' },
   { to: 'services', label: 'Services' },
   { to: 'giving', label: 'Giving' },
   { to: 'series', label: 'Series' },
@@ -116,6 +118,7 @@ function Shell({ role, email }: { role: StaffRole; email: string }) {
   else if (section === 'events') page = <EventsList />;
   else if (section === 'notifications') page = <Notifications />;
   else if (section === 'playlists') page = <Playlists />;
+  else if (section === 'clips') page = <Clips />;
   else if (section === 'prayer') page = <Prayer onChange={countPrayers} />;
   else if (section === 'services') page = <ServicesPage />;
   else if (section === 'giving') page = <GivingPage />;

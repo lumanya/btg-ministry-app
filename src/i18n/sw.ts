@@ -448,6 +448,27 @@ const sw: Record<string, string> = {
   "Wait for Wi-Fi": "Subiri Wi-Fi",
   "Download now": "Pakua sasa",
   "Downloading {percent}%. Tap to cancel": "Inapakua {percent}%. Gusa kusitisha",
+  // Clips
+  "Clips": "Klipu",
+  "Watch all": "Tazama zote",
+  "Play clip: {title}": "Cheza klipu: {title}",
+  "NEW": "MPYA",
+  "Loading clips": "Inapakia klipu",
+  "Couldn’t load clips. Check your connection and try again.": "Imeshindikana kupakia klipu. Angalia muunganisho wako ujaribu tena.",
+  "No clips yet. New ones appear here when the ministry posts them.": "Bado hakuna klipu. Mpya zitaonekana hapa huduma ikizichapisha.",
+  "Turn sound on": "Washa sauti",
+  "Mute": "Zima sauti",
+  "Like this clip": "Penda klipu hii",
+  "Share this clip": "Shiriki klipu hii",
+  "Watch the full sermon: {title}": "Tazama hubiri zima: {title}",
+  "From the sermon": "Kutoka kwenye hubiri",
+  "Keep watching": "Endelea kutazama",
+  "Want the whole message?": "Unataka ujumbe wote?",
+  "This clip starts at {time} in the sermon.": "Klipu hii inaanzia dakika {time} ya hubiri.",
+  "Continue from this moment": "Endelea kuanzia hapa",
+  "Watch from the start": "Tazama tangu mwanzo",
+  "Replay clip": "Rudia klipu",
+  "Next clip": "Klipu inayofuata",
 };
 
 export default sw;

@@ -234,6 +234,22 @@ Setup, once:
 
 Setup, once: run `supabase/migrations/20261115090000_kiswahili_likes.sql` in the SQL Editor, then redeploy `youtube-feed` and `send-notifications`.
 
+## Clips (short videos from Instagram)
+
+The ministry's Instagram videos and Reels appear as **Clips**: a row on Home, and a full-screen feed that plays each clip as you swipe up, like Instagram or TikTok. The videos stay on Instagram, so they cost nothing to store. Each clip can lead to the full sermon it comes from: when it ends, members can continue the sermon on YouTube from that moment or from the start.
+
+- `supabase/functions/instagram-feed` reads the account's videos (cached 15 minutes, since Instagram's video links expire) and renews the access key when fewer than 30 days are left.
+- The dashboard's **Clips** page connects Instagram (paste an access token once), links each clip to a sermon and the minute it starts, renames or hides clips, and shows likes and views.
+- Instagram doesn't share videos that use music from its audio library; those are listed on the dashboard but don't play in the app.
+
+Setup, once:
+1. The ministry's Instagram must be a Business or Creator account.
+2. At developers.facebook.com, create an app (type Business), add **Instagram → API setup with Instagram login**, add the account and generate a token.
+3. Run `supabase/migrations/20261115190000_clips.sql` in the SQL Editor and deploy `instagram-feed` with JWT verification off.
+4. Paste the token on the dashboard's Clips page.
+
+The feed uses `expo-video`, a native module: phones need a new build (`npx eas-cli build --profile preview --platform android`).
+
 ## Publishing to the App Store and Google Play
 
 Builds are made with EAS (`eas.json`): `preview` makes an Android APK to install directly for testing; `production` makes store builds, with build numbers counted by EAS.
@@ -275,6 +291,7 @@ assets/images/    app icon, splash, eagle emblem, full logo
 supabase/
   functions/youtube-feed/     reads the YouTube channel
   functions/delete-account/   deletes a member's account on request
+  functions/instagram-feed/   reads the ministry's Instagram videos (clips)
   migrations/                 tables and access rules (profiles, content, prayer, staff, member data)
   seed.sql                    starting content from btgministry.org
   tests/policies.test.mjs     checks the access rules in a local Postgres
