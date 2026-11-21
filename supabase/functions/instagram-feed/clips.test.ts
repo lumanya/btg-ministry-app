@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildClips, clipTitle, shouldRefresh } from './clips.ts';
+import { buildClips, clipTitle, mediaUrl, shouldRefresh } from './clips.ts';
 
 test('titles come from the first line of the caption', () => {
   assert.equal(clipTitle('A word on grace 🙏 #faith #btg\nMore text'), 'A word on grace');
@@ -50,4 +50,11 @@ test('the key is renewed when under 30 days are left, at most once a day', () =>
   assert.equal(shouldRefresh({ expires_at: iso(now + 5 * day), refreshed_at: iso(now - 3600 * 1000), updated_at: iso(now - 40 * day) }, now), false);
   // Plenty of time left.
   assert.equal(shouldRefresh({ expires_at: iso(now + 50 * day), refreshed_at: iso(now - 10 * day), updated_at: iso(now - 10 * day) }, now), false);
+});
+
+test('business keys never renew and read the account by ID', () => {
+  const now = Date.parse('2026-11-21T12:00:00Z');
+  assert.equal(shouldRefresh({ expires_at: null, refreshed_at: null, updated_at: '2026-01-01T00:00:00Z' }, now), false);
+  assert.match(mediaUrl('EAAkey', '17841402024265975'), /^https:\/\/graph\.facebook\.com\/v25\.0\/17841402024265975\/media\?fields=/);
+  assert.match(mediaUrl('IGAAkey', null), /^https:\/\/graph\.instagram\.com\/me\/media\?fields=/);
 });

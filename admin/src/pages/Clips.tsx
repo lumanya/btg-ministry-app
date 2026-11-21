@@ -4,7 +4,7 @@ import { formatClock, formatDay, friendlyError, parseClock, plural, youtubeIdFro
 import { CLIPS_URL, db, FEED_URL } from '../supabase';
 import { Button, ConfirmButton, Empty, Field, Loading, PageHead, useToast } from '../ui';
 
-type Status = { connected: boolean; expires_at?: string | null; refreshed_at?: string | null };
+type Status = { connected: boolean; account_id?: string | null; expires_at?: string | null; refreshed_at?: string | null };
 type Clip = {
   id: string;
   videoUrl: string | null;
@@ -31,6 +31,7 @@ export default function Clips() {
   const [stats, setStats] = useState<Map<string, { likes: number; views: number }>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState('');
+  const [accountId, setAccountId] = useState('');
   const [replacing, setReplacing] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -83,10 +84,11 @@ export default function Clips() {
 
   const connect = async () => {
     setBusy('connect');
-    const { error } = await db().rpc('set_instagram_token', { token: token.trim() });
+    const { error } = await db().rpc('set_instagram_token', { token: token.trim(), account_id: accountId.trim() || null });
     setBusy(null);
     if (error) return toast(friendlyError(error), 'error');
     setToken('');
+    setAccountId('');
     setReplacing(false);
     toast('Instagram connected. Loading the clips…');
     load();
@@ -148,8 +150,14 @@ export default function Clips() {
           {status.connected && !replacing ? (
             <>
               <p style={{ margin: 0 }}>
-                Connected. The access key renews itself while the app is in use
-                {status.expires_at ? <> and is currently good until <strong>{formatDay(status.expires_at.slice(0, 10))}</strong></> : null}.
+                {status.account_id ? (
+                  <>Connected to Instagram account {status.account_id}. This key doesn’t expire.</>
+                ) : (
+                  <>
+                    Connected. The access key renews itself while the app is in use
+                    {status.expires_at ? <> and is currently good until <strong>{formatDay(status.expires_at.slice(0, 10))}</strong></> : null}.
+                  </>
+                )}
               </p>
               <div className="row wrap">
                 <Button small onClick={() => setReplacing(true)}>
@@ -169,6 +177,9 @@ export default function Clips() {
               </ol>
               <Field label="Instagram access token">
                 {(p) => <textarea {...p} className="textarea" style={{ minHeight: 70, fontFamily: 'monospace', fontSize: 13 }} value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} />}
+              </Field>
+              <Field label="Instagram account ID" hint="Needed for keys from Meta’s business setup (they don’t start with “IG”). It’s the long number shown under the account’s name on the app’s Instagram page.">
+                {(p) => <input {...p} className="input" style={{ maxWidth: 260 }} inputMode="numeric" placeholder="17841402024265975" value={accountId} onChange={(e) => setAccountId(e.target.value)} />}
               </Field>
               <div className="row">
                 <Button variant="primary" onClick={connect} busy={busy === 'connect'} disabled={token.trim().length < 20}>

@@ -12,11 +12,10 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { buildClips, type ClipSetting, type InstagramMedia, shouldRefresh } from './clips.ts';
+import { buildClips, type ClipSetting, type InstagramMedia, mediaUrl, shouldRefresh } from './clips.ts';
 
 const GRAPH = 'https://graph.instagram.com';
 const CACHE_MS = 15 * 60 * 1000;
-const FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -33,7 +32,7 @@ function json(body: unknown, status = 200, maxAge = 0) {
   });
 }
 
-type Auth = { access_token: string; expires_at: string | null; refreshed_at: string | null; updated_at: string };
+type Auth = { access_token: string; account_id: string | null; expires_at: string | null; refreshed_at: string | null; updated_at: string };
 
 // deno-lint-ignore no-explicit-any
 async function freshToken(admin: any, auth: Auth): Promise<string> {
@@ -58,9 +57,9 @@ async function freshToken(admin: any, auth: Auth): Promise<string> {
   }
 }
 
-async function loadMedia(token: string): Promise<InstagramMedia[]> {
+async function loadMedia(token: string, accountId: string | null): Promise<InstagramMedia[]> {
   const out: InstagramMedia[] = [];
-  let url: string | null = `${GRAPH}/me/media?fields=${FIELDS}&limit=50&access_token=${encodeURIComponent(token)}`;
+  let url: string | null = mediaUrl(token, accountId);
   // Two pages (about 100 posts) is plenty for a feed of recent clips.
   for (let page = 0; url && page < 2; page++) {
     const res: Response = await fetch(url);
@@ -83,7 +82,7 @@ Deno.serve(async (req) => {
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   const [{ data: auth }, { data: settings }] = await Promise.all([
-    admin.from('instagram_auth').select('access_token,expires_at,refreshed_at,updated_at').eq('id', 1).maybeSingle(),
+    admin.from('instagram_auth').select('access_token,account_id,expires_at,refreshed_at,updated_at').eq('id', 1).maybeSingle(),
     admin.from('clips').select('instagram_id,hidden,title,sermon_youtube_id,sermon_start_seconds'),
   ]);
   if (!auth) return json({ connected: false, clips: [] }, 200, 60);
@@ -91,7 +90,7 @@ Deno.serve(async (req) => {
   try {
     if (!cache || Date.now() - cache.at > CACHE_MS) {
       const token = await freshToken(admin, auth as Auth);
-      cache = { at: Date.now(), media: await loadMedia(token) };
+      cache = { at: Date.now(), media: await loadMedia(token, (auth as Auth).account_id) };
     }
     const clips = buildClips(cache.media, (settings ?? []) as ClipSetting[], all);
     return json({ connected: true, clips }, 200, all ? 0 : 300);

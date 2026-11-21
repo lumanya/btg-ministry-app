@@ -90,8 +90,20 @@ export function shouldRefresh(
   auth: { expires_at: string | null; refreshed_at: string | null; updated_at: string },
   now = Date.now(),
 ): boolean {
+  // Business keys (no expiry date) never need renewing.
+  if (!auth.expires_at) return false;
   const since = Date.parse(auth.refreshed_at ?? auth.updated_at) || 0;
   if (now - since < DAY) return false;
-  const expires = auth.expires_at ? Date.parse(auth.expires_at) : 0;
-  return expires - now < 30 * DAY;
+  return Date.parse(auth.expires_at) - now < 30 * DAY;
+}
+
+const FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp';
+
+/**
+ * Where to read the account's posts. Keys from Instagram login read "me" on
+ * graph.instagram.com; business keys read the account by its ID on graph.facebook.com.
+ */
+export function mediaUrl(token: string, accountId: string | null): string {
+  const base = accountId ? `https://graph.facebook.com/v25.0/${encodeURIComponent(accountId)}/media` : 'https://graph.instagram.com/me/media';
+  return `${base}?fields=${FIELDS}&limit=50&access_token=${encodeURIComponent(token)}`;
 }

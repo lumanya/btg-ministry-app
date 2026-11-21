@@ -395,6 +395,16 @@ describe('clips', () => {
     assert.equal(after.connected, false);
   });
 
+  test('business keys need the Instagram account ID and never expire', async () => {
+    await fails(EDITOR, `select public.set_instagram_token($1)`, ['EAAexamplebusinesskey1234567890'], /account ID/);
+    await fails(EDITOR, `select public.set_instagram_token($1, 60, $2)`, ['EAAexamplebusinesskey1234567890', 'abc'], /long number/);
+    await rows(EDITOR, `select public.set_instagram_token($1, 60, $2)`, ['EAAexamplebusinesskey1234567890', '17841402024265975']);
+    const [{ instagram_status: s }] = await rows(EDITOR, `select public.instagram_status()`);
+    assert.equal(s.account_id, '17841402024265975');
+    assert.equal(s.expires_at, null);
+    await rows(EDITOR, `select public.disconnect_instagram()`);
+  });
+
   test('clips can be liked', async () => {
     const [{ toggle_like: l }] = await rows(null, `select public.toggle_like('clip', '17900000000000001', 'phone-1234-abcd')`);
     assert.equal(l.liked, true);
