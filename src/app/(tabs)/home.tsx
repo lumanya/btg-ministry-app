@@ -1,21 +1,20 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { dayName, monthName, t, weekLetters } from '@/i18n';
-import { Eagle, ScrollCard } from '@/components/art';
-import { ClipsRail } from '@/components/clips-rail';
+import { dayName, monthName, t } from '@/i18n';
+import { Eagle } from '@/components/art';
 import { EventCard } from '@/components/event-card';
 import { FormMessage } from '@/components/form';
-import { Icon } from '@/components/icon';
+import { Icon, IconName } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
-import { Body, Button, Eyebrow, IconButton, ProgressBar, Screen, SectionHeader, Tap, Title } from '@/components/ui';
+import { SeedsRail } from '@/components/seeds-rail';
+import { Button, IconButton, Screen, SectionHeader, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
-import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { formatDate } from '@/content/sample';
-import { devotionalEpisode } from '@/lib/content';
+import { Fonts, Palette } from '@/constants/theme';
+import { seedTitle } from '@/lib/clips';
 import { formatLength } from '@/lib/podcast';
-import { formatStart, videoMeta, videoTone } from '@/lib/video';
+import { formatStart, videoMeta } from '@/lib/video';
 import { useAuth } from '@/state/auth';
 import { useClips } from '@/state/clips';
 import { useContent } from '@/state/content';
@@ -23,8 +22,14 @@ import { useFeed } from '@/state/feed';
 import { useLibrary } from '@/state/library';
 import { useNotifications } from '@/state/notifications';
 import { usePlayer } from '@/state/player';
-import { useColors, useStyles } from '@/state/theme';
+import { useRhythm } from '@/state/rhythm';
+import { useColors, useStyles, useTheme } from '@/state/theme';
 
+/** Fixed colours for the rhythm panel: the same deep ink in light and dark mode. */
+const INK = '#17120E';
+const GOLD = '#D4AF73';
+const SOFT = 'rgba(255,255,255,0.70)';
+const RULE = 'rgba(255,255,255,0.10)';
 
 function greeting(now: Date) {
   const h = now.getHours();
@@ -33,37 +38,50 @@ function greeting(now: Date) {
   return t('Good evening');
 }
 
-export default function Home() {
+export default function Today() {
   const c = useColors();
+  const { isDark } = useTheme();
   const styles = useStyles(createStyles);
   const router = useRouter();
   const auth = useAuth();
   const lib = useLibrary();
+  const rhythm = useRhythm();
   const content = useContent();
   const notify = useNotifications();
+  const player = usePlayer();
+  const { clips } = useClips();
   const [promptError, setPromptError] = useState<string | null>(null);
-  const nextEvent = content.upcoming[0];
   const { feed, status, refreshing, refresh } = useFeed();
   const refreshAll = () => {
     refresh();
     content.refresh();
   };
-  const player = usePlayer();
 
   const now = new Date();
   const firstName = auth.name?.split(' ')[0];
+  const loading = status === 'loading';
 
   const live = feed.live;
-  const { clips } = useClips();
   const next = feed.upcoming[0];
   // While live, feature the stream; otherwise the most recent service.
   const feature = live ?? feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
-  const latestVideos = feed.videos.filter((v) => v.id !== feature?.id).slice(0, 4);
-  const loading = status === 'loading';
+  const nextEvent = content.upcoming[0];
 
   const today = content.today;
-  const readToday = lib.isRead(today.id);
   const openToday = () => router.push({ pathname: '/devotional/[id]', params: { id: today.id } });
+  const seed = clips[0];
+  const openSeed = () => router.navigate(seed ? { pathname: '/seeds', params: { start: seed.id, at: String(Date.now()) } } : '/seeds');
+
+  const steps: { key: string; label: string; title: string; icon: IconName; done: boolean; onPress: () => void }[] = [
+    { key: 'read', label: t('Read'), title: today.title, icon: 'devotional', done: lib.readToday, onPress: openToday },
+    { key: 'seed', label: t('Watch a seed'), title: seed ? seedTitle(seed.title) : t('One minute with the Word'), icon: 'seed', done: rhythm.seedToday, onPress: openSeed },
+    { key: 'pray', label: t('Pray'), title: t('A minute of prayer'), icon: 'heart', done: rhythm.prayedToday, onPress: () => router.push('/pray') },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+  const nextKey = steps.find((s) => !s.done)?.key;
+
+  const streakLine = lib.streak > 0 ? t('{n}-day streak', { n: lib.streak }) : t('Start your streak today');
+  const graceLine = lib.streak > 0 ? (lib.graceReady ? t('grace day ready') : t('grace day used this week')) : null;
 
   const resume = player.resume;
   const listen = resume?.episode ?? player.podcast.episodes[0];
@@ -76,19 +94,13 @@ export default function Home() {
 
   const quote = content.quotes[now.getDate() % content.quotes.length];
 
-  const streakTitle = lib.streak > 0 ? t('{n}-day reading streak', { n: lib.streak }) : t('Start a reading streak');
-  const streakText = lib.readToday
-    ? t('You’ve read today. See you tomorrow.')
-    : lib.streak > 0
-      ? t('Read today’s devotional to keep it going.')
-      : t('Read today’s devotional to begin.');
-
   return (
-    <Screen gap={28} refreshing={refreshing || content.refreshing} onRefresh={refreshAll}>
+    <Screen gap={36} refreshing={refreshing || content.refreshing} onRefresh={refreshAll}>
       <View style={styles.topBar}>
-        <View style={styles.brand}>
-          <Eagle height={40} />
-          <Text style={styles.brandText}>BTG Ministry</Text>
+        <View style={styles.brand} accessibilityRole="header" accessibilityLabel="BTG Ministry">
+          <Eagle height={34} />
+          <Text style={styles.brandText}>BTG</Text>
+          <Text style={styles.brandSmall}>MINISTRY</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <IconButton icon="bookmark" label={t('Saved')} onPress={() => router.push('/saved')} />
@@ -102,67 +114,69 @@ export default function Home() {
         </View>
       </View>
 
-      <Appear>
-        <View style={{ gap: 6 }}>
-          <Text style={styles.date}>
-            {dayName(now.getDay())}, {now.getDate()} {monthName(now.getMonth())}
-          </Text>
-          <Title size={38}>
-            {greeting(now)}
-            {firstName ? `, ${firstName}` : ''}.
-          </Title>
-          <Text style={styles.blessing}>{t('Grace and peace to you.')}</Text>
+      <Appear style={{ gap: 8, marginTop: -8 }}>
+        <Text style={styles.date}>
+          {dayName(now.getDay())} · {now.getDate()} {monthName(now.getMonth())}
+        </Text>
+        <Title size={44}>
+          {greeting(now)}
+          {firstName ? `, ${firstName}` : ''}.
+        </Title>
+        <Text style={styles.blessing}>{t('Grace and peace to you.')}</Text>
+      </Appear>
+
+      <Appear index={1}>
+        <View style={[styles.rhythm, { borderColor: isDark ? 'rgba(255,255,255,0.10)' : INK }]}>
+          <View style={styles.rhythmHead}>
+            <Text style={styles.rhythmTitle} accessibilityRole="header">
+              {t('Today’s rhythm')}
+            </Text>
+            <Text style={styles.rhythmCount}>{doneCount === 3 ? t('Complete') : t('{n} of 3', { n: doneCount })}</Text>
+          </View>
+          <Text style={styles.rhythmSub}>{t('Three small steps with the Word.')}</Text>
+          <View style={{ marginTop: 10 }}>
+            {steps.map((s) => (
+              <Tap
+                key={s.key}
+                haptic="tap"
+                accessibilityRole="button"
+                accessibilityLabel={`${s.label}: ${s.title}${s.done ? `, ${t('done')}` : ''}`}
+                onPress={s.onPress}
+                style={styles.step}>
+                <Pop trigger={s.done ? 1 : 0}>
+                  <View style={[styles.stepDisc, s.done ? styles.stepDone : s.key === nextKey ? styles.stepNext : styles.stepLater]}>
+                    <Icon name={s.done ? 'check' : s.icon} size={18} color={s.done ? INK : s.key === nextKey ? GOLD : SOFT} />
+                  </View>
+                </Pop>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[styles.stepLabel, !s.done && s.key !== nextKey && { color: SOFT }]}>{s.label}</Text>
+                  <Text style={[styles.stepTitle, s.done && styles.stepTitleDone]} numberOfLines={1}>
+                    {s.title}
+                  </Text>
+                </View>
+                {s.done ? null : <Icon name="chevron" size={18} color={SOFT} />}
+              </Tap>
+            ))}
+          </View>
+          <Tap accessibilityRole="button" accessibilityLabel={`${streakLine}${graceLine ? `, ${graceLine}` : ''}`} onPress={() => router.push('/rhythm')} style={styles.streakRow}>
+            <Icon name="flame" size={16} color={GOLD} filled={lib.streak > 0} />
+            <Text style={styles.streakText}>{streakLine}</Text>
+            {graceLine ? <Text style={styles.graceText}>· {graceLine}</Text> : null}
+          </Tap>
         </View>
       </Appear>
 
       {clips.length ? (
-        <Appear index={1}>
-          <ClipsRail />
+        <Appear index={2}>
+          <SeedsRail />
         </Appear>
       ) : null}
-
-      <Appear index={1}>
-        {loading ? (
-          <View style={[styles.liveCard, { gap: 14 }]} accessibilityLabel={t('Loading the latest service')}>
-            <Skeleton height={176} radius={16} />
-            <Skeleton height={22} width="70%" />
-            <Skeleton height={14} width="45%" />
-          </View>
-        ) : feature ? (
-          <Tap
-            haptic="tap"
-            accessibilityRole="button"
-            accessibilityLabel={live ? t('Join the livestream: {title}', { title: feature.title }) : t('Watch the latest service: {title}', { title: feature.title })}
-            onPress={() => (live ? router.navigate('/live') : router.push({ pathname: '/sermon/[id]', params: { id: feature.id } }))}
-            style={styles.liveCard}>
-            <VideoThumb video={feature} height={176} play="center" />
-            <View style={styles.liveFooter}>
-              <View style={{ gap: 4, flex: 1 }}>
-                <Eyebrow style={{ fontSize: 11 }}>
-                  {live ? t('Streaming now') : t('Latest service')}
-                </Eyebrow>
-                <Text style={styles.liveTitle} numberOfLines={2}>
-                  {feature.title}
-                </Text>
-                <Text style={styles.liveMeta}>
-                  {live ? 'Iman Mwakanyamale' : next?.scheduledStart ? t('Next live: {when}', { when: formatStart(next.scheduledStart) }) : videoMeta(feature)}
-                </Text>
-              </View>
-              <View style={styles.joinPill}>
-                <Text style={styles.joinText}>{live ? t('Join') : t('Watch')}</Text>
-              </View>
-            </View>
-          </Tap>
-        ) : null}
-      </Appear>
 
       {notify.showPrompt ? (
         <Appear index={2}>
           <View style={styles.prompt}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <View style={styles.promptIcon}>
-                <Icon name="bell" color={c.accent} />
-              </View>
+              <Icon name="bell" color={c.accent} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={styles.cardTitle}>{t('Never miss a service')}</Text>
                 <Text style={styles.metaText}>{t('Get a notification when we go live, when today’s devotional is posted, and before events.')}</Text>
@@ -184,77 +198,43 @@ export default function Home() {
         </Appear>
       ) : null}
 
+      <Appear index={3} style={{ gap: 14 }}>
+        <SectionHeader title={live ? t('Streaming now') : t('Latest service')} action={t('All sermons')} onAction={() => router.navigate('/sermons')} />
+        {loading ? (
+          <View style={{ gap: 12 }} accessibilityLabel={t('Loading the latest service')}>
+            <Skeleton height={200} radius={20} />
+            <Skeleton height={24} width="75%" />
+            <Skeleton height={14} width="45%" />
+          </View>
+        ) : feature ? (
+          <Tap
+            haptic="tap"
+            accessibilityRole="button"
+            accessibilityLabel={live ? t('Join the livestream: {title}', { title: feature.title }) : t('Watch the latest service: {title}', { title: feature.title })}
+            onPress={() => (live ? router.navigate('/live') : router.push({ pathname: '/sermon/[id]', params: { id: feature.id } }))}
+            style={{ gap: 12 }}>
+            <VideoThumb video={feature} height={200} radius={20} play="center" />
+            <View style={{ gap: 4 }}>
+              <Text style={styles.serviceTitle} numberOfLines={2}>
+                {feature.title}
+              </Text>
+              <Text style={styles.metaText}>
+                {live ? 'Iman Mwakanyamale' : next?.scheduledStart ? t('Next live: {when}', { when: formatStart(next.scheduledStart) }) : videoMeta(feature)}
+              </Text>
+            </View>
+          </Tap>
+        ) : null}
+      </Appear>
+
       {nextEvent ? (
-        <Appear index={2} style={{ gap: 4 }}>
+        <Appear index={3} style={{ gap: 12 }}>
           <SectionHeader title={t('Coming up')} action={content.upcoming.length > 1 ? t('All events') : undefined} onAction={() => router.push('/events')} />
           <EventCard event={nextEvent} onPress={() => router.push({ pathname: '/events/[id]', params: { id: nextEvent.id } })} />
         </Appear>
       ) : null}
 
-      <Appear index={2} style={{ gap: 4 }}>
-        <SectionHeader title={t("Today's devotional")} action={t('See all')} onAction={() => router.navigate('/devotional')} />
-        <ScrollCard>
-          <View style={styles.rowBetween}>
-            <Eyebrow style={{ fontSize: 12 }}>{formatDate(today.date)}</Eyebrow>
-            {readToday ? (
-              <View style={[styles.refChip, styles.readChip]}>
-                <Icon name="check" size={13} color={c.cream} />
-                <Text style={[styles.refText, { color: c.cream }]}>{t('Read')}</Text>
-              </View>
-            ) : today.scripture ? (
-              <View style={styles.refChip}>
-                <Text style={styles.refText}>{today.scripture.ref}</Text>
-              </View>
-            ) : null}
-          </View>
-          <Title size={32}>{today.title}</Title>
-          <Body>{today.excerpt}</Body>
-          <View style={{ flexDirection: 'row', gap: 10, paddingTop: 4 }}>
-            <Button label={readToday ? t('Read again') : t('Read now')} variant={readToday ? 'outline' : 'primary'} onPress={openToday} style={{ flex: 1, minHeight: 46 }} />
-            {today.audioUrl ? (
-              <IconButton
-                icon="podcast"
-                label={t('Listen to this devotional')}
-                size={46}
-                onPress={() => {
-                  player.play(devotionalEpisode(today));
-                  router.push('/player');
-                }}
-                style={{ borderColor: c.accent, backgroundColor: 'transparent' }}
-              />
-            ) : null}
-          </View>
-        </ScrollCard>
-      </Appear>
-
-      <Appear index={3}>
-        <Tap accessibilityRole="button" accessibilityLabel={`${streakTitle}. ${streakText}`} onPress={openToday} style={styles.streakCard}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <Pop trigger={lib.streak} style={[styles.flameDisc, lib.readToday && { backgroundColor: c.brown }]}>
-              <Icon name="flame" color={lib.readToday ? c.gold : c.accent} filled={lib.readToday} />
-            </Pop>
-            <View style={{ gap: 2, flex: 1 }}>
-              <Text style={styles.cardTitle}>{streakTitle}</Text>
-              <Text style={styles.metaText}>{streakText}</Text>
-            </View>
-          </View>
-          <View style={styles.week}>
-            {lib.week.map((d, i) => (
-              <View key={d.key} style={{ alignItems: 'center', gap: 6 }}>
-                <View style={[styles.dot, d.read && styles.dotDone, d.isToday && !d.read && styles.dotToday]}>
-                  {d.read ? <Icon name="check" size={14} color={c.cream} /> : null}
-                </View>
-                <Text style={[styles.dayLetter, d.isToday && { color: c.text, fontFamily: Fonts.sansBold }]}>{weekLetters()[i]}</Text>
-              </View>
-            ))}
-          </View>
-          {lib.bestStreak > lib.streak ? <Text style={styles.metaText}>{t('Your best: {n} days in a row', { n: lib.bestStreak })}</Text> : null}
-        </Tap>
-      </Appear>
-
       {listen ? (
-        <Appear index={4} style={{ gap: 8 }}>
-          <SectionHeader title={resume ? t('Continue listening') : t('Listen')} action={t('Podcast')} onAction={() => router.navigate('/podcast')} />
+        <Appear index={4}>
           <View style={styles.listenRow}>
             <Tap
               accessibilityRole="button"
@@ -262,14 +242,22 @@ export default function Home() {
               onPress={() => router.push('/player')}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={styles.listenArt}>
-                <Eagle height={54} />
+                <Text style={styles.listenArtText}>BTG</Text>
               </View>
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text style={styles.listenTitle} numberOfLines={2}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.listenLabel}>{resume ? t('Continue listening') : t('Listen')}</Text>
+                <Text style={styles.listenTitle} numberOfLines={1}>
                   {listen.title}
                 </Text>
-                <Text style={styles.metaText}>{listenMeta}</Text>
-                {resume && resume.duration > 0 ? <ProgressBar value={resume.position / resume.duration} /> : null}
+                {resume && resume.duration > 0 ? (
+                  <View style={styles.listenTrack}>
+                    <View style={[styles.listenFill, { width: `${Math.round((resume.position / resume.duration) * 100)}%` }]} />
+                  </View>
+                ) : (
+                  <Text style={styles.metaText} numberOfLines={1}>
+                    {listenMeta}
+                  </Text>
+                )}
               </View>
             </Tap>
             <IconButton
@@ -283,56 +271,20 @@ export default function Home() {
         </Appear>
       ) : null}
 
-      <Appear index={5} style={{ gap: 8 }}>
-        <SectionHeader title={t('Latest sermons')} action={t('See all')} onAction={() => router.navigate('/sermons')} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={236 + 14}
-          style={{ marginHorizontal: -ScreenPadding }}
-          contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 14 }}>
-          {loading
-            ? [0, 1].map((i) => (
-                <View key={i} style={{ width: 236, gap: 10 }}>
-                  <Skeleton height={132} radius={16} />
-                  <Skeleton height={16} width="80%" />
-                  <Skeleton height={12} width="50%" />
-                </View>
-              ))
-            : latestVideos.map((v, i) => (
-                <Tap
-                  key={v.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${v.title}, ${videoMeta(v)}`}
-                  onPress={() => router.push({ pathname: '/sermon/[id]', params: { id: v.id } })}
-                  style={{ width: 236, gap: 10 }}>
-                  <VideoThumb video={v} height={132} tone={videoTone(i)} />
-                  <View style={{ gap: 2 }}>
-                    <Text style={styles.sermonTitle} numberOfLines={2}>
-                      {v.title}
-                    </Text>
-                    <Text style={styles.metaText}>{videoMeta(v)}</Text>
-                  </View>
-                </Tap>
-              ))}
-        </ScrollView>
-      </Appear>
-
-      <Appear index={6}>
-        <View style={styles.quote}>
-          <Eyebrow style={{ fontSize: 12 }}>{t('Word for today')}</Eyebrow>
-          <Text style={styles.quoteText}>“{quote}”</Text>
-          <View style={styles.rowBetween}>
-            <Text style={styles.cardTitle}>Iman Mwakanyamale</Text>
-            <IconButton
-              icon="share"
-              label={t('Share this word')}
-              iconSize={18}
-              onPress={() => router.push({ pathname: '/share', params: { kind: 'quote', text: quote, attribution: 'Iman Mwakanyamale' } })}
-              style={{ backgroundColor: 'transparent', borderColor: c.accent }}
-            />
-          </View>
+      <Appear index={5} style={{ gap: 12 }}>
+        <Text style={styles.quoteMark} accessible={false}>
+          “
+        </Text>
+        <Text style={styles.quoteText}>{quote}</Text>
+        <View style={styles.quoteFoot}>
+          <Text style={styles.cardTitle}>Iman Mwakanyamale</Text>
+          <Tap
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/share', params: { kind: 'quote', text: quote, attribution: 'Iman Mwakanyamale', format: 'status', theme: 'ink' } })}
+            style={styles.statusButton}>
+            <Icon name="share" size={16} color={c.accent} />
+            <Text style={styles.statusText}>{t('Share to Status')}</Text>
+          </Tap>
         </View>
       </Appear>
     </Screen>
@@ -342,64 +294,47 @@ export default function Home() {
 const createStyles = (c: Palette) =>
   StyleSheet.create({
     topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    brandText: { fontFamily: Fonts.display, fontSize: 26, letterSpacing: 1.5, color: c.text },
+    brandSmall: { fontFamily: Fonts.sansSemiBold, fontSize: 10, letterSpacing: 2.8, color: c.textMuted, marginTop: 4 },
     avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
     avatarText: { fontFamily: Fonts.display, fontSize: 22, color: c.cream },
-    brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    brandText: { fontFamily: Fonts.display, fontSize: 22, color: c.text },
-    date: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
-    blessing: { fontFamily: Fonts.displayItalic, fontSize: 20, color: c.textMuted },
-    rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    date: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: c.eyebrow },
+    blessing: { fontFamily: Fonts.displayItalic, fontSize: 21, color: c.textMuted },
 
-    liveCard: {
-      backgroundColor: c.white,
-      borderWidth: 1,
-      borderColor: c.line,
-      borderRadius: Radius.xl,
-      padding: 10,
-      paddingBottom: 16,
-      gap: 14,
-      shadowColor: '#3A2413',
-      shadowOpacity: 0.06,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 2,
-    },
-    liveFooter: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: 4 },
-    liveTitle: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 30, color: c.text },
-    liveMeta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
-    joinPill: { height: 40, paddingHorizontal: 18, borderRadius: Radius.pill, backgroundColor: c.brown, justifyContent: 'center' },
-    joinText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.cream },
+    rhythm: { marginHorizontal: -4, backgroundColor: INK, borderRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 22, paddingBottom: 6 },
+    rhythmHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    rhythmTitle: { fontFamily: Fonts.displayMedium, fontSize: 28, color: '#FFFFFF' },
+    rhythmCount: { fontFamily: Fonts.sans, fontSize: 13, color: SOFT },
+    rhythmSub: { fontFamily: Fonts.sans, fontSize: 14, color: SOFT, marginTop: 4 },
+    step: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 62, borderTopWidth: 1, borderTopColor: RULE },
+    stepDisc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+    stepDone: { backgroundColor: GOLD },
+    stepNext: { borderWidth: 1.5, borderColor: GOLD },
+    stepLater: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
+    stepLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: GOLD },
+    stepTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: '#FFFFFF' },
+    stepTitleDone: { color: SOFT, textDecorationLine: 'line-through' },
+    streakRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 50, borderTopWidth: 1, borderTopColor: RULE },
+    streakText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: '#FFFFFF' },
+    graceText: { fontFamily: Fonts.sans, fontSize: 14, color: SOFT, flexShrink: 1 },
 
-    refChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: c.lineStrong, borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-    readChip: { backgroundColor: c.brown, borderColor: c.brown },
-    refText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
+    prompt: { gap: 14, paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.line },
+    cardTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
+    metaText: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 19, color: c.textMuted },
+    serviceTitle: { fontFamily: Fonts.display, fontSize: 27, lineHeight: 29, color: c.text },
 
-    streakCard: { gap: 16, padding: 18, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
-    flameDisc: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.parchment, alignItems: 'center', justifyContent: 'center' },
-    cardTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: c.text },
-    week: { flexDirection: 'row', justifyContent: 'space-between' },
-    dot: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.sand, alignItems: 'center', justifyContent: 'center' },
-    dotDone: { backgroundColor: c.brown },
-    dotToday: { backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: c.accent },
-    dayLetter: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: c.textMuted },
+    listenRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.line },
+    listenArt: { width: 58, height: 58, borderRadius: 12, backgroundColor: INK, alignItems: 'center', justifyContent: 'center' },
+    listenArtText: { fontFamily: Fonts.display, fontSize: 18, letterSpacing: 1, color: GOLD },
+    listenLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: c.eyebrow },
+    listenTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: c.text },
+    listenTrack: { height: 3, borderRadius: 2, backgroundColor: c.rail, overflow: 'hidden', marginTop: 2 },
+    listenFill: { height: 3, backgroundColor: c.brown },
 
-    listenRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 14,
-      padding: 12,
-      borderRadius: Radius.lg,
-      backgroundColor: c.white,
-      borderWidth: 1,
-      borderColor: c.line,
-    },
-    listenArt: { width: 64, height: 64, borderRadius: 14, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
-    listenTitle: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 22, color: c.text },
-    metaText: { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18, color: c.textMuted },
-    sermonTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
-
-    prompt: { gap: 14, padding: 18, borderRadius: Radius.lg, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
-    promptIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.white, alignItems: 'center', justifyContent: 'center' },
-    quote: { gap: 14, padding: 20, paddingTop: 24, borderRadius: Radius.lg, backgroundColor: c.sand },
-    quoteText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 29, color: c.brownDark },
+    quoteMark: { fontFamily: Fonts.display, fontSize: 84, lineHeight: 70, height: 40, color: c.goldLine },
+    quoteText: { fontFamily: Fonts.displayItalic, fontSize: 27, lineHeight: 32, color: c.text },
+    quoteFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    statusButton: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: c.accent },
+    statusText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
   });

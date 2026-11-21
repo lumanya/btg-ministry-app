@@ -5,10 +5,10 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { t } from '@/i18n';
 import { Icon } from '@/components/icon';
 import { PlaylistCard } from '@/components/playlist-card';
-import { Eyebrow, Screen, Tap, Title } from '@/components/ui';
+import { Screen, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { FeedVideo, videoMeta, videoTone } from '@/lib/video';
+import { FeedVideo, formatStart, videoMeta, videoTone } from '@/lib/video';
 import { useFeed } from '@/state/feed';
 import { useColors, useStyles } from '@/state/theme';
 
@@ -37,7 +37,29 @@ export default function Sermons() {
 
   return (
     <Screen gap={18} refreshing={refreshing} onRefresh={refresh}>
-      <Title>{t('Sermons')}</Title>
+      <Title>{t('Watch')}</Title>
+
+      <Tap
+        haptic="tap"
+        accessibilityRole="button"
+        accessibilityLabel={feed.live ? t('Join the livestream: {title}', { title: feed.live.title }) : t('Live services and prayer requests')}
+        onPress={() => router.navigate('/live')}
+        style={styles.live}>
+        <View style={[styles.liveDisc, feed.live && { backgroundColor: c.live }]}>
+          <Icon name="live" size={20} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={styles.liveLabel}>{feed.live ? t('Streaming now') : t('Live')}</Text>
+          <Text style={styles.liveTitle} numberOfLines={1}>
+            {feed.live
+              ? feed.live.title
+              : feed.upcoming[0]?.scheduledStart
+                ? t('Next live: {when}', { when: formatStart(feed.upcoming[0].scheduledStart) })
+                : t('Service times and prayer requests')}
+          </Text>
+        </View>
+        <Text style={styles.liveAction}>{feed.live ? t('Join') : t('Open')}</Text>
+      </Tap>
 
       <View style={styles.search}>
         <Icon name="search" size={20} color={c.textMuted} />
@@ -91,7 +113,7 @@ export default function Sermons() {
       {playlists.length && !q && filter === 'all' ? (
         <View style={{ gap: 10 }}>
           <View style={styles.listHeader}>
-            <Eyebrow>{t('Series')}</Eyebrow>
+            <Text style={styles.listTitle} accessibilityRole="header">{t('Series')}</Text>
             <Text style={styles.meta}>{playlists.length === 1 ? t('1 series') : t('{n} series', { n: playlists.length })}</Text>
           </View>
           <ScrollView
@@ -109,7 +131,7 @@ export default function Sermons() {
       ) : null}
 
       <View style={styles.listHeader}>
-        <Eyebrow>{filter === 'all' ? t('Recent') : filters.find((f) => f.id === filter)!.label}</Eyebrow>
+        <Text style={styles.listTitle} accessibilityRole="header">{filter === 'all' ? t('Recent') : t(filters.find((f) => f.id === filter)!.label)}</Text>
         <Text style={styles.meta} accessibilityLiveRegion="polite">
           {matches.length === 1 ? t('1 sermon') : t('{n} sermons', { n: matches.length })}
         </Text>
@@ -165,7 +187,13 @@ const createStyles = (c: Palette) =>
   itemTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 20, color: c.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
   subtitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: c.eyebrow },
-  listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 },
+  listHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 10 },
+  listTitle: { fontFamily: Fonts.displayMedium, fontSize: 27, color: c.text },
+  live: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 68, paddingHorizontal: 14, borderRadius: Radius.lg, backgroundColor: '#17120E' },
+  liveDisc: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },
+  liveLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: '#D4AF73' },
+  liveTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: '#FFFFFF' },
+  liveAction: { fontFamily: Fonts.sansBold, fontSize: 14, color: '#D4AF73' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   empty: { padding: 28, borderRadius: Radius.lg, backgroundColor: c.parchment, alignItems: 'center' },
 });

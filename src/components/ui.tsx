@@ -205,14 +205,22 @@ export function Screen({
   );
 }
 
-export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+/** A section's heading in the display serif, with an optional line under it and a link on the right. */
+export function SectionHeader({ title, subtitle, action, onAction }: { title: string; subtitle?: string; action?: string; onAction?: () => void }) {
+  const c = useColors();
   const styles = useStyles(createStyles);
   return (
     <View style={styles.sectionHeader}>
-      <Eyebrow>{title}</Eyebrow>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          {title}
+        </Text>
+        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      </View>
       {action ? (
         <Pressable accessibilityRole="link" onPress={onAction} hitSlop={8} style={styles.sectionAction}>
           <Text style={styles.sectionActionText}>{action}</Text>
+          <Icon name="arrow" size={16} color={c.accent} />
         </Pressable>
       ) : null}
     </View>
@@ -277,8 +285,10 @@ const createStyles = (c: Palette) =>
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  sectionAction: { minHeight: 44, justifyContent: 'center' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, minHeight: 44 },
+  sectionTitle: { fontFamily: Fonts.displayMedium, fontSize: 29, lineHeight: 31, color: c.text },
+  sectionSubtitle: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
+  sectionAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionActionText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
   card: {
     backgroundColor: c.white,

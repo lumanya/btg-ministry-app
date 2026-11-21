@@ -13,7 +13,7 @@ import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { success, tick } from '@/lib/haptics';
 import { useColors, useStyles } from '@/state/theme';
 
-export type ShareParams = { kind: CardKind; text: string; attribution?: string; title?: string; link?: string };
+export type ShareParams = { kind: CardKind; text: string; attribution?: string; title?: string; link?: string; format?: CardFormat; theme?: CardTheme };
 
 /** Pick a look, then share the card as an image (WhatsApp, Instagram, anywhere). */
 export default function ShareScreen() {
@@ -23,11 +23,11 @@ export default function ShareScreen() {
   const insets = useSafeAreaInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const params = useLocalSearchParams<ShareParams>();
-  const kind = (['quote', 'verse', 'devotional', 'event'].includes(params.kind) ? params.kind : 'quote') as CardKind;
+  const kind = (['quote', 'verse', 'devotional', 'event', 'week'].includes(params.kind) ? params.kind : 'quote') as CardKind;
   const text = String(params.text ?? '');
   const card = useRef<CardRef>(null);
-  const [theme, setTheme] = useState<CardTheme>('ivory');
-  const [format, setFormat] = useState<CardFormat>('post');
+  const [theme, setTheme] = useState<CardTheme>(params.theme && params.theme in CARD_THEMES ? params.theme : 'ink');
+  const [format, setFormat] = useState<CardFormat>(params.format === 'post' || params.format === 'status' ? params.format : 'post');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +35,10 @@ export default function ShareScreen() {
   const ratio = format === 'status' ? 16 / 9 : 5 / 4;
   const width = Math.round(Math.min(screenW - ScreenPadding * 2, 380, (screenH - 340) / ratio));
 
-  const asText = [params.title, text, params.attribution].filter(Boolean).join('\n');
+  const asText =
+    kind === 'week'
+      ? t('{n} days in a row in the Word with BTG Ministry.', { n: text })
+      : [params.title, text, params.attribution].filter(Boolean).join('\n');
   const footer = params.link ? `\n\n${params.link}` : '\n\nBTG Ministry · btgministry.org';
 
   const shareImage = async () => {

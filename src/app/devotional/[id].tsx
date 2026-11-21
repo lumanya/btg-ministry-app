@@ -1,11 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import Animated, { FadeIn, ZoomIn, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
-import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { LikeButton, StatLine } from '@/components/like-button';
 import { Pop } from '@/components/motion';
@@ -18,6 +17,7 @@ import { recordView, useStat } from '@/state/engagement';
 import { usePlayer } from '@/state/player';
 import { success, tap } from '@/lib/haptics';
 import { useLibrary } from '@/state/library';
+import { useRhythm } from '@/state/rhythm';
 import { useColors, useStyles } from '@/state/theme';
 
 const SIZES = [16, 18, 20, 23];
@@ -38,6 +38,7 @@ export default function Reader() {
 
   const [size, setSize] = useState(1);
   const lib = useLibrary();
+  const rhythm = useRhythm();
   const bookmarked = lib.isDevotionalSaved(d.id);
   const done = lib.isRead(d.id);
   const fontSize = SIZES[size];
@@ -68,6 +69,8 @@ export default function Reader() {
   const markRead = () => {
     success();
     lib.markRead(d.id);
+    // Reading today's word opens the streak; older ones just tick off.
+    if (d.id === content.today.id) router.push('/rhythm');
   };
   const toggleBookmark = () => {
     tap();
@@ -117,8 +120,7 @@ export default function Reader() {
 
         {d.scripture?.text ? (
           <View style={styles.verse}>
-            <Eagle height={36} />
-            <Text style={styles.verseText}>“{d.scripture.text}”</Text>
+            <Text style={styles.verseText}>{d.scripture.text}</Text>
             <Text style={styles.verseRef}>{d.scripture.ref} · {bible}</Text>
           </View>
         ) : null}
@@ -158,6 +160,27 @@ export default function Reader() {
         </Tap>
         ) : null}
 
+        <View style={styles.reflect}>
+          <Text style={styles.reflectTitle} accessibilityRole="header">
+            {t('Reflect')}
+          </Text>
+          <Text style={styles.reflectPrompt}>{t('What is one thing this word is saying to you today?')}</Text>
+          <Text style={styles.reflectLabel} nativeID="reflectionLabel">
+            {t('Your reflection — saved on this phone only')}
+          </Text>
+          <TextInput
+            value={rhythm.reflection(d.id)}
+            onChangeText={(text) => rhythm.setReflection(d.id, text)}
+            placeholder={t('Write a line…')}
+            placeholderTextColor={c.textSubtle}
+            accessibilityLabelledBy="reflectionLabel"
+            accessibilityLabel={t('Your reflection')}
+            multiline
+            maxLength={2000}
+            style={styles.reflectInput}
+          />
+        </View>
+
         {done ? (
           <Animated.View entering={FadeIn.duration(250)} style={styles.done} accessibilityLiveRegion="polite">
             <Animated.View entering={ZoomIn.springify().damping(10)}>
@@ -174,7 +197,7 @@ export default function Reader() {
             </Tap>
           </Animated.View>
         ) : (
-          <Button label={t('Mark as read')} icon="check" onPress={markRead} style={{ minHeight: 56 }} />
+          <Button label={t('Amen — I’ve read this word')} icon="check" onPress={markRead} style={{ minHeight: 56 }} />
         )}
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -215,11 +238,29 @@ const createStyles = (c: Palette) =>
   kicker: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
   title: { fontFamily: Fonts.display, fontSize: 48, lineHeight: 48, color: c.text },
   subtitle: { fontFamily: Fonts.displayItalic, fontSize: 22, color: c.textMuted },
-  verse: { alignItems: 'center', gap: 12, padding: 24, paddingHorizontal: 20, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
-  verseText: { fontFamily: Fonts.displayItalic, fontSize: 23, lineHeight: 29, color: c.brownDark, textAlign: 'center' },
+  verse: { alignItems: 'center', gap: 14, paddingVertical: 24, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.goldLine },
+  verseText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 30, color: c.text, textAlign: 'center' },
   verseRef: { fontFamily: Fonts.sansBold, fontSize: 12, letterSpacing: 1.6, textTransform: 'uppercase', color: c.eyebrow },
   body: { fontFamily: Fonts.sans, color: c.text },
-  dropCap: { fontFamily: Fonts.display, fontSize: 40, color: c.accent },
+  dropCap: { fontFamily: Fonts.display, fontSize: 48, color: c.accent },
+  reflect: { gap: 10, padding: 20, borderRadius: Radius.xl, backgroundColor: c.sand },
+  reflectTitle: { fontFamily: Fonts.displayMedium, fontSize: 28, lineHeight: 30, color: c.text },
+  reflectPrompt: { fontFamily: Fonts.sans, fontSize: 15, lineHeight: 22, color: c.textMuted },
+  reflectLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: c.textMuted, marginTop: 2 },
+  reflectInput: {
+    minHeight: 92,
+    padding: 14,
+    paddingTop: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: c.inputBorder,
+    backgroundColor: c.white,
+    fontFamily: Fonts.sans,
+    fontSize: 16,
+    lineHeight: 22,
+    color: c.text,
+    textAlignVertical: 'top',
+  },
   listen: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
@@ -31,6 +31,13 @@ export default function Live() {
 
   const [watchingId, setWatchingId] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>('upcoming');
+  // Opened from "Send a prayer request" (Pray): show the prayer form. `at` changes on every visit.
+  const params = useLocalSearchParams<{ panel?: string; at?: string }>();
+  const [openedAt, setOpenedAt] = useState<string | undefined>(undefined);
+  if (params.panel === 'prayer' && params.at !== openedAt) {
+    setOpenedAt(params.at);
+    setPanel('prayer');
+  }
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
   const [prayer, setPrayer] = useState('');
   const [sent, setSent] = useState(false);
@@ -85,7 +92,10 @@ export default function Live() {
   return (
     <Screen gap={20} refreshing={refreshing} onRefresh={refresh}>
       <View style={styles.header}>
-        <Title>{t('Live')}</Title>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: -10 }}>
+          <IconButton icon="back" label={t('Back to Watch')} variant="plain" iconSize={22} onPress={() => router.navigate('/sermons')} />
+          <Title>{t('Live')}</Title>
+        </View>
         <IconButton
           icon="share"
           label={t('Share the livestream')}

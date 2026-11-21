@@ -15,3 +15,18 @@ export function clock(seconds: number) {
   const ss = String(s % 60).padStart(2, '0');
   return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
+
+/** Words that keep a capital when an all-caps title is tidied. */
+const PROPER = ['Mungu', 'Yesu', 'Kristo', 'Roho', 'Mtakatifu', 'Bwana', 'Biblia', 'Iman', 'Mwakanyamale', 'BTG', 'God', 'Jesus', 'Christ', 'Lord', 'Holy', 'Spirit', 'Bible', 'I'];
+const PROPER_MAP = new Map(PROPER.map((w) => [w.toLowerCase(), w]));
+
+/**
+ * Instagram captions are often in capitals ("DUNIA NI ULIMWENGU WA ROHONI").
+ * Shown large in the app, sentence case reads calmer: "Dunia ni ulimwengu wa rohoni".
+ * Titles that already use lower case are left as written.
+ */
+export function seedTitle(title: string) {
+  if (/\p{Ll}/u.test(title)) return title;
+  const lower = title.toLowerCase().replace(/\p{L}+/gu, (w) => PROPER_MAP.get(w) ?? w);
+  return lower.replace(/^(\P{L}*)(\p{L})/u, (_, lead: string, first: string) => lead + first.toUpperCase());
+}

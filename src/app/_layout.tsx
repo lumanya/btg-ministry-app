@@ -26,6 +26,7 @@ import { FeedProvider } from '@/state/feed';
 import { LibraryProvider } from '@/state/library';
 import { NotificationsProvider } from '@/state/notifications';
 import { PlayerProvider } from '@/state/player';
+import { RhythmProvider } from '@/state/rhythm';
 import { ThemeProvider, useTheme } from '@/state/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -63,9 +64,11 @@ export default function RootLayout() {
                 <ClipsProvider>
                   <PlayerProvider>
                     <LibraryProvider>
-                      <NotificationsProvider>
-                        <AppStack />
-                      </NotificationsProvider>
+                      <RhythmProvider>
+                        <NotificationsProvider>
+                          <AppStack />
+                        </NotificationsProvider>
+                      </RhythmProvider>
                     </LibraryProvider>
                   </PlayerProvider>
                 </ClipsProvider>
@@ -93,7 +96,9 @@ function AppStack() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sermon/[id]" />
-        <Stack.Screen name="clips" options={{ animation: 'fade', contentStyle: { backgroundColor: '#120C07' } }} />
+        <Stack.Screen name="clips" options={{ animation: 'none' }} />
+        <Stack.Screen name="rhythm" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#17120E' } }} />
+        <Stack.Screen name="pray" options={{ presentation: 'modal' }} />
         <Stack.Screen name="devotional/[id]" />
         <Stack.Screen name="player" options={{ presentation: 'modal' }} />
         <Stack.Screen name="give" />

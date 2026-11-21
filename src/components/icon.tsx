@@ -46,7 +46,11 @@ export type IconName =
   | 'link'
   | 'gift'
   | 'volume'
-  | 'volumeOff';
+  | 'volumeOff'
+  | 'seed'
+  | 'watch'
+  | 'close'
+  | 'replay';
 
 type Props = {
   name: IconName;
@@ -54,7 +58,7 @@ type Props = {
   color?: string;
   /** Filled variant for toggles such as a saved bookmark or heart. */
   filled?: boolean;
-  /** Draw the red "live" dot on the live icon. */
+  /** Draw the red "live" dot (live and watch icons). */
   dot?: boolean;
 };
 
@@ -279,6 +283,36 @@ export function Icon({ name, size = 22, color: colorProp, filled = false, dot = 
       break;
     case 'chat':
       body = <Path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 19z" {...stroke} />;
+      break;
+    case 'seed':
+      // A sprout: the word as a seed (Luke 8:11).
+      body = (
+        <>
+          <Path d="M12 21v-8" {...stroke} />
+          <Path d="M12 13c0-4.5 3-7.5 8-7.5 0 5-3 7.5-8 7.5z" {...stroke} fill={filled ? color : 'none'} />
+          <Path d="M12 15.5c0-3.5-2.5-6-7-6 0 4 2.5 6 7 6z" {...stroke} fill={filled ? color : 'none'} />
+        </>
+      );
+      break;
+    case 'watch':
+      body = (
+        <>
+          <Rect x={3} y={5} width={18} height={14} rx={3} {...stroke} />
+          <Path d="M10.5 9.5v5l4-2.5z" {...stroke} fill={filled ? color : 'none'} />
+          {dot ? <Circle cx={20.5} cy={4.5} r={3} fill={c.live} /> : null}
+        </>
+      );
+      break;
+    case 'close':
+      body = <Path d="M6 6l12 12M18 6L6 18" {...stroke} />;
+      break;
+    case 'replay':
+      body = (
+        <>
+          <Path d="M4 12a8 8 0 1 0 2.4-5.7" {...stroke} />
+          <Path d="M4 4v4h4" {...stroke} />
+        </>
+      );
       break;
     case 'flame':
       body = (

@@ -234,21 +234,29 @@ Setup, once:
 
 Setup, once: run `supabase/migrations/20261115090000_kiswahili_likes.sql` in the SQL Editor, then redeploy `youtube-feed` and `send-notifications`.
 
-## Clips (short videos from Instagram)
+## Seeds (short videos from Instagram)
 
-The ministry's Instagram videos and Reels appear as **Clips**: a row on Home, and a full-screen feed that plays each clip as you swipe up, like Instagram or TikTok. The videos stay on Instagram, so they cost nothing to store. Each clip can lead to the full sermon it comes from: when it ends, members can continue the sermon on YouTube from that moment or from the start.
+Iman's Instagram videos and Reels appear as **Seeds** (*Mbegu*): one-minute words, after Luke 8:11 ("the seed is the word of God"). They have their own tab and a row on Today. The Seeds tab plays each one full screen as you swipe up, like Instagram or TikTok. The videos stay on Instagram, so they cost nothing to store.
 
-- `supabase/functions/instagram-feed` reads the account's videos (cached 15 minutes, since Instagram's video links expire) and renews the access key when fewer than 30 days are left.
-- The dashboard's **Clips** page connects Instagram (paste an access token once), links each clip to a sermon and the minute it starts, renames or hides clips, and shows likes and views.
+- **Grow this seed.** A seed linked to a sermon shows *Full sermon · from 12:30* while it plays. When it ends, a sheet offers the sermon from where the seed ends, *Watch later* (saves the sermon), or the next seed after a 5-second countdown.
+- After 10 seeds in a row the feed gently suggests a full sermon.
+- *Amen* is the like button; watching a seed for 2 seconds counts a view and ticks *Watch a seed* in today's rhythm.
+- Instagram captions written in capitals are shown in sentence case (`seedTitle` in `src/lib/clips.ts`).
+- `supabase/functions/instagram-feed` reads the account's videos (cached 15 minutes, since Instagram's video links expire). Business keys from Meta never expire; Instagram-login keys renew themselves.
+- The dashboard's **Seeds** page connects Instagram (paste the access key and the Instagram account ID once), links each seed to a sermon and the minute it starts, renames or hides seeds, and shows Amens and views.
 - Instagram doesn't share videos that use music from its audio library; those are listed on the dashboard but don't play in the app.
 
-Setup, once:
-1. The ministry's Instagram must be a Business or Creator account.
-2. At developers.facebook.com, create an app (type Business), add **Instagram → API setup with Instagram login**, add the account and generate a token.
-3. Run `supabase/migrations/20261115190000_clips.sql` in the SQL Editor and deploy `instagram-feed` with JWT verification off.
-4. Paste the token on the dashboard's Clips page.
+In code and the database these are still called clips (`clips` table, `instagram-feed` function, `src/state/clips.tsx`); only the name people see changed.
 
-The feed uses `expo-video`, a native module: phones need a new build (`npx eas-cli build --profile preview --platform android`).
+## Today's rhythm, streaks and grace days
+
+- **Tabs:** Today · Seeds · Watch (sermons, with Live at the top) · Word (devotionals) · Listen (podcast). Live is still at `/live`.
+- **Today's rhythm** is three small steps: read today's devotional, watch a seed, and a minute of prayer (`/pray`, which can also send a prayer request). Seeds and prayer are tracked on the phone (`src/state/rhythm.tsx`).
+- **Grace day.** One missed day each Monday-to-Sunday week doesn't break the reading streak; two missed days in a row do (`src/lib/streak.ts`, with tests).
+- **Milestones:** Planted (7 days), Rooted (21), Growing (40), Fruitful (100).
+- **Amen — I've read this word** marks today's devotional and opens the streak screen (`/rhythm`), which can share *My week in the Word* as a Status card.
+- **Reflect.** Each devotional has a private reflection box. Reflections are saved on the phone only and never sent anywhere.
+- **Share to Status** on Today's quote opens the share card in Status shape on the new Ink colour.
 
 ## Publishing to the App Store and Google Play
 
@@ -266,7 +274,7 @@ The app follows the phone's light or dark setting. Members can override it under
 
 ## Reading streak, saved items and the mini player
 
-- **Reading streak.** Marking a devotional as read counts for the day. Home and the Devotional tab show the current streak and this week's days; the streak stays alive through today and ends after a full missed day. Best streak is kept too.
+- **Reading streak.** Marking a devotional as read counts for the day. Today and the Word tab show the current streak and this week's days; the streak stays alive through today, and one grace day a week covers a missed day. Best streak is kept too.
 - **Saved.** The bookmark on a devotional and *Save* on a sermon put them in *Saved* (bookmark button on Home, or *Your library* in Settings).
 - **Mini player.** Once something has played, a small player sits above the tabs on every tab and opens the full player.
 - **Feel.** Sections ease in as a screen opens, placeholders pulse while the feed loads, and buttons give a light tap on phones. Motion is skipped when the phone's *Reduce motion* setting is on.
@@ -291,7 +299,7 @@ assets/images/    app icon, splash, eagle emblem, full logo
 supabase/
   functions/youtube-feed/     reads the YouTube channel
   functions/delete-account/   deletes a member's account on request
-  functions/instagram-feed/   reads the ministry's Instagram videos (clips)
+  functions/instagram-feed/   reads Iman's Instagram videos (Seeds)
   migrations/                 tables and access rules (profiles, content, prayer, staff, member data)
   seed.sql                    starting content from btgministry.org
   tests/policies.test.mjs     checks the access rules in a local Postgres

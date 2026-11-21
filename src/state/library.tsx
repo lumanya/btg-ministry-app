@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { compactVideo, emptyLibrary, mergeOnSignIn, ReadRow, SavedRow, Stored } from '@/lib/library-sync';
-import { currentStreak, dayKey, longestStreak, weekProgress } from '@/lib/streak';
+import { dayKey, longestStreak, streakInfo, weekProgress } from '@/lib/streak';
 import { supabase } from '@/lib/supabase';
 import type { FeedVideo } from '@/lib/video';
 import { useAuth } from '@/state/auth';
@@ -22,6 +22,8 @@ type LibraryState = {
   ready: boolean;
   streak: number;
   bestStreak: number;
+  /** This week's grace day is unused: one missed day won't break the streak. */
+  graceReady: boolean;
   readToday: boolean;
   week: ReturnType<typeof weekProgress>;
   isRead: (devotionalId: string) => boolean;
@@ -120,12 +122,14 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     const days = Object.values(data.read);
     const today = dayKey();
     const client = uid ? supabase : null;
+    const run = streakInfo(days, today);
     return {
       ready,
-      streak: currentStreak(days, today),
+      streak: run.count,
       bestStreak: longestStreak(days),
+      graceReady: run.graceReady,
       readToday: days.includes(today),
-      week: weekProgress(days, today),
+      week: weekProgress(days, today, run.graced),
       isRead: (id) => id in data.read,
       markRead: (id) => {
         if (id in data.read) return;

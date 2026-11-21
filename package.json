@@ -63,7 +63,7 @@
     "test": "npm run -s test:feed && npm run -s test:podcast && npm run -s test:auth && npm run -s test:streak && npm run -s test:sync && npm run -s test:db && npm run -s test:i18n",
     "test:i18n": "node --experimental-strip-types --no-warnings --test src/i18n/i18n.test.ts",
     "test:auth": "node --experimental-strip-types --no-warnings --test src/lib/auth-messages.test.ts",
-    "test:streak": "node --experimental-strip-types --no-warnings --test src/lib/streak.test.ts",
+    "test:streak": "node --experimental-strip-types --no-warnings --test src/lib/streak.test.ts src/lib/clips.test.ts",
     "test:db": "node --test supabase/tests/policies.test.mjs",
     "test:sync": "node --experimental-strip-types --no-warnings --test src/lib/library-sync.test.ts src/lib/content.test.ts"
   },

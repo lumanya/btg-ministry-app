@@ -84,7 +84,7 @@ const NAV: { to: string; label: string; adminOnly?: boolean }[] = [
   { to: 'notifications', label: 'Notifications' },
   { to: 'prayer', label: 'Prayer requests' },
   { to: 'playlists', label: 'Sermon series' },
-  { to: 'clips', label: 'Clips' },
+  { to: 'clips', label: 'Seeds' },
   { to: 'services', label: 'Services' },
   { to: 'giving', label: 'Giving' },
   { to: 'series', label: 'Series' },

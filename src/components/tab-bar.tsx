@@ -16,26 +16,34 @@ import { useColors, useStyles } from '@/state/theme';
 
 const ICONS: Record<string, IconName> = {
   home: 'home',
-  sermons: 'sermons',
-  live: 'live',
+  seeds: 'seed',
+  sermons: 'watch',
   podcast: 'podcast',
   devotional: 'devotional',
 };
 
+/** Night colours for the bar under the full-screen Seeds feed. */
+const NIGHT = { bar: '#0E0B09', on: '#D4AF73', off: 'rgba(255,255,255,0.72)', pill: 'rgba(255,255,255,0.10)' };
+
 /**
  * The bottom bar: a mini player that follows the listener across every tab,
- * then the five tabs. The live tab shows a red dot only while a stream is live.
+ * then the five tabs. Watch shows a red dot only while a stream is live.
+ * On Seeds the bar turns dark to sit under the video.
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
   const styles = useStyles(createStyles);
   const { feed } = useFeed();
+  const current = state.routes[state.index]?.name;
+  const night = current === 'seeds';
 
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-      <MiniPlayer />
+    <View style={[styles.bar, night && { backgroundColor: NIGHT.bar, borderTopColor: 'transparent' }, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      {night ? null : <MiniPlayer />}
       <View style={styles.row} accessibilityRole="tablist">
         {state.routes.map((route, index) => {
-          const focused = index === state.index;
+          if (!(route.name in ICONS)) return null;
+          // Live has no tab of its own; it belongs under Watch.
+          const focused = index === state.index || (current === 'live' && route.name === 'sermons');
           const { options } = descriptors[route.key];
           const label = typeof options.title === 'string' ? options.title : route.name;
           const onPress = () => {
@@ -49,7 +57,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab, insets }: B
               label={label}
               icon={ICONS[route.name] ?? 'home'}
               focused={focused}
-              dot={route.name === 'live' && !!feed.live}
+              night={night}
+              dot={route.name === 'sermons' && !!feed.live}
               onPress={onPress}
             />
           );
@@ -59,7 +68,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab, insets }: B
   );
 }
 
-function TabItem({ label, icon, focused, dot, onPress }: { label: string; icon: IconName; focused: boolean; dot: boolean; onPress: () => void }) {
+function TabItem({ label, icon, focused, night, dot, onPress }: { label: string; icon: IconName; focused: boolean; night: boolean; dot: boolean; onPress: () => void }) {
   const c = useColors();
   const styles = useStyles(createStyles);
   const active = useSharedValue(focused ? 1 : 0);
@@ -81,13 +90,20 @@ function TabItem({ label, icon, focused, dot, onPress }: { label: string; icon: 
       onPress={onPress}
       style={styles.item}>
       <View style={styles.iconWrap}>
-        <Animated.View style={[styles.pill, pill]} />
+        <Animated.View style={[styles.pill, night && { backgroundColor: NIGHT.pill }, pill]} />
         {/* Above the animated pill (its transform puts it on its own layer). */}
         <View style={{ zIndex: 1 }}>
-          <Icon name={icon} color={focused ? c.accent : c.textSubtle} dot={dot} />
+          <Icon name={icon} color={night ? (focused ? NIGHT.on : NIGHT.off) : focused ? c.accent : c.textSubtle} dot={dot} />
         </View>
       </View>
-      <Text style={[styles.label, { color: focused ? c.brownDark : c.textSubtle }, focused && { fontFamily: Fonts.sansBold }]}>{label}</Text>
+      <Text
+        style={[
+          styles.label,
+          { color: night ? (focused ? NIGHT.on : NIGHT.off) : focused ? c.brownDark : c.textSubtle },
+          focused && { fontFamily: Fonts.sansBold },
+        ]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

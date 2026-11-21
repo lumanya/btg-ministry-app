@@ -73,7 +73,7 @@ export default function Clips() {
           );
       }
     } catch {
-      setError('Couldn’t load the clips from Instagram. Refresh to try again.');
+      setError('Couldn’t load the seeds from Instagram. Refresh to try again.');
       setRows([]);
     }
   }, []);
@@ -90,14 +90,14 @@ export default function Clips() {
     setToken('');
     setAccountId('');
     setReplacing(false);
-    toast('Instagram connected. Loading the clips…');
+    toast('Instagram connected. Loading the seeds…');
     load();
   };
 
   const disconnect = async () => {
     const { error } = await db().rpc('disconnect_instagram');
     if (error) return toast(friendlyError(error), 'error');
-    toast('Instagram disconnected. Clips no longer show in the app.');
+    toast('Instagram disconnected. Seeds no longer show in the app.');
     load();
   };
 
@@ -130,9 +130,9 @@ export default function Clips() {
   return (
     <>
       <PageHead
-        eyebrow="Home screen"
-        title="Clips"
-        intro="Short videos from the ministry’s Instagram play full screen in the app. Link each one to the sermon it comes from, so members can go on to watch the whole message."
+        eyebrow="Seeds tab"
+        title="Seeds"
+        intro="Seeds (Mbegu) are the short videos from Iman’s Instagram. They play full screen in the app’s Seeds tab. Link each one to the sermon it comes from, so members can grow the seed into the whole message."
         actions={
           status?.connected ? (
             <Button small onClick={load}>
@@ -196,7 +196,7 @@ export default function Clips() {
         </section>
       ) : null}
 
-      {status?.connected && !rows ? <Loading label="Loading clips" /> : null}
+      {status?.connected && !rows ? <Loading label="Loading seeds" /> : null}
       {status?.connected && rows && rows.length === 0 && !error ? (
         <Empty title="No videos yet" text="Videos and Reels posted on the ministry’s Instagram appear here automatically." />
       ) : null}
@@ -204,7 +204,7 @@ export default function Clips() {
       {rows && rows.length ? (
         <div className="stack" style={{ gap: 14 }}>
           <p className="small muted" style={{ margin: 0 }}>
-            {plural(rows.filter((r) => !r.hidden && r.videoUrl).length, 'clip')} showing in the app.
+            {plural(rows.filter((r) => !r.hidden && r.videoUrl).length, 'seed')} showing in the app.
           </p>
           {rows.map((r) => {
             const st = stats.get(r.id);
@@ -268,7 +268,7 @@ export default function Clips() {
                   ) : null}
                   <div className="row wrap" style={{ gap: 16, alignItems: 'flex-end' }}>
                     {r.sermonId ? (
-                      <Field label="Clip starts at" hint="Minutes:seconds into the sermon.">
+                      <Field label="Seed starts at" hint="Minutes:seconds into the sermon.">
                         {(p) => <input {...p} className="input" style={{ width: 120 }} placeholder="12:40" value={r.start} onChange={(e) => edit(r.id, { start: e.target.value })} />}
                       </Field>
                     ) : null}
