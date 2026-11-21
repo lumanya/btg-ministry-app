@@ -258,6 +258,25 @@ In code and the database these are still called clips (`clips` table, `instagram
 - **Reflect.** Each devotional has a private reflection box. Reflections are saved on the phone only and never sent anywhere.
 - **Share to Status** on Today's quote opens the share card in Status shape on the new Ink colour.
 
+## Updating the app without a new build (EAS Update)
+
+Builds made with `expo-updates` (from commit "Over-the-air updates" on) can get new versions of the app's screens and logic without a new APK or a store review.
+
+- The app checks for an update each time it starts, and again when it's reopened after 30 minutes. The update downloads in the background and is used on the next start. Today also shows **A new version is ready · Restart**.
+- Each build type listens on its own channel: `preview` (test APKs) and `production` (store builds), set in `eas.json`.
+
+Publish an update (from the project folder, after `git pull`):
+
+```
+npx eas-cli@latest update --channel preview --message "What changed"
+```
+
+Use `--channel production` for store builds. On Windows PowerShell write `npx.cmd`.
+
+**What can go out as an update:** screens, text, colours, Kiswahili, images bundled with the code and app logic: anything in `src/`.
+
+**What needs a new build:** a new package with native code (for example a new `expo-*` module), the app icon or splash screen, permissions and other native settings in `app.json`. When that happens, raise `version` in `app.json` (1.0.0 → 1.1.0) and build again. Updates only reach builds with the same version (`runtimeVersion` policy `appVersion`), so an update can never land on a build missing the native code it needs.
+
 ## Publishing to the App Store and Google Play
 
 Builds are made with EAS (`eas.json`): `preview` makes an Android APK to install directly for testing; `production` makes store builds, with build numbers counted by EAS.

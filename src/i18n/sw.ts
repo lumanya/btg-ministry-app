@@ -537,6 +537,10 @@ const sw: Record<string, string> = {
   "My week in the Word": "Wiki yangu katika Neno",
   "Ink": "Wino",
   "{n} days in a row in the Word with BTG Ministry.": "Siku {n} mfululizo katika Neno pamoja na BTG Ministry.",
+  // App updates
+  "A new version is ready": "Toleo jipya liko tayari",
+  "Restart to get the latest improvements.": "Fungua upya upate maboresho mapya.",
+  "Restart": "Fungua upya",
 };
 
 export default sw;

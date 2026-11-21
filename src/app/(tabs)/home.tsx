@@ -10,6 +10,7 @@ import { Icon, IconName } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
 import { SeedsRail } from '@/components/seeds-rail';
 import { Button, IconButton, Screen, SectionHeader, Tap, Title } from '@/components/ui';
+import { UpdateBanner } from '@/components/update-banner';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette } from '@/constants/theme';
 import { seedTitle } from '@/lib/clips';
@@ -113,6 +114,8 @@ export default function Today() {
           )}
         </View>
       </View>
+
+      <UpdateBanner />
 
       <Appear style={{ gap: 8, marginTop: -8 }}>
         <Text style={styles.date}>

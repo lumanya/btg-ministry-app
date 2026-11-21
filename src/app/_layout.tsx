@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
+import { useUpdateChecks } from '@/components/update-banner';
 import { keepPortrait } from '@/lib/orientation';
 import { AuthProvider } from '@/state/auth';
 import { DataSaverProvider } from '@/state/data-saver';
@@ -83,6 +84,7 @@ export default function RootLayout() {
 
 function AppStack() {
   const { colors: c, isDark } = useTheme();
+  useUpdateChecks();
 
   // The window behind the screens (seen during transitions) follows the theme too.
   useEffect(() => {

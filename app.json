@@ -3,6 +3,14 @@
     "name": "BTG Ministry",
     "slug": "btg-ministry-app",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c85fe87d-6264-4fe2-b9cc-d10060f822a7",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "btgministry",
