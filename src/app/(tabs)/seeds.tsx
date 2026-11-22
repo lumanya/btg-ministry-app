@@ -56,7 +56,17 @@ export default function SeedsScreen() {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const height = size.height;
 
-  const [active, setActive] = useState(0);
+  // The seed on screen, remembered by its id: the list is fetched again as the
+  // tab opens (fresh video links) and new posts can shift positions.
+  const [activeId, setActiveId] = useState<string | null>(start ?? null);
+  // Opened from Today at a particular seed (`at` changes on every tap): show that one.
+  const [followedAt, setFollowedAt] = useState(at);
+  if (start && at !== followedAt) {
+    setFollowedAt(at);
+    setActiveId(start);
+  }
+  const found = activeId ? clips.findIndex((c) => c.id === activeId) : -1;
+  const active = found >= 0 ? found : 0;
   const [focused, setFocused] = useState(true);
   const [muted, setMuted] = useState(false);
   const seen = useRef(new Set<string>());
@@ -82,16 +92,17 @@ export default function SeedsScreen() {
     }, []),
   );
 
-  // Opened from Today at a particular seed: jump to it (`at` changes on every tap).
-  const startIndex = start ? clips.findIndex((c) => c.id === start) : -1;
+  // Keep the current seed in view when the list is refreshed or reordered, the
+  // screen height changes (the mini player hides on this tab), or Today opens
+  // a particular seed. Swipes and "Next seed" scroll on their own.
+  const activeRef = useRef(active);
   useEffect(() => {
-    if (startIndex < 0 || !height) return;
-    const timer = setTimeout(() => {
-      list.current?.scrollToIndex({ index: startIndex, animated: false });
-      setActive(startIndex);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [startIndex, height, at]);
+    activeRef.current = active;
+  });
+  useEffect(() => {
+    if (!height || !clips.length) return;
+    list.current?.scrollToOffset({ offset: activeRef.current * height, animated: false });
+  }, [height, clips, followedAt]);
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width: w, height: h } = e.nativeEvent.layout;
@@ -99,12 +110,14 @@ export default function SeedsScreen() {
   };
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (!height) return;
-    setActive(Math.round(e.nativeEvent.contentOffset.y / height));
+    const index = Math.round(e.nativeEvent.contentOffset.y / height);
+    const id = clips[Math.max(0, Math.min(clips.length - 1, index))]?.id;
+    if (id) setActiveId(id);
   };
   const goTo = (index: number) => {
     if (index < 0 || index >= clips.length) return;
     list.current?.scrollToIndex({ index, animated: true });
-    setActive(index);
+    setActiveId(clips[index].id);
   };
 
   return (
@@ -134,6 +147,7 @@ export default function SeedsScreen() {
           decelerationRate="fast"
           showsVerticalScrollIndicator={false}
           getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
+          initialScrollIndex={active}
           onMomentumScrollEnd={onScrollEnd}
           windowSize={3}
           initialNumToRender={1}
