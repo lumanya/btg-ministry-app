@@ -30,11 +30,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,5 +62,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: admin/dist
+
+  # Publishing runs as its own step once the upload has finished (GitHub's standard
+  # setup; doing both in one job sometimes failed with "No artifacts named github-pages").
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
