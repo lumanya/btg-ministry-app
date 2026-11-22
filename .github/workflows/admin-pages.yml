@@ -1,10 +1,23 @@
-# Publishes the staff dashboard (admin/) to GitHub Pages whenever it changes on main.
-name: Staff dashboard
+# Publishes to GitHub Pages whenever the app or the dashboard changes on main:
+#   https://lumanya.github.io/btg-ministry-app/      the staff dashboard (admin/)
+#   https://lumanya.github.io/btg-ministry-app/app/  the app as a web page, for testing on
+#                                                     iPhone and PC (Add to Home Screen)
+name: Staff dashboard and web app
 
 on:
   push:
     branches: [main]
-    paths: ['admin/**', '.github/workflows/admin-pages.yml']
+    paths:
+      - 'admin/**'
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'app.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.env'
+      - 'scripts/web-pwa.mjs'
+      - '.github/workflows/admin-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -22,19 +35,32 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    defaults:
-      run:
-        working-directory: admin
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: admin/package-lock.json
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+          cache-dependency-path: |
+            package-lock.json
+            admin/package-lock.json
+
+      - name: Dashboard
+        working-directory: admin
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Web app
+        env:
+          EXPO_WEB_BASE_URL: /btg-ministry-app/app
+          CI: '1'
+        run: |
+          npm ci
+          npx expo export -p web --output-dir admin/dist/app
+          node scripts/web-pwa.mjs admin/dist/app /btg-ministry-app/app admin/dist/404.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
