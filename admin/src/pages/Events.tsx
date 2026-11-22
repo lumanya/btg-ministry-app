@@ -152,8 +152,13 @@ function InstagramPosters({ used }: { used: EventRow[] }) {
     setBusy(p.id);
     const { data, error: err } = await db().functions.invoke('instagram-feed', { body: { import: p.id } });
     setBusy(null);
-    const body = data as { url?: string; error?: string } | null;
-    if (err || !body?.url) return toast(body?.error ?? 'Couldn’t copy the poster. Try again.', 'error');
+    let body = data as { url?: string; error?: string } | null;
+    // When the server says no (e.g. not staff), its reason is in the response.
+    if (err && !body) {
+      const res = (err as { context?: unknown }).context;
+      if (res instanceof Response) body = await res.json().catch(() => null);
+    }
+    if (err || !body?.url) return toast(body?.error ?? 'Couldn’t copy the poster. Check your connection and try again.', 'error');
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ image_url: body.url, caption: p.caption }));
     go('/events/new');
   };
