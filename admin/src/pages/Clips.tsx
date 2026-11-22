@@ -268,8 +268,8 @@ export default function Clips() {
                   ) : null}
                   <div className="row wrap" style={{ gap: 16, alignItems: 'flex-end' }}>
                     {r.sermonId ? (
-                      <Field label="Seed starts at" hint="Minutes:seconds into the sermon.">
-                        {(p) => <input {...p} className="input" style={{ width: 120 }} placeholder="12:40" value={r.start} onChange={(e) => edit(r.id, { start: e.target.value })} />}
+                      <Field label="Open the sermon at (optional)" hint="Leave empty to start from the beginning. Seeds are usually edited from several parts, so only add a time when one moment clearly fits.">
+                        {(p) => <input {...p} className="input" style={{ width: 120 }} placeholder="0:00" value={r.start} onChange={(e) => edit(r.id, { start: e.target.value })} />}
                       </Field>
                     ) : null}
                     <label className="check" style={{ minHeight: 44 }}>

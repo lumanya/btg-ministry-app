@@ -29,7 +29,8 @@ import { useRhythm } from '@/state/rhythm';
 /**
  * Seeds (Mbegu): the ministry's one-minute Instagram videos, one per screen,
  * playing on their own as you swipe up. A seed linked to a sermon offers to
- * "grow" into the full message, starting where the seed ends.
+ * "grow" into the full message. Seeds are edited from several parts of a
+ * sermon, so it opens from the beginning unless staff chose a start point.
  */
 const INK = '#0E0B09';
 const WHITE = '#FFFFFF';
@@ -360,7 +361,7 @@ function SeedPage({
       {clip.sermon && sermonTitle ? (
         <Tap
           accessibilityRole="button"
-          accessibilityLabel={t('Watch the full sermon from {time}: {title}', { time: clock(clip.sermon.start), title: sermonTitle })}
+          accessibilityLabel={t('Watch the full sermon: {title}', { title: sermonTitle })}
           onPress={() => openSermon(clip.sermon!.start)}
           style={styles.bridge}>
           <View style={styles.bridgeArt}>
@@ -368,7 +369,9 @@ function SeedPage({
             <Icon name="play" size={14} color={WHITE} filled />
           </View>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <Text style={styles.bridgeEyebrow}>{t('Full sermon · from {time}', { time: clock(clip.sermon.start) })}</Text>
+            <Text style={styles.bridgeEyebrow}>
+              {clip.sermon.start > 0 ? t('Full sermon · from {time}', { time: clock(clip.sermon.start) }) : t('From the full sermon')}
+            </Text>
             <Text style={styles.bridgeTitle} numberOfLines={1}>
               {sermonTitle}
             </Text>
@@ -385,10 +388,10 @@ function SeedPage({
         <GrowSheet
           sermonTitle={sermonTitle}
           thumbnail={sermon?.thumbnail ?? null}
-          from={clip.sermon.start + duration}
+          from={clip.sermon.start}
           saved={saved}
           canSave={!!sermon}
-          onWatch={() => openSermon(clip.sermon!.start + duration)}
+          onWatch={() => openSermon(clip.sermon!.start)}
           onSave={() => sermon && lib.toggleVideo(sermon)}
           onReplay={replay}
           onNext={onNext}
@@ -449,15 +452,15 @@ function GrowSheet({
           <Text style={styles.sheetTitle} accessibilityRole="header">
             {t('Grow this seed')}
           </Text>
-          <Text style={styles.sheetText}>{t('This minute comes from a full teaching. Pick it up right where the seed ends.')}</Text>
+          <Text style={styles.sheetText}>{t('This seed was edited from a full teaching. Watch the whole message.')}</Text>
         </View>
         <Pop trigger={1}>
-          <Tap accessibilityRole="button" accessibilityLabel={t('Watch {title} from {time}', { title: sermonTitle, time: clock(from) })} onPress={onWatch} style={styles.sermonArt}>
+          <Tap accessibilityRole="button" accessibilityLabel={t('Watch the full sermon: {title}', { title: sermonTitle })} onPress={onWatch} style={styles.sermonArt}>
             {thumbnail ? <Image source={{ uri: thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} /> : <Eagle height={90} light />}
             <View style={styles.sermonPlay}>
               <Icon name="play" size={22} color={WHITE} filled />
             </View>
-            <Text style={styles.startsAt}>{t('Continues at {time}', { time: clock(from) })}</Text>
+            {from > 0 ? <Text style={styles.startsAt}>{t('Opens at {time}', { time: clock(from) })}</Text> : null}
           </Tap>
         </Pop>
         <View style={{ gap: 2 }}>
@@ -468,7 +471,7 @@ function GrowSheet({
         </View>
         <Tap accessibilityRole="button" onPress={onWatch} style={styles.primary}>
           <Icon name="play" size={18} color={WHITE} filled />
-          <Text style={styles.primaryText}>{t('Watch from {time}', { time: clock(from) })}</Text>
+          <Text style={styles.primaryText}>{from > 0 ? t('Watch from {time}', { time: clock(from) }) : t('Watch the full sermon')}</Text>
         </Tap>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {onNext ? (

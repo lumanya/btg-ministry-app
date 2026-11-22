@@ -238,12 +238,12 @@ Setup, once: run `supabase/migrations/20261115090000_kiswahili_likes.sql` in the
 
 Iman's Instagram videos and Reels appear as **Seeds** (*Mbegu*): one-minute words, after Luke 8:11 ("the seed is the word of God"). They have their own tab and a row on Today. The Seeds tab plays each one full screen as you swipe up, like Instagram or TikTok. The videos stay on Instagram, so they cost nothing to store.
 
-- **Grow this seed.** A seed linked to a sermon shows *Full sermon · from 12:30* while it plays. When it ends, a sheet offers the sermon from where the seed ends, *Watch later* (saves the sermon), or the next seed after a 5-second countdown.
+- **Grow this seed.** A seed linked to a sermon shows *From the full sermon* while it plays. When it ends, a sheet offers the whole sermon, *Watch later* (saves the sermon), or the next seed after a 5-second countdown. Seeds are edited from several parts of a sermon, so the sermon opens from the beginning; staff can set an optional start time on the dashboard when one moment clearly fits.
 - After 10 seeds in a row the feed gently suggests a full sermon.
 - *Amen* is the like button; watching a seed for 2 seconds counts a view and ticks *Watch a seed* in today's rhythm.
 - Instagram captions written in capitals are shown in sentence case (`seedTitle` in `src/lib/clips.ts`).
 - `supabase/functions/instagram-feed` reads the account's videos (cached 15 minutes, since Instagram's video links expire). Business keys from Meta never expire; Instagram-login keys renew themselves.
-- The dashboard's **Seeds** page connects Instagram (paste the access key and the Instagram account ID once), links each seed to a sermon and the minute it starts, renames or hides seeds, and shows Amens and views.
+- The dashboard's **Seeds** page connects Instagram (paste the access key and the Instagram account ID once), links each seed to its sermon (with an optional start time), renames or hides seeds, and shows Amens and views.
 - Instagram doesn't share videos that use music from its audio library; those are listed on the dashboard but don't play in the app.
 
 In code and the database these are still called clips (`clips` table, `instagram-feed` function, `src/state/clips.tsx`); only the name people see changed.
