@@ -7,7 +7,8 @@ import type { ArtTone } from '@/content/sample';
 import { useColors, useStyles, useTheme } from '@/state/theme';
 
 export const eagleImage = require('@/assets/images/eagle.png');
-export const eagleCreamImage = require('@/assets/images/eagle-cream.png');
+/** Gold eagle for dark tiles (the cream one it replaced is still in assets). */
+export const eagleCreamImage = require('@/assets/images/eagle-gold.png');
 export const logoImage = require('@/assets/images/logo-full.png');
 
 /** Width ÷ height of the eagle emblem images. */
@@ -15,14 +16,16 @@ export const EAGLE_RATIO = 0.73;
 
 export type Tone = { bg: string; line: string; text: string; eagle: number; lightEagle: boolean };
 
-/** Artwork tile colours for the current mode: soft and light by day, warm charcoal at night. */
-export function tonesFor(c: Palette, isDark: boolean): Record<ArtTone, Tone> {
-  const eagle = isDark ? eagleCreamImage : eagleImage;
-  const base = { line: c.artLine, text: c.artText, eagle, lightEagle: isDark };
+/**
+ * Artwork tile colours: deep ink with the gold eagle, in light and dark mode,
+ * so series, podcast and event artwork match the app icon.
+ */
+export function tonesFor(_c: Palette, _isDark: boolean): Record<ArtTone, Tone> {
+  const base = { line: 'rgba(212,175,115,0.45)', text: '#FFFFFF', eagle: eagleCreamImage, lightEagle: true };
   return {
-    brown: { ...base, bg: c.artBrown },
-    deep: { ...base, bg: c.artDeep },
-    sand: { ...base, bg: c.artSand },
+    brown: { ...base, bg: '#17120E' },
+    deep: { ...base, bg: '#221B15' },
+    sand: { ...base, bg: '#2B2119' },
   };
 }
 
@@ -120,30 +123,10 @@ export function SermonArt({
   );
 }
 
-/** The scroll from the logo: a rolled bar above and below the content. */
+/** A passage set between two thin gold rules (the scroll, simplified). */
 export function ScrollCard({ children }: { children: ReactNode }) {
   const styles = useStyles(createStyles);
-  return (
-    <View style={{ alignItems: 'center' }}>
-      <Roll />
-      <View style={styles.paper}>{children}</View>
-      <Roll />
-    </View>
-  );
-}
-
-function Roll() {
-  const styles = useStyles(createStyles);
-  return (
-    <View style={styles.roll} accessible={false}>
-      <View style={styles.rollKnob} />
-      <View style={styles.rollBar}>
-        <View style={styles.rollShine} />
-        <View style={styles.rollShade} />
-      </View>
-      <View style={styles.rollKnob} />
-    </View>
-  );
+  return <View style={styles.paper}>{children}</View>;
 }
 
 const createStyles = (c: Palette) =>
@@ -157,19 +140,11 @@ const createStyles = (c: Palette) =>
     overflow: 'hidden',
   },
   sermonTitle: { flex: 1, fontFamily: Fonts.display },
-  roll: { width: '100%', flexDirection: 'row', alignItems: 'center' },
-  rollKnob: { width: 8, height: 22, borderRadius: 4, backgroundColor: c.rollKnob },
-  rollBar: { flex: 1, height: 14, borderRadius: 4, backgroundColor: c.roll, overflow: 'hidden', justifyContent: 'space-between' },
-  rollShine: { height: 3, backgroundColor: 'rgba(255,255,255,0.16)' },
-  rollShade: { height: 4, backgroundColor: 'rgba(31,19,10,0.12)' },
   paper: {
-    width: '92%',
-    backgroundColor: c.paper,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: c.lineStrong,
-    paddingVertical: 22,
-    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: c.goldLine,
+    paddingVertical: 24,
     gap: 12,
   },
 });

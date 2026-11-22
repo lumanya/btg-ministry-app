@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { t } from '@/i18n';
-import { Eagle } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon, IconName } from '@/components/icon';
 import { IconButton, Tap } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
@@ -136,7 +136,7 @@ function MiniPlayer() {
           onPress={() => router.push('/player')}
           style={styles.miniMain}>
           <View style={styles.miniArt}>
-            <Eagle height={36} />
+            <EagleMark height={30} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.miniTitle} numberOfLines={1}>
@@ -189,7 +189,7 @@ const createStyles = (c: Palette) =>
       elevation: 6,
     },
     miniMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
-    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
+    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center' },
     miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.text },
     miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.textMuted },
     miniTrack: { position: 'absolute', left: 14, right: 14, bottom: 0, height: 2, backgroundColor: c.rail },

@@ -95,14 +95,15 @@ function AppStack() {
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.ivory } }}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: '#17120E' } }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sermon/[id]" />
         <Stack.Screen name="clips" options={{ animation: 'none' }} />
         <Stack.Screen name="rhythm" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#17120E' } }} />
         <Stack.Screen name="pray" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="setup" options={{ presentation: 'modal' }} />
         <Stack.Screen name="devotional/[id]" />
-        <Stack.Screen name="player" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="player" options={{ presentation: 'modal', contentStyle: { backgroundColor: '#17120E' } }} />
         <Stack.Screen name="give" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="saved" />

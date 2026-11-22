@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { dayName, monthName, t } from '@/i18n';
 import { Eagle } from '@/components/art';
@@ -15,6 +15,7 @@ import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette } from '@/constants/theme';
 import { seedTitle } from '@/lib/clips';
 import { formatLength } from '@/lib/podcast';
+import { setupDone } from '@/lib/reminder';
 import { formatStart, videoMeta } from '@/lib/video';
 import { useAuth } from '@/state/auth';
 import { useClips } from '@/state/clips';
@@ -57,6 +58,21 @@ export default function Today() {
     refresh();
     content.refresh();
   };
+
+  // First time on Today (on a phone): ask when to send the daily reminder.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setupDone().then((done) => {
+        if (!done && !cancelled) router.push('/setup');
+      });
+    }, 900);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [router]);
 
   const now = new Date();
   const firstName = auth.name?.split(' ')[0];

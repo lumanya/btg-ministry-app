@@ -19,7 +19,8 @@ const FEED_URL = process.env.EXPO_PUBLIC_PODCAST_FEED_URL;
 const STORAGE_KEY = 'btg.podcast.progress.v1';
 const FEED_CACHE_KEY = 'btg.podcast.feed.v1';
 const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
-const SLEEP_MS = 30 * 60 * 1000;
+/** Sleep timer choices in minutes; tapping cycles through them, then off. */
+const SLEEP_STEPS = [15, 30, 60];
 const SAVE_EVERY_S = 10;
 const ARTIST = 'Iman Mwakanyamale';
 
@@ -40,6 +41,8 @@ type PlayerState = {
   duration: number;
   speed: number;
   sleepOn: boolean;
+  /** Minutes the sleep timer was set for (0 when off). */
+  sleepMinutes: number;
   /** Episode chosen has no recording (sample content). */
   unavailable: boolean;
   play: (episode: Episode) => void;
@@ -80,7 +83,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [feedStatus, setFeedStatus] = useState<PodcastStatus>(FEED_URL ? 'loading' : 'sample');
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [speedIndex, setSpeedIndex] = useState(0);
-  const [sleepOn, setSleepOn] = useState(false);
+  const [sleepMinutes, setSleepMinutes] = useState(0);
+  const sleepOn = sleepMinutes > 0;
   const [store, setStore] = useState<Store>({ last: null, episodes: {}, lastEpisode: null });
 
   const pendingSeek = useRef<number | null>(null);
@@ -241,6 +245,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       duration: unavailable ? episode?.duration ?? 0 : status.duration || episode?.duration || 0,
       speed,
       sleepOn,
+      sleepMinutes,
       unavailable,
       play,
       toggle: () => {
@@ -274,13 +279,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleSleep: () => {
         if (sleepTimer.current) clearTimeout(sleepTimer.current);
         sleepTimer.current = null;
-        if (!sleepOn) {
+        const next = SLEEP_STEPS[SLEEP_STEPS.indexOf(sleepMinutes) + 1] ?? 0;
+        if (next) {
           sleepTimer.current = setTimeout(() => {
             player.pause();
-            setSleepOn(false);
-          }, SLEEP_MS);
+            setSleepMinutes(0);
+          }, next * 60 * 1000);
         }
-        setSleepOn(!sleepOn);
+        setSleepMinutes(next);
       },
       saved: (id) => store.episodes[id],
       resume: lastEp
@@ -291,7 +297,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           }
         : null,
     };
-  }, [podcast, feedStatus, loadFeed, episode, status, speed, speedIndex, sleepOn, play, player, store]);
+  }, [podcast, feedStatus, loadFeed, episode, status, speed, speedIndex, sleepOn, sleepMinutes, play, player, store]);
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }

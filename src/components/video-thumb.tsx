@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-import { SermonArt } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon } from '@/components/icon';
 import { LiveBadge } from '@/components/ui';
 import { Fonts, Palette } from '@/constants/theme';
@@ -17,7 +17,6 @@ export function VideoThumb({
   video,
   height,
   titleSize = 21,
-  tone = 'deep',
   play = 'none',
   radius = 16,
   style,
@@ -25,6 +24,7 @@ export function VideoThumb({
   video: FeedVideo;
   height: number;
   titleSize?: number;
+  /** Kept for callers; the fallback artwork is always ink and gold now. */
   tone?: ArtTone;
   /** Where to draw the play button. */
   play?: 'none' | 'corner' | 'center';
@@ -63,11 +63,27 @@ export function VideoThumb({
   );
 
   if (!video.thumbnail) {
+    // No YouTube picture: the gold eagle on ink, with the title set in the display serif.
+    const mark = Math.max(18, Math.min(56, Math.round(height * 0.28)));
+    const showTitle = height >= 96 && play !== 'center';
     return (
-      <SermonArt title={video.title} tone={tone} height={height} titleSize={titleSize} style={[{ borderRadius: radius }, style]}>
+      <View style={[styles.fallback, { height, borderRadius: radius }, style]}>
+        <View style={{ position: 'absolute', left: 14, top: 12 }}>
+          <EagleMark height={mark} color="#D4AF73" />
+        </View>
+        {showTitle ? (
+          <Text
+            style={[
+              styles.fallbackTitle,
+              { fontSize: Math.min(titleSize, 26), lineHeight: Math.min(titleSize, 26) * 1.05, paddingRight: play === 'corner' ? 76 : 16, bottom: video.duration ? 36 : 14 },
+            ]}
+            numberOfLines={2}>
+            {video.title}
+          </Text>
+        ) : null}
         {badges}
         {playButton}
-      </SermonArt>
+      </View>
     );
   }
 
@@ -82,6 +98,8 @@ export function VideoThumb({
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
+  fallback: { overflow: 'hidden', backgroundColor: '#17120E' },
+  fallbackTitle: { position: 'absolute', left: 14, fontFamily: Fonts.display, color: '#FFFFFF' },
   play: {
     position: 'absolute',
     backgroundColor: c.cream,

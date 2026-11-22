@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { dayName, t } from '@/i18n';
-import { Eagle } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon, IconName } from '@/components/icon';
 import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
@@ -117,10 +117,10 @@ export default function Live() {
             <Title size={30}>{live.title}</Title>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={styles.avatar}>
-                <Eagle height={26} />
+                <EagleMark height={20} />
               </View>
               <Text style={styles.meta}>
-                <Text style={{ fontFamily: Fonts.sansSemiBold, color: c.text }}>Iman Mwakanyamale</Text> · Streaming now
+                <Text style={{ fontFamily: Fonts.sansSemiBold, color: c.text }}>Iman Mwakanyamale</Text> · {t('Streaming now')}
               </Text>
             </View>
           </View>
@@ -128,7 +128,7 @@ export default function Live() {
       ) : (
         <View style={styles.offline}>
           <View style={styles.offlineArt}>
-            <Eagle height={64} />
+            <EagleMark height={40} />
           </View>
           <View style={{ gap: 6 }}>
             <Title size={28}>{t('We’re not live right now.')}</Title>
@@ -267,11 +267,11 @@ export default function Live() {
 const createStyles = (c: Palette) =>
   StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.sand, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2, overflow: 'hidden' },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   meta: { fontFamily: Fonts.sans, fontSize: 14, color: c.textMuted },
   metaSmall: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
-  offline: { gap: 16, padding: 18, borderRadius: Radius.xl, backgroundColor: c.parchment, borderWidth: 1, borderColor: c.line },
-  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: c.artBrown, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  offline: { gap: 16, paddingVertical: 22, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.line },
+  offlineArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   latest: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: Radius.md, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
   latestTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 19, color: c.text },
   actions: { flexDirection: 'row', gap: 10 },

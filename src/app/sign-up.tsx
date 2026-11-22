@@ -71,6 +71,15 @@ export default function SignUp() {
       <View style={{ gap: 6 }}>
         <Button label={busy ? t('Creating your account…') : t('Create account')} onPress={busy ? undefined : submit} />
         <Button label={t('I already have an account')} variant="outline" onPress={() => router.replace('/sign-in')} style={{ borderColor: 'transparent' }} />
+        <Button
+          label={t('Skip for now — look around first')}
+          variant="outline"
+          onPress={() => {
+            auth.continueAsGuest();
+            goHome(router);
+          }}
+          style={{ borderColor: 'transparent', minHeight: 44 }}
+        />
       </View>
       <Text style={{ fontFamily: Fonts.sans, fontSize: 13, lineHeight: 19, color: c.textMuted }}>
         {t('We’ll email you a code to confirm your address. Your details are used only for your BTG Ministry account.')}

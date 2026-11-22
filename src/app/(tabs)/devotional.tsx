@@ -7,7 +7,7 @@ import { Eagle, ScrollCard, useTones } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { StatLine } from '@/components/like-button';
 import { Pop } from '@/components/motion';
-import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title } from '@/components/ui';
+import { Body, Button, Eyebrow, IconButton, Screen, Tap, Title, SectionHeader } from '@/components/ui';
 import { Fonts, Palette, Radius } from '@/constants/theme';
 import { Devotional, formatDate } from '@/content/sample';
 import { devotionalEpisode } from '@/lib/content';
@@ -64,7 +64,7 @@ export default function DevotionalTab() {
       </View>
 
       <View style={{ gap: 10 }}>
-        <Eyebrow>{`${monthName(m - 1)} ${y}`}</Eyebrow>
+        <SectionHeader small title={`${monthName(m - 1)} ${y}`} />
         <View style={styles.week}>
           {week.map((w) => {
             const d = w.devotional;
@@ -128,7 +128,7 @@ export default function DevotionalTab() {
       </View>
 
       <View style={{ gap: 12 }}>
-        <Eyebrow>{t('Series')}</Eyebrow>
+        <SectionHeader small title={t('Series')} />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {content.series.map((s) => {
             const tn = toneSet[s.tone];
@@ -149,7 +149,7 @@ export default function DevotionalTab() {
       </View>
 
       <View>
-        <Eyebrow style={{ marginBottom: 4 }}>{t('Earlier')}</Eyebrow>
+        <SectionHeader small title={t('Earlier')} />
         {earlier.map((d) => (
           <Tap key={d.id} accessibilityRole="button" accessibilityLabel={`${d.title}, ${formatDate(d.date)}`} onPress={() => open(d.id)} style={styles.earlier}>
             <View style={{ flex: 1, gap: 3 }}>

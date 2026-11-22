@@ -4,7 +4,6 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
-import { Eagle } from '@/components/art';
 import { Icon } from '@/components/icon';
 import { Body, IconButton, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
@@ -93,9 +92,8 @@ export function AuthScreen({ title, subtitle, children }: { title: string; subti
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: ScreenPadding + 4, paddingBottom: insets.bottom + 32, gap: 24 }}>
-        <View style={{ gap: 14 }}>
-          <Eagle height={52} />
-          <Title size={38}>{title}</Title>
+        <View style={{ gap: 10, paddingTop: 18 }}>
+          <Title size={44}>{title}</Title>
           {subtitle ? <Body style={{ fontSize: 16 }}>{subtitle}</Body> : null}
         </View>
         {children}

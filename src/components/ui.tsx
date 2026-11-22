@@ -126,9 +126,12 @@ export function IconButton({
   iconSize = 20,
   filled,
   selected,
+  color,
   style,
 }: {
   icon: IconName;
+  /** Overrides the icon colour (e.g. white on the dark player). */
+  color?: string;
   /** Read aloud by screen readers; required because the button has no text. */
   label: string;
   onPress?: () => void;
@@ -161,7 +164,7 @@ export function IconButton({
         { width: size, height: size, backgroundColor: look.bg, borderColor: look.border },
         style,
       ]}>
-      <Icon name={icon} size={iconSize} color={look.fg} filled={filled} />
+      <Icon name={icon} size={iconSize} color={color ?? look.fg} filled={filled} />
     </Tap>
   );
 }
@@ -206,13 +209,13 @@ export function Screen({
 }
 
 /** A section's heading in the display serif, with an optional line under it and a link on the right. */
-export function SectionHeader({ title, subtitle, action, onAction }: { title: string; subtitle?: string; action?: string; onAction?: () => void }) {
+export function SectionHeader({ title, subtitle, action, onAction, small = false }: { title: string; subtitle?: string; action?: string; onAction?: () => void; small?: boolean }) {
   const c = useColors();
   const styles = useStyles(createStyles);
   return (
     <View style={styles.sectionHeader}>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.sectionTitle} accessibilityRole="header">
+        <Text style={[styles.sectionTitle, small && { fontSize: 24, lineHeight: 26 }]} accessibilityRole="header">
           {title}
         </Text>
         {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}

@@ -1,18 +1,19 @@
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
 import { Field, FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
-import { Body, Button, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
+import { Body, Button, IconButton, Tap, Title, SectionHeader } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { links } from '@/content/sample';
 import { checkName } from '@/lib/auth-messages';
 import { goHome } from '@/lib/navigation';
+import { getReminder, ReminderTime } from '@/lib/reminder';
 import { useAuth } from '@/state/auth';
 import { DataSaverPreference, useDataSaver } from '@/state/data-saver';
 import { LanguagePreference, useLanguage } from '@/state/language';
@@ -45,6 +46,13 @@ export default function Profile() {
   const saver = useDataSaver();
   const notify = useNotifications();
   const [notifyError, setNotifyError] = useState<string | null>(null);
+  const [reminder, setReminderTime] = useState<ReminderTime | null>(null);
+  // Read again when coming back from the reminder screen.
+  useFocusEffect(
+    useCallback(() => {
+      getReminder().then(setReminderTime);
+    }, []),
+  );
   const savedCount = lib.savedVideos.length + lib.savedDevotionals.length;
   const savedLabel = savedCount ? (savedCount === 1 ? t('Saved · 1 item') : t('Saved · {n} items', { n: savedCount })) : t('Saved sermons and devotionals');
   const insets = useSafeAreaInsets();
@@ -139,7 +147,7 @@ export default function Profile() {
 
         {/* Language */}
         <View style={{ gap: 12 }}>
-          <Eyebrow>{t('Language')}</Eyebrow>
+          <SectionHeader small title={t('Language')} />
           <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel={t('App language')}>
             {LANGUAGES.map((opt) => {
               const on = language.preference === opt.id;
@@ -161,7 +169,7 @@ export default function Profile() {
 
         {/* Appearance */}
         <View style={{ gap: 12 }}>
-          <Eyebrow>{t('Appearance')}</Eyebrow>
+          <SectionHeader small title={t('Appearance')} />
           <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel={t('Appearance')}>
             {THEMES.map((opt) => {
               const on = theme.preference === opt.id;
@@ -184,7 +192,7 @@ export default function Profile() {
 
         {/* Data saver */}
         <View style={{ gap: 12 }}>
-          <Eyebrow>{t('Data saver')}</Eyebrow>
+          <SectionHeader small title={t('Data saver')} />
           <View style={styles.segment} accessibilityRole="radiogroup" accessibilityLabel={t('Use less mobile data')}>
             {DATA_SAVER.map((opt) => {
               const on = saver.preference === opt.id;
@@ -208,11 +216,12 @@ export default function Profile() {
 
         {/* Notifications */}
         <View style={{ gap: 4 }}>
-          <Eyebrow style={{ marginBottom: 6 }}>{t('Notifications')}</Eyebrow>
+          <SectionHeader small title={t('Notifications')} />
           {notify.unsupported ? (
             <Text style={styles.meta}>{notify.unsupported}</Text>
           ) : (
             <>
+              <Row icon="clock" label={reminder ? t('Daily reminder: {time}', { time: reminder }) : t('Daily reminder: off')} onPress={() => router.push('/setup')} />
               <View style={styles.switchRow}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.switchLabel}>{t('Allow notifications')}</Text>
@@ -257,7 +266,7 @@ export default function Profile() {
 
         {/* Library */}
         <View style={{ gap: 4 }}>
-          <Eyebrow style={{ marginBottom: 6 }}>{t('Your library')}</Eyebrow>
+          <SectionHeader small title={t('Your library')} />
           <Row icon="bookmark" label={savedLabel} onPress={() => router.push('/saved')} />
           <Row icon="calendar" label={t('Events')} onPress={() => router.push('/events')} />
           <Row icon="flame" label={lib.streak ? t('{n}-day reading streak · best {best}', { n: lib.streak, best: lib.bestStreak }) : t('Start a reading streak')} onPress={() => router.navigate('/devotional')} />
@@ -265,7 +274,7 @@ export default function Profile() {
 
         {/* About */}
         <View style={{ gap: 4 }}>
-          <Eyebrow style={{ marginBottom: 6 }}>{t('About')}</Eyebrow>
+          <SectionHeader small title={t('About')} />
           <Row icon="globe" label="btgministry.org" onPress={() => WebBrowser.openBrowserAsync(links.website)} />
           <Row icon="heart" label={t('Give to the ministry')} onPress={() => router.push('/give')} />
           <Text style={[styles.meta, { paddingTop: 10 }]}>{t('BTG Ministry app · version {version}', { version: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
@@ -274,7 +283,7 @@ export default function Profile() {
         {/* Delete account: required by the App Store for apps that offer sign-up. */}
         {signedIn ? (
           <View style={{ gap: 12 }}>
-            <Eyebrow>{t('Delete account')}</Eyebrow>
+            <SectionHeader small title={t('Delete account')} />
             {confirmDelete ? (
               <View style={[styles.card, { borderColor: c.danger }]}>
                 <Text style={styles.name}>{t('Delete your account?')}</Text>
@@ -313,7 +322,7 @@ const createStyles = (c: Palette) =>
     switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.line },
     switchLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
     topBar: { paddingHorizontal: 12, paddingBottom: 4 },
-    card: { gap: 16, padding: 18, borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line },
+    card: { gap: 16, paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.line },
     avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
     avatarText: { fontFamily: Fonts.display, fontSize: 26, color: c.cream },
     name: { fontFamily: Fonts.sansSemiBold, fontSize: 17, color: c.text },

@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '@/i18n';
-import { Arch, Eagle, useTones } from '@/components/art';
+import { Eagle, useTones } from '@/components/art';
 import { DownloadButton } from '@/components/download-button';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon } from '@/components/icon';
-import { Body, Eyebrow, IconButton, ProgressBar, Screen, Tap, Title } from '@/components/ui';
+import { Body, IconButton, ProgressBar, Screen, Tap, Title, SectionHeader } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { ArtTone } from '@/content/sample';
 import { Episode, formatLength } from '@/lib/podcast';
@@ -51,11 +52,11 @@ export default function PodcastTab() {
         <Title>{t('Podcast')}</Title>
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
-          <View style={[styles.cover, { backgroundColor: c.artBrown }]}>
+          <View style={[styles.cover, { backgroundColor: '#17120E' }]}>
             {p.podcast.artwork ? (
               <Image source={{ uri: p.podcast.artwork }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
             ) : (
-              <Arch tone="brown" width={108} height={120} eagleHeight={92} />
+              <EagleMark height={88} />
             )}
           </View>
           <View style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}>
@@ -102,7 +103,7 @@ export default function PodcastTab() {
 
         {series.length > 1 && !onlyDownloads ? (
           <View style={{ gap: 12 }}>
-            <Eyebrow>{t('Series')}</Eyebrow>
+            <SectionHeader small title={t('Series')} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -131,7 +132,7 @@ export default function PodcastTab() {
 
         <View>
           <View style={styles.listHeader}>
-            <Eyebrow>{onlyDownloads ? t('Downloads') : (seriesFilter ?? t('Episodes'))}</Eyebrow>
+            <SectionHeader small title={onlyDownloads ? t('Downloads') : (seriesFilter ?? t('Episodes'))} />
             {seriesFilter && !onlyDownloads ? (
               <Tap accessibilityRole="button" onPress={() => setSeriesFilter(null)} style={{ minHeight: 44, justifyContent: 'center' }}>
                 <Text style={styles.link}>{t('Show all')}</Text>
@@ -176,7 +177,7 @@ export default function PodcastTab() {
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
-  cover: { width: 132, height: 132, borderRadius: 22, alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' },
+  cover: { width: 132, height: 132, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   follow: {
     alignSelf: 'flex-start',
     flexDirection: 'row',

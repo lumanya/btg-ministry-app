@@ -258,6 +258,17 @@ In code and the database these are still called clips (`clips` table, `instagram
 - **Reflect.** Each devotional has a private reflection box. Reflections are saved on the phone only and never sent anywhere.
 - **Share to Status** on Today's quote opens the share card in Status shape on the new Ink colour.
 
+## Look and brand (version 1.1)
+
+- **Eagle mark.** `src/components/eagle-mark.tsx` is the eagle traced into one clean vector shape: gold on ink, brown on paper, sharp at any size. The app icon, Android adaptive icon, splash screen and favicon in `assets/images/` are made from it (gold eagle on ink `#17120E`).
+- **Welcome** is ink and gold with English / Kiswahili at the top, then *Get started* (create an account, or skip), *I already have an account* and *Look around first*.
+- **Daily reminder.** The first time Today opens on a phone, it asks when to send a daily reminder for today's rhythm (06:00 to 20:00, or none). It's scheduled on the phone (`src/lib/reminder.ts`) and can be changed in Settings.
+- **Player** is ink and gold, with skip 15/30 seconds, speed, a sleep timer (15, 30 or 60 minutes) and lock-screen controls.
+- **Artwork.** Videos without a YouTube picture, series tiles, the podcast cover and empty states use the gold eagle on ink.
+- **YouTube thumbnails.** The design canvas has a 1280 × 720 thumbnail template so every sermon looks the same on YouTube and in the app.
+
+Changing the icon or splash screen needs a new build; raise `version` in `app.json` when you do.
+
 ## Updating the app without a new build (EAS Update)
 
 Builds made with `expo-updates` (from commit "Over-the-air updates" on) can get new versions of the app's screens and logic without a new APK or a store review.

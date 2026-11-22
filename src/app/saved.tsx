@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
-import { Eagle } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon } from '@/components/icon';
 import { Appear } from '@/components/motion';
 import { Body, Button, IconButton, Tap, Title } from '@/components/ui';
@@ -129,12 +129,13 @@ export default function Saved() {
 }
 
 function Empty({ title, text, action, onAction }: { title: string; text: string; action: string; onAction: () => void }) {
+  const c = useColors();
   const styles = useStyles(createStyles);
   return (
     <Appear>
       <View style={styles.empty}>
         <View style={styles.emptyArt}>
-          <Eagle height={58} />
+          <EagleMark height={58} color={c.accent} />
         </View>
         <Title size={26} style={{ textAlign: 'center' }}>
           {title}

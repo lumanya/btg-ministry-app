@@ -5,9 +5,9 @@ import { ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { compact, t } from '@/i18n';
-import { Eagle } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { Icon, IconName } from '@/components/icon';
-import { Body, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
+import { Body, Eyebrow, IconButton, Tap, Title, SectionHeader } from '@/components/ui';
 import { VideoThumb } from '@/components/video-thumb';
 import { YouTubePlayer } from '@/components/youtube-player';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
@@ -115,7 +115,7 @@ export default function SermonScreen() {
 
         <View style={styles.speaker}>
           <View style={styles.avatar}>
-            <Eagle height={34} />
+            <EagleMark height={26} />
           </View>
           <View style={{ gap: 2 }}>
             <Text style={styles.speakerName}>Iman Mwakanyamale</Text>
@@ -153,7 +153,7 @@ export default function SermonScreen() {
 
         {upNext.length ? (
           <View style={{ gap: 14 }}>
-            <Eyebrow>{at >= 0 ? t('Next in this series') : t('Up next')}</Eyebrow>
+            <SectionHeader small title={at >= 0 ? t('Next in this series') : t('Up next')} />
             {upNext.map((v, i) => (
               <Tap
                 key={v.id}
@@ -187,12 +187,9 @@ const createStyles = (c: Palette) =>
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: c.sand,
-    borderWidth: 1,
-    borderColor: c.lineStrong,
+    backgroundColor: '#17120E',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 3,
+    justifyContent: 'center',
     overflow: 'hidden',
   },
   speakerName: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },

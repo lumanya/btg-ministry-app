@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
-import { Eagle } from '@/components/art';
+import { EagleMark } from '@/components/eagle-mark';
 import { EventCard } from '@/components/event-card';
 import { Appear } from '@/components/motion';
 import { Body, IconButton, Title } from '@/components/ui';
@@ -35,7 +35,7 @@ export default function EventsScreen() {
           ))
         ) : (
           <View style={styles.empty}>
-            <Eagle height={54} />
+            <EagleMark height={54} color={c.accent} />
             <Title size={24} style={{ textAlign: 'center' }}>
               {t('No events announced yet')}
             </Title>

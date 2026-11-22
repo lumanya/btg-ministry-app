@@ -2,7 +2,7 @@
   "expo": {
     "name": "BTG Ministry",
     "slug": "btg-ministry-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -62,7 +62,7 @@
     "android": {
       "package": "org.btgministry.app",
       "adaptiveIcon": {
-        "backgroundColor": "#FCFAF6",
+        "backgroundColor": "#17120E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -91,9 +91,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFDFA",
+          "backgroundColor": "#17120E",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 120
+          "imageWidth": 110,
+          "dark": {
+            "backgroundColor": "#17120E",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       [

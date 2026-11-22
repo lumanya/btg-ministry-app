@@ -15,11 +15,14 @@ export function Scrubber({
   duration,
   onSeek,
   disabled = false,
+  night = false,
 }: {
   position: number;
   duration: number;
   onSeek: (seconds: number) => void;
   disabled?: boolean;
+  /** Gold on dark, for the player's night look. */
+  night?: boolean;
 }) {
   const styles = useStyles(createStyles);
   const [width, setWidth] = useState(1);
@@ -62,12 +65,18 @@ export function Scrubber({
       hitSlop={{ top: 12, bottom: 12 }}
       style={styles.track}>
       {/* Children ignore touches so every touch position is measured against the bar itself. */}
-      <View pointerEvents="none" style={styles.rail}>
-        <View style={[styles.fill, { width: `${fraction * 100}%` }]} />
+      <View pointerEvents="none" style={[styles.rail, night && { backgroundColor: 'rgba(255,255,255,0.16)' }]}>
+        <View style={[styles.fill, night && { backgroundColor: '#D4AF73' }, { width: `${fraction * 100}%` }]} />
       </View>
       <View
         pointerEvents="none"
-        style={[styles.thumb, { left: `${fraction * 100}%` }, drag !== null && styles.thumbActive, !enabled && { opacity: 0.4 }]}
+        style={[
+          styles.thumb,
+          night && { backgroundColor: '#D4AF73', borderColor: '#17120E' },
+          { left: `${fraction * 100}%` },
+          drag !== null && styles.thumbActive,
+          !enabled && { opacity: 0.4 },
+        ]}
       />
     </View>
   );
