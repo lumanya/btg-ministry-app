@@ -14,6 +14,8 @@ const CLIPS_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/instagram-feed` :
 const CACHE_KEY = 'btg.clips.v1';
 /** Fetch again when older than this (Instagram video links stop working after a while). */
 const FRESH_MS = 10 * 60 * 1000;
+/** Seeds per batch: the newest first, more as people scroll. */
+const BATCH = 40;
 
 type ClipsState = {
   clips: Clip[];
@@ -21,6 +23,10 @@ type ClipsState = {
   status: 'off' | 'loading' | 'ready' | 'error';
   /** Fetches the list again unless it is fresh (or always, with `force`). */
   refresh: (force?: boolean) => Promise<void>;
+  /** Older seeds exist beyond those loaded. */
+  hasMore: boolean;
+  /** Loads the next batch of older seeds. */
+  loadMore: () => Promise<void>;
 };
 
 const ClipsContext = createContext<ClipsState | null>(null);
@@ -28,17 +34,27 @@ const ClipsContext = createContext<ClipsState | null>(null);
 export function ClipsProvider({ children }: { children: ReactNode }) {
   const [clips, setClips] = useState<Clip[]>([]);
   const [status, setStatus] = useState<ClipsState['status']>(CLIPS_URL ? 'loading' : 'off');
+  const [hasMore, setHasMore] = useState(false);
+  const loadingMore = useRef(false);
   const fetchedAt = useRef(0);
   const inFlight = useRef<Promise<void> | null>(null);
 
   const load = useCallback(async () => {
     if (!CLIPS_URL) return;
     try {
-      const res = await fetch(CLIPS_URL);
-      const body = (await res.json()) as { clips?: Clip[] };
+      const res = await fetch(`${CLIPS_URL}?limit=${BATCH}`);
+      const body = (await res.json()) as { clips?: Clip[]; hasMore?: boolean };
       if (!res.ok || !Array.isArray(body.clips)) throw new Error(`Clips returned ${res.status}`);
       fetchedAt.current = Date.now();
-      setClips(body.clips);
+      const fresh = body.clips;
+      // Keep older seeds already loaded further down, so a refresh doesn't pull
+      // someone out of the history they are watching.
+      setClips((prev) => {
+        const ids = new Set(fresh.map((c) => c.id));
+        const oldest = Date.parse(fresh[fresh.length - 1]?.postedAt ?? '') || 0;
+        return [...fresh, ...prev.filter((c) => !ids.has(c.id) && (Date.parse(c.postedAt ?? '') || 0) < oldest)];
+      });
+      setHasMore(!!body.hasMore);
       setStatus('ready');
       AsyncStorage.setItem(CACHE_KEY, JSON.stringify(body.clips)).catch(() => {});
     } catch (err) {
@@ -72,7 +88,28 @@ export function ClipsProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [refresh]);
 
-  const value = useMemo(() => ({ clips, status, refresh }), [clips, status, refresh]);
+  // The next batch of older seeds, added after those already loaded.
+  const loadMore = useCallback(async () => {
+    if (!CLIPS_URL || !hasMore || loadingMore.current) return;
+    loadingMore.current = true;
+    try {
+      const res = await fetch(`${CLIPS_URL}?limit=${BATCH}&offset=${clips.length}`);
+      const body = (await res.json()) as { clips?: Clip[]; hasMore?: boolean };
+      if (!res.ok || !Array.isArray(body.clips)) throw new Error(`Clips returned ${res.status}`);
+      const more = body.clips;
+      setClips((c) => {
+        const have = new Set(c.map((x) => x.id));
+        return [...c, ...more.filter((x) => !have.has(x.id))];
+      });
+      setHasMore(!!body.hasMore);
+    } catch (err) {
+      console.warn('Could not load more seeds', err);
+    } finally {
+      loadingMore.current = false;
+    }
+  }, [clips.length, hasMore]);
+
+  const value = useMemo(() => ({ clips, status, refresh, hasMore, loadMore }), [clips, status, refresh, hasMore, loadMore]);
   return <ClipsContext.Provider value={value}>{children}</ClipsContext.Provider>;
 }
 

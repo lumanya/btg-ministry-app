@@ -49,7 +49,7 @@ export default function SeedsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { start, at } = useLocalSearchParams<{ start?: string; at?: string }>();
-  const { clips, status, refresh } = useClips();
+  const { clips, status, refresh, loadMore } = useClips();
   const podcast = usePlayer();
   const saving = useDataSaver().active;
   const list = useRef<FlatList<Clip>>(null);
@@ -149,6 +149,8 @@ export default function SeedsScreen() {
           getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
           initialScrollIndex={active}
           onMomentumScrollEnd={onScrollEnd}
+          onEndReached={() => loadMore()}
+          onEndReachedThreshold={3}
           windowSize={3}
           initialNumToRender={1}
           maxToRenderPerBatch={2}

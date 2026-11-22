@@ -242,7 +242,7 @@ Iman's Instagram videos and Reels appear as **Seeds** (*Mbegu*): one-minute word
 - After 10 seeds in a row the feed gently suggests a full sermon.
 - *Amen* is the like button; watching a seed for 2 seconds counts a view and ticks *Watch a seed* in today's rhythm.
 - Instagram captions written in capitals are shown in sentence case (`seedTitle` in `src/lib/clips.ts`).
-- `supabase/functions/instagram-feed` reads the account's videos (cached 15 minutes, since Instagram's video links expire). Business keys from Meta never expire; Instagram-login keys renew themselves.
+- `supabase/functions/instagram-feed` reads the account's whole video history: Reels, older feed videos from before Reels, and videos inside carousel posts. The full history is read every 6 hours and kept in `public.instagram_cache`; the newest posts are checked every 15 minutes (Instagram's video links expire). The app loads seeds 40 at a time, newest first, and more as people scroll. Business keys from Meta never expire; Instagram-login keys renew themselves.
 - The dashboard's **Seeds** page connects Instagram (paste the access key and the Instagram account ID once), links each seed to its sermon (with an optional start time), renames or hides seeds, and shows Amens and views.
 - Instagram doesn't share videos that use music from its audio library; those are listed on the dashboard but don't play in the app.
 

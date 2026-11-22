@@ -12,6 +12,8 @@ export type InstagramMedia = {
   permalink?: string;
   caption?: string;
   timestamp?: string;
+  /** For carousel posts: the photos and videos inside. */
+  children?: { data?: { id: string; media_type?: string; media_url?: string; thumbnail_url?: string }[] };
 };
 
 /** Staff settings for a clip (public.clips). */
@@ -55,13 +57,41 @@ export function clipTitle(caption: string | undefined): string {
 }
 
 /**
+ * Every video on the account: plain video posts and Reels (old feed videos are
+ * VIDEO too), plus the videos inside carousel posts, which take the post's
+ * caption, date and link.
+ */
+export function videosOf(media: InstagramMedia[]): InstagramMedia[] {
+  const out: InstagramMedia[] = [];
+  for (const m of media) {
+    if (m.media_type === 'VIDEO') out.push(m);
+    else if (m.media_type === 'CAROUSEL_ALBUM') {
+      for (const child of m.children?.data ?? []) {
+        if (child.media_type !== 'VIDEO') continue;
+        out.push({ ...child, permalink: m.permalink, caption: m.caption, timestamp: m.timestamp });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * New posts from the first page added to the stored history: same id = the fresh
+ * copy (new video link), newest first.
+ */
+export function mergeMedia(stored: InstagramMedia[], fresh: InstagramMedia[]): InstagramMedia[] {
+  const byId = new Map(stored.map((m) => [m.id, m]));
+  for (const m of fresh) byId.set(m.id, m);
+  return [...byId.values()].sort((a, b) => (Date.parse(b.timestamp ?? '') || 0) - (Date.parse(a.timestamp ?? '') || 0));
+}
+
+/**
  * Videos only, newest first, merged with staff settings.
  * The app gets playable, visible clips; the dashboard (`all`) gets every video.
  */
 export function buildClips(media: InstagramMedia[], settings: ClipSetting[], all = false): Clip[] {
   const byId = new Map(settings.map((s) => [s.instagram_id, s]));
-  return media
-    .filter((m) => m.media_type === 'VIDEO')
+  return videosOf(media)
     .map((m): Clip => {
       const s = byId.get(m.id);
       return {
@@ -97,7 +127,7 @@ export function shouldRefresh(
   return Date.parse(auth.expires_at) - now < 30 * DAY;
 }
 
-const FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp';
+const FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp,children{id,media_type,media_url,thumbnail_url}';
 
 /**
  * Where to read the account's posts. Keys from Instagram login read "me" on
@@ -105,5 +135,5 @@ const FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestam
  */
 export function mediaUrl(token: string, accountId: string | null): string {
   const base = accountId ? `https://graph.facebook.com/v25.0/${encodeURIComponent(accountId)}/media` : 'https://graph.instagram.com/me/media';
-  return `${base}?fields=${FIELDS}&limit=50&access_token=${encodeURIComponent(token)}`;
+  return `${base}?fields=${encodeURIComponent(FIELDS)}&limit=50&access_token=${encodeURIComponent(token)}`;
 }
