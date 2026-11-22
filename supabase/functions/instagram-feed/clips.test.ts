@@ -115,3 +115,17 @@ test('picture posts become posters: single images and the first picture of a car
   const merged = mergePosters([{ id: 'old', imageUrl: 'https://x/o.jpg', caption: '', permalink: null, postedAt: '2025-01-01T00:00:00+0000' }], posters);
   assert.deepEqual(merged.map((p) => p.id), ['c1', 'p1', 'old']);
 });
+
+test('collab posts join the account’s own posts once, newest first', async () => {
+  const { combineMedia, collabUrl, postersOf } = await import('./clips.ts');
+  const own = [{ id: '1', media_type: 'IMAGE', media_url: 'a', timestamp: '2026-11-13T07:00:00+0000' }];
+  const collabs = [
+    { id: '2', media_type: 'IMAGE', media_url: 'b', timestamp: '2026-11-22T10:00:00+0000' },
+    { id: '1', media_type: 'IMAGE', media_url: 'a2', timestamp: '2026-11-13T07:00:00+0000' },
+  ];
+  const all = combineMedia(own, collabs);
+  assert.deepEqual(all.map((m) => m.id), ['2', '1']);
+  assert.equal(postersOf(all)[0].id, '2');
+  assert.equal(collabUrl('t', null), null);
+  assert.match(collabUrl('t', '42') ?? '', /\/42\/collaborative_media\?/);
+});

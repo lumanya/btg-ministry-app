@@ -254,6 +254,8 @@ Iman's Instagram videos and Reels appear as **Seeds** (*Mbegu*): one-minute word
 
 In code and the database these are still called clips (`clips` table, `instagram-feed` function, `src/state/clips.tsx`); only the name people see changed.
 
+**Collab posts.** Posts that another account starts with Iman as an accepted collaborator (for example @btg.ministry's posters and reels) are read too, through Instagram's *collaborative media* list, so they appear as seeds and posters like his own posts.
+
 ## Today's rhythm, streaks and grace days
 
 - **Tabs:** Today · Seeds · Watch (sermons, with Live at the top) · Word (devotionals) · Listen (podcast). Live is still at `/live`.

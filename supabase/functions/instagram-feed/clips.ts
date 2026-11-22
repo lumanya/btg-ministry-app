@@ -167,3 +167,18 @@ export function mediaUrl(token: string, accountId: string | null): string {
   const base = accountId ? `https://graph.facebook.com/v25.0/${encodeURIComponent(accountId)}/media` : 'https://graph.instagram.com/me/media';
   return `${base}?fields=${encodeURIComponent(FIELDS)}&limit=50&access_token=${encodeURIComponent(token)}`;
 }
+
+/**
+ * Collab posts another account started (e.g. @btg.ministry) with this account as an
+ * accepted collaborator. They show on the profile but are not in /media. Business
+ * keys only (graph.facebook.com); null for Instagram-login keys.
+ */
+export function collabUrl(token: string, accountId: string | null): string | null {
+  if (!accountId) return null;
+  return `https://graph.facebook.com/v25.0/${encodeURIComponent(accountId)}/collaborative_media?fields=${encodeURIComponent(FIELDS)}&limit=50&access_token=${encodeURIComponent(token)}`;
+}
+
+/** Own posts and collab posts together, each once, newest first. */
+export function combineMedia(own: InstagramMedia[], collabs: InstagramMedia[]): InstagramMedia[] {
+  return mergeMedia(own, collabs);
+}

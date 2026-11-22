@@ -18,7 +18,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { buildClips, type ClipSetting, type InstagramMedia, mediaUrl, mergeMedia, mergePosters, type Poster, postersOf, shouldRefresh, videosOf } from './clips.ts';
+import { buildClips, type ClipSetting, collabUrl, combineMedia, type InstagramMedia, mediaUrl, mergeMedia, mergePosters, type Poster, postersOf, shouldRefresh, videosOf } from './clips.ts';
 
 const GRAPH = 'https://graph.instagram.com';
 /** Read the newest posts again after this long. */
@@ -70,9 +70,25 @@ async function freshToken(admin: any, auth: Auth): Promise<string> {
   }
 }
 
+/** The account's own posts plus collab posts it accepted (which /media leaves out). */
 async function loadMedia(token: string, accountId: string | null, pages: number): Promise<InstagramMedia[]> {
+  const own = await loadPages(mediaUrl(token, accountId), pages);
+  const first = collabUrl(token, accountId);
+  let collabs: InstagramMedia[] = [];
+  if (first) {
+    try {
+      collabs = await loadPages(first, Math.min(pages, 10));
+    } catch (err) {
+      // Older keys may lack access to collab posts: carry on with the account's own posts.
+      console.error('instagram-feed: could not read collab posts', err);
+    }
+  }
+  return combineMedia(own, collabs);
+}
+
+async function loadPages(firstUrl: string, pages: number): Promise<InstagramMedia[]> {
   const out: InstagramMedia[] = [];
-  let url: string | null = mediaUrl(token, accountId);
+  let url: string | null = firstUrl;
   for (let page = 0; url && page < pages; page++) {
     const res: Response = await fetch(url);
     const body = (await res.json()) as { data?: InstagramMedia[]; paging?: { next?: string }; error?: { message?: string } };
