@@ -221,6 +221,31 @@ export function eventWhen(e: Pick<MinistryEvent, 'startsAt' | 'endsAt'>, n: Date
 }
 
 /** Day number and short month for the date tile, e.g. { day: '12', month: 'DEC' }. */
+/** Calendar days from today until a date (0 = today, 1 = tomorrow), in the phone's time zone. */
+export function daysUntil(iso: string, now: Date = new Date()): number {
+  const d = new Date(iso);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((day - start) / 86_400_000);
+}
+
+/**
+ * A Google Calendar "add event" link (opens the app or the website), so no
+ * calendar permission or native module is needed.
+ */
+export function calendarLink(e: Pick<MinistryEvent, 'title' | 'startsAt' | 'endsAt' | 'locationName' | 'address' | 'description'>): string {
+  const stamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const end = e.endsAt ?? new Date(Date.parse(e.startsAt) + 2 * 3600_000).toISOString();
+  const q = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: e.title,
+    dates: `${stamp(e.startsAt)}/${stamp(end)}`,
+    details: e.description.slice(0, 900),
+    location: [e.locationName, e.address].filter(Boolean).join(', '),
+  });
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
+}
+
 export function dateTile(iso: string, n: DateNames = englishNames) {
   const d = new Date(iso);
   return { day: String(d.getDate()), month: n.month(d.getMonth()).slice(0, 3).toUpperCase() };

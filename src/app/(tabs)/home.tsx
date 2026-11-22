@@ -4,7 +4,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { dayName, monthName, t } from '@/i18n';
 import { Eagle } from '@/components/art';
-import { EventCard } from '@/components/event-card';
+import { ComingUpRail } from '@/components/event-poster';
 import { FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
@@ -82,7 +82,6 @@ export default function Today() {
   const next = feed.upcoming[0];
   // While live, feature the stream; otherwise the most recent service.
   const feature = live ?? feed.videos.find((v) => v.kind === 'stream') ?? feed.videos[0];
-  const nextEvent = content.upcoming[0];
 
   const today = content.today;
   const openToday = () => router.push({ pathname: '/devotional/[id]', params: { id: today.id } });
@@ -191,6 +190,16 @@ export default function Today() {
         </Appear>
       ) : null}
 
+      {content.upcoming.length ? (
+        <Appear index={2}>
+          <ComingUpRail
+            events={content.upcoming}
+            onOpen={(id) => router.push({ pathname: '/events/[id]', params: { id } })}
+            onAll={() => router.push('/events')}
+          />
+        </Appear>
+      ) : null}
+
       {notify.showPrompt ? (
         <Appear index={2}>
           <View style={styles.prompt}>
@@ -244,13 +253,6 @@ export default function Today() {
           </Tap>
         ) : null}
       </Appear>
-
-      {nextEvent ? (
-        <Appear index={3} style={{ gap: 12 }}>
-          <SectionHeader title={t('Coming up')} action={content.upcoming.length > 1 ? t('All events') : undefined} onAction={() => router.push('/events')} />
-          <EventCard event={nextEvent} onPress={() => router.push({ pathname: '/events/[id]', params: { id: nextEvent.id } })} />
-        </Appear>
-      ) : null}
 
       {listen ? (
         <Appear index={4}>

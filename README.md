@@ -222,7 +222,11 @@ Setup, once:
 
 **Share cards.** The quote on Home, the devotional reader and events share as branded images (Ivory, Latte or Night; a square-ish post or a full-screen status), ready for WhatsApp.
 
-**Events.** Staff add conferences and special services on the dashboard's **Events** page (date, place, picture, registration link). The next one shows on Home; members can register, get directions, set a reminder and invite friends with a share card.
+**Events (from posters).** Event posters are already made for Instagram, so the dashboard's **Events** page shows the latest pictures posted on the connected Instagram account (*Posters from Instagram*). Staff press **Use as event** on a poster: it is copied into the app's own storage (`media/events/instagram-<id>.jpg`), the form opens with the poster and a title taken from the caption, and staff set the date, time and place. Posters can also be uploaded by hand. Tick *Tell members when it's published* to send an Events notification once.
+
+In the app, **Coming up** sits on Today straight after Seeds: the next posters side by side, each shown whole (never cropped), with the date, "in 14 days" and a reminder bell. Members never see where a poster came from. Each event opens on its poster (tap for full screen), with *Remind me*, *Calendar* (adds it to Google Calendar or the phone's calendar app), *Directions*, *Share poster* (shares the picture itself to WhatsApp or status) and the invite card.
+
+Setup: apply `supabase/migrations/20261122200000_instagram_posters.sql` and redeploy `instagram-feed` (it now also answers `?posters=1` and, for signed-in staff, imports a poster).
 
 ## Kiswahili, likes and views, data saver
 

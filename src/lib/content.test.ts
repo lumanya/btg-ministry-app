@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { arrangePlaylists, eventWhen, formatTime, mapDevotional, mapService, paragraphs, upcomingEvents } from './content.ts';
+import { arrangePlaylists, calendarLink, daysUntil, eventWhen, formatTime, mapDevotional, mapService, paragraphs, upcomingEvents } from './content.ts';
 
 test('maps a devotional row for the app', () => {
   const d = mapDevotional({
@@ -82,4 +82,19 @@ test('upcoming events and their dates', () => {
   const list = upcomingEvents([ev('later', '2026-12-01T07:00:00Z'), ev('past', '2026-11-01T07:00:00Z'), ev('today', '2026-11-14T10:00:00Z')], now);
   assert.deepEqual(list.map((e) => e.id), ['today', 'later']);
   assert.equal(eventWhen({ startsAt: '2026-12-12T07:00:00Z', endsAt: '2026-12-14T13:00:00Z' }).multiDay, true);
+});
+
+test('days until an event, by calendar day', () => {
+  const now = new Date(2026, 10, 22, 21, 0);
+  assert.equal(daysUntil(new Date(2026, 10, 22, 23, 0).toISOString(), now), 0);
+  assert.equal(daysUntil(new Date(2026, 10, 23, 8, 0).toISOString(), now), 1);
+  assert.equal(daysUntil(new Date(2026, 11, 6, 16, 0).toISOString(), now), 14);
+});
+
+test('calendar link carries the title, times and place', () => {
+  const link = calendarLink({ title: 'End Time Awakening', startsAt: '2026-12-06T13:00:00Z', endsAt: null, locationName: 'BTG Temple', address: 'Dar es Salaam', description: 'Come' });
+  const q = new URL(link).searchParams;
+  assert.equal(q.get('text'), 'End Time Awakening');
+  assert.equal(q.get('dates'), '20261206T130000Z/20261206T150000Z');
+  assert.equal(q.get('location'), 'BTG Temple, Dar es Salaam');
 });

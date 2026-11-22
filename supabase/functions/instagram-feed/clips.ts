@@ -75,6 +75,36 @@ export function videosOf(media: InstagramMedia[]): InstagramMedia[] {
   return out;
 }
 
+/** A picture post that could be an event poster. */
+export type Poster = { id: string; imageUrl: string; caption: string; permalink: string | null; postedAt: string | null };
+
+/** How many recent picture posts to offer as posters. */
+export const POSTER_COUNT = 40;
+
+/**
+ * Picture posts, newest first: single images, and the first picture of a carousel
+ * (where a poster usually leads).
+ */
+export function postersOf(media: InstagramMedia[], keep = POSTER_COUNT): Poster[] {
+  const out: Poster[] = [];
+  for (const m of media) {
+    let url: string | undefined;
+    if (m.media_type === 'IMAGE') url = m.media_url;
+    else if (m.media_type === 'CAROUSEL_ALBUM') url = m.children?.data?.find((c) => c.media_type === 'IMAGE')?.media_url;
+    if (!url) continue;
+    out.push({ id: m.id, imageUrl: url, caption: (m.caption ?? '').trim(), permalink: m.permalink ?? null, postedAt: m.timestamp ?? null });
+  }
+  return out.sort((a, b) => (Date.parse(b.postedAt ?? '') || 0) - (Date.parse(a.postedAt ?? '') || 0)).slice(0, keep);
+}
+
+/** Fresh posters first, then older ones not in the fresh list. */
+export function mergePosters(stored: Poster[], fresh: Poster[], keep = POSTER_COUNT): Poster[] {
+  const ids = new Set(fresh.map((p) => p.id));
+  return [...fresh, ...stored.filter((p) => !ids.has(p.id))]
+    .sort((a, b) => (Date.parse(b.postedAt ?? '') || 0) - (Date.parse(a.postedAt ?? '') || 0))
+    .slice(0, keep);
+}
+
 /**
  * New posts from the first page added to the stored history: same id = the fresh
  * copy (new video link), newest first.

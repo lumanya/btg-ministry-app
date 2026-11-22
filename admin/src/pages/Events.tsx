@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { go } from '../App';
 import { eatInputToIso, formatEat, friendlyError, isoToEatInput, plural } from '../lib';
-import { db } from '../supabase';
+import { CLIPS_URL, db } from '../supabase';
 import { Button, ConfirmButton, Empty, Field, Loading, PageHead, Segment, useToast } from '../ui';
 
 type EventRow = {
@@ -62,7 +62,7 @@ export function EventsList() {
       <PageHead
         eyebrow="Content"
         title="Events"
-        intro="Conferences and special services. Published events show on the app’s Home screen, with reminders the day before and an hour before."
+        intro="Conferences and special services. Published events show on the app’s Today screen with their poster, with reminders the day before and an hour before. Pick a poster from Instagram below, or start a new event and upload one."
         actions={
           <a className="btn primary" href="#/events/new">
             New event
@@ -70,6 +70,7 @@ export function EventsList() {
         }
       />
       {error ? <div className="notice error">{error}</div> : null}
+      <InstagramPosters used={rows ?? []} />
       {!rows && !error ? <Loading /> : null}
       {rows ? (
         <div className="stack">
@@ -119,6 +120,102 @@ export function EventsList() {
   );
 }
 
+/* ---------- Posters from Instagram ---------- */
+
+type Poster = { id: string; imageUrl: string; caption: string; permalink: string | null; postedAt: string | null };
+
+/** Where a chosen poster is passed to the new-event form. */
+const DRAFT_KEY = 'btg.eventDraft';
+
+function InstagramPosters({ used }: { used: EventRow[] }) {
+  const toast = useToast();
+  const [posters, setPosters] = useState<Poster[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
+
+  useEffect(() => {
+    fetch(`${CLIPS_URL}?posters=1`)
+      .then((r) => r.json() as Promise<{ connected?: boolean; posters?: Poster[]; error?: string }>)
+      .then((b) => {
+        if (b.connected === false) return setPosters([]);
+        if (!Array.isArray(b.posters)) throw new Error(b.error ?? 'No posters');
+        setPosters(b.posters);
+      })
+      .catch(() => setError('Couldn’t load the posters from Instagram. Refresh to try again.'));
+  }, []);
+
+  // An event made from a poster keeps "instagram-<post id>" in its picture's file name.
+  const eventFor = (p: Poster) => used.find((e) => e.image_url?.includes(`instagram-${p.id}.`));
+
+  const use = async (p: Poster) => {
+    setBusy(p.id);
+    const { data, error: err } = await db().functions.invoke('instagram-feed', { body: { import: p.id } });
+    setBusy(null);
+    const body = data as { url?: string; error?: string } | null;
+    if (err || !body?.url) return toast(body?.error ?? 'Couldn’t copy the poster. Try again.', 'error');
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ image_url: body.url, caption: p.caption }));
+    go('/events/new');
+  };
+
+  if (error) return <div className="notice error">{error}</div>;
+  if (!posters) return <Loading label="Loading posters from Instagram" />;
+  if (!posters.length) return null;
+  const shown = more ? posters.slice(0, 24) : posters.slice(0, 8);
+
+  return (
+    <section className="card stack" style={{ gap: 14, marginBottom: 20 }}>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h2 style={{ margin: 0, fontSize: 18 }}>Latest posters on Instagram</h2>
+        <span className="small muted">Picture posts · newest first</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14 }}>
+        {shown.map((p) => {
+          const ev = eventFor(p);
+          return (
+            <div key={p.id} className="stack" style={{ gap: 8 }}>
+              <div style={{ position: 'relative' }}>
+                <img src={p.imageUrl} alt={p.caption.split('\n')[0] || 'Instagram post'} loading="lazy" style={{ width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: 12, background: '#E6DCCF' }} />
+                {ev ? <span className="pill live" style={{ position: 'absolute', left: 8, top: 8 }}>On the app</span> : null}
+              </div>
+              <span className="small muted">{p.postedAt ? formatEat(p.postedAt) : ''}</span>
+              {ev ? (
+                <a className="btn small" href={`#/events/${ev.id}`}>
+                  Open event
+                </a>
+              ) : (
+                <Button small onClick={() => use(p)} busy={busy === p.id}>
+                  {busy === p.id ? 'Copying…' : 'Use as event'}
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {posters.length > 8 ? (
+        <Button small variant="ghost" onClick={() => setMore((m) => !m)}>
+          {more ? 'Show fewer' : 'Show older posters'}
+        </Button>
+      ) : null}
+      <p className="small muted" style={{ margin: 0 }}>
+        Instagram doesn’t know when an event happens, so set the date on the next screen. The poster leaves the app after the event ends.
+      </p>
+    </section>
+  );
+}
+
+/** First line of a caption, without hashtags, mentions or emoji: a starting title for the event. */
+function titleFromCaption(caption: string): string {
+  const first = caption.split(/\r?\n/).find((l) => l.trim()) ?? '';
+  return first
+    .replace(/#[\p{L}\p{N}_]+/gu, '')
+    .replace(/@[\w.]+/g, '')
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+}
+
 /* ---------- Editor ---------- */
 
 type Form = {
@@ -158,9 +255,24 @@ const blank = (): Form => ({
   description_sw: '',
 });
 
+/** A new event, or one started from an Instagram poster picked on the Events page. */
+function newForm(): Form {
+  const f = blank();
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return f;
+    sessionStorage.removeItem(DRAFT_KEY);
+    const d = JSON.parse(raw) as { image_url?: string; caption?: string };
+    return { ...f, image_url: d.image_url ?? '', title: titleFromCaption(d.caption ?? ''), description: (d.caption ?? '').trim().slice(0, 8000) };
+  } catch {
+    return f;
+  }
+}
+
 export function EventEditor({ id }: { id: string | null }) {
   const toast = useToast();
-  const [form, setForm] = useState<Form | null>(id ? null : blank());
+  const [form, setForm] = useState<Form | null>(() => (id ? null : newForm()));
+  const [notifyNow, setNotifyNow] = useState(true);
   const [savedStatus, setSavedStatus] = useState<Form['status'] | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -232,9 +344,24 @@ export function EventEditor({ id }: { id: string | null }) {
     const res = id ? await db().from('events').update(row).eq('id', id).select('id').single() : await db().from('events').insert(row).select('id').single();
     setBusy(null);
     if (res.error) return toast(friendlyError(res.error), 'error');
+    // First time it's published: tell members, once (the key stops a second message).
+    let told = false;
+    if (status === 'published' && savedStatus !== 'published' && notifyNow) {
+      const where = row.location_name ? ` · ${row.location_name}` : '';
+      const { error: nErr } = await db().from('notifications').insert({
+        title: `New event: ${row.title}`.slice(0, 80),
+        body: `${formatEat(row.starts_at)}${where}`.slice(0, 240),
+        title_sw: `Tukio jipya: ${row.title_sw || row.title}`.slice(0, 80),
+        body_sw: `${formatEat(row.starts_at)}${where}`.slice(0, 240),
+        topic: 'events',
+        url: `/events/${res.data.id}`,
+        dedupe_key: `event:${res.data.id}:new`,
+      });
+      told = !nErr;
+    }
     setForm({ ...form, status });
     setSavedStatus(status);
-    toast(status === 'published' ? 'Published. It’s on the app’s Home screen now.' : 'Saved as a draft.');
+    toast(status === 'published' ? (told ? 'Published, and members are being told about it.' : 'Published. It’s on the app’s Today screen now.') : 'Saved as a draft.');
     if (!id) go(`/events/${res.data.id}`);
   };
 
@@ -255,7 +382,7 @@ export function EventEditor({ id }: { id: string | null }) {
     setBusy(null);
     if (error) return toast(friendlyError(error), 'error');
     set('image_url', db().storage.from('media').getPublicUrl(path).data.publicUrl);
-    toast('Picture uploaded. Save to keep it.');
+    toast('Poster uploaded. Save to keep it.');
   };
 
   return (
@@ -310,11 +437,12 @@ export function EventEditor({ id }: { id: string | null }) {
             {(p) => <input {...p} className="input" value={form.registration_url} placeholder="https://" onChange={(e) => set('registration_url', e.target.value)} />}
           </Field>
           <div className="card soft stack tight">
-            <span style={{ fontWeight: 600, fontSize: 13 }}>Picture (optional)</span>
-            {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} /> : null}
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Poster</span>
+            <span className="small muted">Shown large on the app’s Today screen, uncropped. Upload one here, or pick one from Instagram on the Events page.</span>
+            {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', maxHeight: 360, objectFit: 'contain', borderRadius: 12, background: '#17120E' }} /> : null}
             <div className="row">
               <Button small onClick={() => file.current?.click()} busy={busy === 'upload'}>
-                {busy === 'upload' ? 'Uploading…' : form.image_url ? 'Replace picture' : 'Upload picture'}
+                {busy === 'upload' ? 'Uploading…' : form.image_url ? 'Replace poster' : 'Upload poster'}
               </Button>
               {form.image_url ? (
                 <Button small variant="ghost" onClick={() => set('image_url', '')}>
@@ -344,6 +472,12 @@ export function EventEditor({ id }: { id: string | null }) {
               <input type="checkbox" checked={form.remind} onChange={(e) => set('remind', e.target.checked)} />
               Send reminder notifications
             </label>
+            {savedStatus !== 'published' ? (
+              <label className="check">
+                <input type="checkbox" checked={notifyNow} onChange={(e) => setNotifyNow(e.target.checked)} />
+                Tell members when it’s published
+              </label>
+            ) : null}
           </div>
           <div className="actions">
             <Button variant="primary" onClick={() => save('published')} busy={busy === 'published'}>
@@ -359,7 +493,7 @@ export function EventEditor({ id }: { id: string | null }) {
         <aside className="preview stack tight" aria-label="Preview">
           <span className="eyebrow">Preview in the app</span>
           <div className="phone" style={{ padding: 0, overflow: 'hidden' }}>
-            {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', height: 150, objectFit: 'cover' }} /> : null}
+            {form.image_url ? <img src={form.image_url} alt="" style={{ width: '100%', display: 'block' }} /> : null}
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <span className="kicker">{form.start ? formatEat(eatInputToIso(form.start)) : 'Date'}</span>
               <h2 style={{ fontSize: 28 }}>{form.title || 'Event name'}</h2>

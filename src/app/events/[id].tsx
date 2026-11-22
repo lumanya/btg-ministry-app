@@ -1,18 +1,20 @@
+import { File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { dateNames, t } from '@/i18n';
-import { Arch } from '@/components/art';
+import { PosterImage, whenFromNow } from '@/components/event-poster';
 import { FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
 import { LikeButton, StatLine } from '@/components/like-button';
 import { Body, Button, Eyebrow, IconButton, Tap, Title } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
-import { dateTile, eventWhen, paragraphs } from '@/lib/content';
+import { calendarLink, eventWhen, paragraphs } from '@/lib/content';
 import { success } from '@/lib/haptics';
 import { useContent } from '@/state/content';
 import { recordView, useStat } from '@/state/engagement';
@@ -28,7 +30,10 @@ export default function EventScreen() {
   const content = useContent();
   const notify = useNotifications();
   const event = content.findEvent(id);
+  const { width: screenW, height: screenH } = useWindowDimensions();
   const [message, setMessage] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const [viewing, setViewing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const stat = useStat('event', event?.id);
   useEffect(() => {
     if (event?.id) recordView('event', event.id);
@@ -46,7 +51,7 @@ export default function EventScreen() {
   }
 
   const when = eventWhen(event, dateNames());
-  const tile = dateTile(event.startsAt, dateNames());
+  const soon = whenFromNow(event.startsAt);
   const reminded = notify.isReminded(event.id);
   // The provider lists events that haven't finished yet.
   const ended = !content.upcoming.some((e) => e.id === event.id);
@@ -71,6 +76,31 @@ export default function EventScreen() {
     Linking.openURL(Platform.OS === 'ios' ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`);
   };
 
+  const addToCalendar = () => Linking.openURL(calendarLink(event));
+
+  // Shares the poster itself (the picture people already recognise).
+  const sharePoster = async () => {
+    if (!event.imageUrl || sharing) return;
+    setMessage(null);
+    if (Platform.OS === 'web') {
+      Linking.openURL(event.imageUrl);
+      return;
+    }
+    setSharing(true);
+    try {
+      const ext = (event.imageUrl.split('?')[0].match(/\.(jpe?g|png|webp)$/i)?.[1] ?? 'jpg').toLowerCase();
+      const file = await File.downloadFileAsync(event.imageUrl, new File(Paths.cache, `poster-${event.id}.${ext}`), { idempotent: true });
+      if (await Sharing.isAvailableAsync()) {
+        const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+        await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: t('Share poster') });
+      }
+    } catch {
+      setMessage({ tone: 'error', text: t('Couldn’t get the poster. Check your connection and try again.') });
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const shareCard = () =>
     router.push({
       pathname: '/share',
@@ -86,27 +116,25 @@ export default function EventScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
-        <View style={[styles.hero, { paddingTop: insets.top }]}>
-          {event.imageUrl ? (
-            <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, styles.heroArt]}>
-              <Arch tone="brown" width={110} height={170} eagleHeight={96} />
-            </View>
-          )}
+        <View style={[styles.hero, { paddingTop: insets.top + 60 }]}>
+          <Tap
+            accessibilityRole={event.imageUrl ? 'imagebutton' : undefined}
+            accessibilityLabel={event.imageUrl ? t('Open the poster full screen') : undefined}
+            disabled={!event.imageUrl}
+            onPress={() => setViewing(true)}>
+            <PosterImage event={event} width={Math.min(screenW - ScreenPadding * 2 - 24, 380)} maxHeight={screenH * 0.62} radius={14} />
+          </Tap>
           <View style={[styles.heroBar, { top: insets.top + 4 }]}>
-            <IconButton icon="back" label={t('Back')} onPress={back} />
-            <IconButton icon="share" label={t('Share this event')} onPress={shareCard} />
+            <IconButton icon="back" label={t('Back')} onPress={back} variant="plain" color="#FFFFFF" />
+            {event.imageUrl ? (
+              <IconButton icon="share" label={t('Share poster')} onPress={sharePoster} variant="plain" color="#FFFFFF" />
+            ) : null}
           </View>
         </View>
 
-        <View style={{ paddingHorizontal: ScreenPadding, gap: 20, marginTop: -36 }}>
-          <View style={styles.tile}>
-            <Text style={styles.tileMonth}>{tile.month}</Text>
-            <Text style={styles.tileDay}>{tile.day}</Text>
-          </View>
+        <View style={{ paddingHorizontal: ScreenPadding, gap: 20, marginTop: 24 }}>
           <View style={{ gap: 6 }}>
-            <Eyebrow>{ended ? t('This event has ended') : t('Event')}</Eyebrow>
+            <Eyebrow>{ended ? t('This event has ended') : [when.day, soon].filter(Boolean).join(' · ')}</Eyebrow>
             <Title size={34}>{event.title}</Title>
           </View>
 
@@ -142,8 +170,16 @@ export default function EventScreen() {
                   onPress={toggleReminder}
                   style={{ flex: 1 }}
                 />
-                {place ? <Button label={t('Directions')} icon="pin" variant="outline" onPress={directions} style={{ flex: 1 }} /> : null}
+                <Button label={t('Calendar')} accessibilityLabel={t('Add to calendar')} icon="calendar" variant="outline" onPress={addToCalendar} style={{ flex: 1 }} />
               </View>
+              {place || event.imageUrl ? (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {place ? <Button label={t('Directions')} icon="pin" variant="outline" onPress={directions} style={{ flex: 1 }} /> : null}
+                  {event.imageUrl ? (
+                    <Button label={sharing ? t('Preparing…') : t('Share poster')} icon="share" variant="outline" onPress={sharePoster} style={{ flex: 1 }} />
+                  ) : null}
+                </View>
+              ) : null}
               {message ? <FormMessage tone={message.tone}>{message.text}</FormMessage> : null}
             </View>
           ) : null}
@@ -168,32 +204,27 @@ export default function EventScreen() {
           </Tap>
         </View>
       </ScrollView>
+
+      {event.imageUrl ? (
+        <Modal visible={viewing} animationType="fade" onRequestClose={() => setViewing(false)} statusBarTranslucent>
+          <View style={styles.viewer}>
+            <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="contain" accessibilityLabel={t('Poster: {title}', { title: event.title })} />
+            <View style={[styles.heroBar, { top: insets.top + 8 }]}>
+              <IconButton icon="close" label={t('Close')} onPress={() => setViewing(false)} variant="plain" color="#FFFFFF" />
+              <IconButton icon="share" label={t('Share poster')} onPress={sharePoster} variant="plain" color="#FFFFFF" />
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </View>
   );
 }
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
-    hero: { height: 280, backgroundColor: c.artDeep },
-    heroArt: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.artBrown },
+    hero: { backgroundColor: '#17120E', alignItems: 'center', paddingBottom: 28 },
+    viewer: { flex: 1, backgroundColor: '#0B0907' },
     heroBar: { position: 'absolute', left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between' },
-    tile: {
-      width: 72,
-      height: 80,
-      borderRadius: 18,
-      backgroundColor: c.white,
-      borderWidth: 1,
-      borderColor: c.line,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#3A2413',
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 3,
-    },
-    tileMonth: { fontFamily: Fonts.sansBold, fontSize: 12, letterSpacing: 1.4, color: c.eyebrow },
-    tileDay: { fontFamily: Fonts.display, fontSize: 36, lineHeight: 38, color: c.text },
     facts: { borderRadius: Radius.lg, backgroundColor: c.white, borderWidth: 1, borderColor: c.line, paddingHorizontal: 14 },
     fact: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
     factLine: { borderTopWidth: 1, borderTopColor: c.line },

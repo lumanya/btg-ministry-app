@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildClips, clipTitle, mediaUrl, mergeMedia, shouldRefresh, videosOf } from './clips.ts';
+import { buildClips, clipTitle, mediaUrl, mergeMedia, mergePosters, postersOf, shouldRefresh, videosOf } from './clips.ts';
 
 test('titles come from the first line of the caption', () => {
   assert.equal(clipTitle('A word on grace 🙏 #faith #btg\nMore text'), 'A word on grace');
@@ -93,4 +93,25 @@ test('new posts merge into the stored history, newest first', () => {
   const merged = mergeMedia(stored, fresh);
   assert.deepEqual(merged.map((m) => m.id), ['c', 'a', 'b']);
   assert.equal(merged[1].media_url, 'https://x/a-new.mp4');
+});
+
+test('picture posts become posters: single images and the first picture of a carousel', () => {
+  const media = [
+    { id: 'v', media_type: 'VIDEO', media_url: 'https://x/v.mp4', timestamp: '2026-11-21T10:00:00+0000' },
+    { id: 'p1', media_type: 'IMAGE', media_url: 'https://x/p1.jpg', caption: 'END TIME AWAKENING\nDec 6', timestamp: '2026-11-20T10:00:00+0000' },
+    {
+      id: 'c1',
+      media_type: 'CAROUSEL_ALBUM',
+      caption: 'School of Revelation',
+      timestamp: '2026-11-22T10:00:00+0000',
+      children: { data: [{ id: 'c1v', media_type: 'VIDEO', media_url: 'https://x/c.mp4' }, { id: 'c1i', media_type: 'IMAGE', media_url: 'https://x/c.jpg' }] },
+    },
+  ];
+  const posters = postersOf(media);
+  assert.deepEqual(posters.map((p) => p.id), ['c1', 'p1']);
+  assert.equal(posters[0].imageUrl, 'https://x/c.jpg');
+  assert.equal(posters[1].caption, 'END TIME AWAKENING\nDec 6');
+  assert.equal(postersOf(media, 1).length, 1);
+  const merged = mergePosters([{ id: 'old', imageUrl: 'https://x/o.jpg', caption: '', permalink: null, postedAt: '2025-01-01T00:00:00+0000' }], posters);
+  assert.deepEqual(merged.map((p) => p.id), ['c1', 'p1', 'old']);
 });

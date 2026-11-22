@@ -255,6 +255,11 @@ describe('notifications', () => {
     await fails(null, `insert into public.notifications (title, body) values ('Hi', 'There')`, [], /row-level security|permission denied/);
     await fails(EDITOR, `insert into public.notifications (title, body, status) values ('Hi', 'There', 'sent')`, [], /row-level security/);
     await fails(EDITOR, `insert into public.notifications (title, body, dedupe_key) values ('Hi', 'There', 'live:x')`, [], /row-level security/);
+    // One "New event" message per event: allowed once, never twice, never under another topic.
+    const ev = '0b9d3b4e-6a1f-4c55-9a52-3d1f2b8e7c10';
+    await rows(EDITOR, `insert into public.notifications (title, body, topic, url, dedupe_key) values ('New event: Conference', 'Sat 6 Dec', 'events', '/events/${ev}', 'event:${ev}:new')`);
+    await fails(EDITOR, `insert into public.notifications (title, body, topic, dedupe_key) values ('Again', 'Again', 'events', 'event:${ev}:new')`, [], /duplicate key/);
+    await fails(EDITOR, `insert into public.notifications (title, body, topic, dedupe_key) values ('Hi', 'There', 'announcements', 'event:${ev}:new')`, [], /row-level security/);
     const [n] = await rows(EDITOR, `insert into public.notifications (title, body, url) values ('Sunday service', 'Join us at 9:00', '/live') returning id, created_by`);
     assert.equal(n.created_by, EDITOR);
     assert.equal((await rows(MEMBER, `select * from public.notifications`)).length, 0);

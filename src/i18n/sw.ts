@@ -567,6 +567,17 @@ const sw: Record<string, string> = {
   "A new version is ready": "Toleo jipya liko tayari",
   "Restart to get the latest improvements.": "Fungua upya upate maboresho mapya.",
   "Restart": "Fungua upya",
+  'Share poster': 'Shiriki bango',
+  'Couldn’t get the poster. Check your connection and try again.': 'Imeshindikana kupata bango. Angalia mtandao wako ujaribu tena.',
+  'Open the poster full screen': 'Fungua bango kwa skrini nzima',
+  'Add to calendar': 'Weka kwenye kalenda',
+  Calendar: 'Kalenda',
+  'Poster: {title}': 'Bango: {title}',
+  today: 'leo',
+  tomorrow: 'kesho',
+  'in {n} days': 'baada ya siku {n}',
+  'Reminder set for {title}': 'Kikumbusho kimewekwa: {title}',
+  'Remind me about {title}': 'Nikumbushe kuhusu {title}',
 };
 
 export default sw;
