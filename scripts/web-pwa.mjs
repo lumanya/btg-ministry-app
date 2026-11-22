@@ -41,6 +41,8 @@ const head = [
   '<meta name="apple-mobile-web-app-title" content="BTG Ministry">',
   '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
   `<meta name="theme-color" content="${INK}">`,
+  // Ink behind the app while it starts, instead of a white flash.
+  `<style>html,body{background:${INK}}</style>`,
 ].join('');
 
 const indexPath = join(dist, 'index.html');

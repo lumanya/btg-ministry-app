@@ -12,6 +12,7 @@ import {
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
@@ -52,8 +53,10 @@ export default function RootLayout() {
     keepPortrait();
   }, []);
 
-  // Keep the splash screen up until the brand fonts are ready.
-  if (!loaded && !error) return null;
+  // Keep the splash screen up until the brand fonts are ready. On the web there is no
+  // splash screen, so draw straight away and let the fonts swap in when they arrive
+  // (on a slow connection they can take many seconds).
+  if (!loaded && !error && Platform.OS !== 'web') return null;
 
   return (
     <LanguageProvider>
