@@ -1,7 +1,9 @@
 # Publishes to GitHub Pages whenever the app or the dashboard changes on main:
-#   https://lumanya.github.io/btg-ministry-app/      the staff dashboard (admin/)
-#   https://lumanya.github.io/btg-ministry-app/app/  the app as a web page, for testing on
-#                                                     iPhone and PC (Add to Home Screen)
+#   https://app.btgministry.org/        the app as a web page, for iPhone and PC
+#                                       (Add to Home Screen)
+#   https://app.btgministry.org/admin/  the staff dashboard (admin/)
+# The custom domain is set in the repository's Settings → Pages, with a CNAME
+# record app.btgministry.org → lumanya.github.io at the domain's DNS (Linode).
 name: Staff dashboard and web app
 
 on:
@@ -51,17 +53,23 @@ jobs:
 
       - name: Web app
         env:
-          EXPO_WEB_BASE_URL: /btg-ministry-app/app
           CI: '1'
         run: |
           npm ci
-          npx expo export -p web --output-dir admin/dist/app
-          node scripts/web-pwa.mjs admin/dist/app /btg-ministry-app/app admin/dist/404.html
+          npx expo export -p web --output-dir site
+          node scripts/web-pwa.mjs site
+
+      - name: Put the dashboard under /admin
+        run: |
+          mkdir -p site/admin
+          cp -r admin/dist/. site/admin/
+          # Privacy, support and account-deletion pages also stay at their old place.
+          cp admin/public/privacy.html admin/public/support.html admin/public/delete-account.html admin/public/legal.css admin/public/eagle.png site/
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: admin/dist
+          path: site
 
   # Publishing runs as its own step once the upload has finished (GitHub's standard
   # setup; doing both in one job sometimes failed with "No artifacts named github-pages").

@@ -5,7 +5,9 @@ The mobile app for **Building the Temple of God Ministry**: sermons, livestream,
 Built with [Expo](https://expo.dev) (SDK 58), React Native and TypeScript, using Expo Router for navigation.
 
 ## Try it on your phone
-**iPhone or PC (web test link):** open **https://lumanya.github.io/btg-ministry-app/app/** in Safari (or any browser). On iPhone, tap **Share → Add to Home Screen** and it opens like an app. It is rebuilt automatically from `main` with each change. Push notifications, daily reminders and sharing straight to WhatsApp need the real app (Android build, or TestFlight on iPhone).
+**Addresses.** Members' web app: **https://app.btgministry.org**. Staff dashboard: **https://app.btgministry.org/admin**. Both are published to GitHub Pages by `.github/workflows/admin-pages.yml`; the domain is set in the repository's *Settings → Pages* with a DNS record `CNAME app → lumanya.github.io` at Linode. Old `lumanya.github.io/btg-ministry-app/...` links redirect.
+
+**iPhone or PC (web test link):** open **https://app.btgministry.org** in Safari (or any browser). On iPhone, tap **Share → Add to Home Screen** and it opens like an app. It is rebuilt automatically from `main` with each change. Push notifications, daily reminders and sharing straight to WhatsApp need the real app (Android build, or TestFlight on iPhone).
 
 
 1. Install **Node.js** (version 20 or newer) on your computer.
