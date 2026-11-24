@@ -90,6 +90,8 @@ To test the function's logic: `npm run test:feed`.
 
 ## Connect the podcast
 
+**BTG Ministry Podcast** is hosted on **Spotify for Creators** (creators.spotify.com, account support@btgministry.org). Its RSS feed, already set in `.env`, is `https://anchor.fm/s/11a8e2ae0/podcast/rss`. To add an episode, upload it there (audio, or a video: its sound goes to the feed); it appears in the app by itself. Give episodes of one series the same **Season** number to group them. The cover art and its source are in `assets/podcast/`.
+
 The Podcast tab plays episodes from the podcast's **RSS feed**, the same feed Spotify and Apple Podcasts read. Any podcast host gives you one when you upload episodes; it usually ends in `.xml` or `/rss`.
 
 Add it to `.env`:
