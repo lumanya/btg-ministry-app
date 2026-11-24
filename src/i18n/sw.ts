@@ -583,6 +583,8 @@ const sw: Record<string, string> = {
   'Play latest': 'Sikiliza kipya',
   'Open in Spotify': 'Fungua kwenye Spotify',
   'Read more': 'Soma zaidi',
+  'Full sermon from {time}': 'Mahubiri kamili kuanzia {time}',
+  'Full sermon': 'Mahubiri kamili',
 };
 
 export default sw;

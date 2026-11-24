@@ -274,7 +274,7 @@ function SeedPage({
   const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
   const started = status === 'readyToPlay' && currentTime > 0.05;
   const sermon = clip.sermon ? findVideo(clip.sermon.youtubeId) : undefined;
-  const sermonTitle = clip.sermon ? (sermon?.title ?? clip.title) : null;
+  const sermonTitle = clip.sermon ? (sermon?.title ?? seedTitle(clip.title)) : null;
   const liked = !!stat?.liked;
   const saved = sermon ? lib.isVideoSaved(sermon.id) : false;
   const title = seedTitle(clip.title);
@@ -324,7 +324,7 @@ function SeedPage({
       <View pointerEvents="none" style={styles.shadeLow} />
       <View pointerEvents="none" style={[styles.shadeTop, { height: topInset + 90 }]} />
 
-      <View style={[styles.rail, { bottom: clip.sermon ? 124 : 48 }]}>
+      <View style={[styles.rail, { bottom: 24 }]}>
         <RailButton
           icon="heart"
           filled={liked}
@@ -354,47 +354,42 @@ function SeedPage({
         ) : null}
       </View>
 
-      <View style={[styles.words, { bottom: clip.sermon ? 112 : 30 }]} pointerEvents="box-none">
-        <View style={styles.byline}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>BTG</Text>
-          </View>
-          <Text style={styles.name}>Iman Mwakanyamale</Text>
-          {clip.postedAt ? <Text style={styles.when}>· {formatDay(clip.postedAt)}</Text> : null}
-        </View>
-        <Text style={styles.title} numberOfLines={3}>
-          {title}
+      <View style={[styles.words, { bottom: 24 }]} pointerEvents="box-none">
+        <Text style={styles.byline} numberOfLines={1}>
+          Iman Mwakanyamale
+          {clip.postedAt ? <Text style={styles.when}> · {formatDay(clip.postedAt)}</Text> : null}
         </Text>
-        {caption ? (
-          <Pressable accessibilityRole="button" accessibilityHint={view.more ? t('Show less') : t('Show more')} onPress={() => update({ more: !view.more })}>
-            <Text style={styles.caption} numberOfLines={view.more ? 12 : 2}>
+        {/* Two lines over the video; tap for the whole title and the caption. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityHint={caption || title.length > 50 ? (view.more ? t('Show less') : t('Show more')) : undefined}
+          onPress={() => update({ more: !view.more })}
+          style={{ gap: 8 }}>
+          <Text style={styles.title} numberOfLines={view.more ? 6 : 2}>
+            {title}
+          </Text>
+          {view.more && caption ? (
+            <Text style={styles.caption} numberOfLines={12}>
               {caption}
             </Text>
-          </Pressable>
+          ) : null}
+        </Pressable>
+        {clip.sermon && sermonTitle ? (
+          <Tap
+            accessibilityRole="button"
+            accessibilityLabel={t('Watch the full sermon: {title}', { title: sermonTitle })}
+            onPress={() => openSermon(clip.sermon!.start)}
+            style={styles.bridge}>
+            <View style={styles.bridgePlay}>
+              <Icon name="play" size={12} color="#17120E" filled />
+            </View>
+            <Text style={styles.bridgeTitle} numberOfLines={1}>
+              {clip.sermon.start > 0 ? t('Full sermon from {time}', { time: clock(clip.sermon.start) }) : t('Full sermon')}
+              <Text style={styles.bridgeSermon}> · {sermonTitle}</Text>
+            </Text>
+          </Tap>
         ) : null}
       </View>
-
-      {clip.sermon && sermonTitle ? (
-        <Tap
-          accessibilityRole="button"
-          accessibilityLabel={t('Watch the full sermon: {title}', { title: sermonTitle })}
-          onPress={() => openSermon(clip.sermon!.start)}
-          style={styles.bridge}>
-          <View style={styles.bridgeArt}>
-            {sermon?.thumbnail ? <Image source={{ uri: sermon.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} /> : null}
-            <Icon name="play" size={14} color={WHITE} filled />
-          </View>
-          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <Text style={styles.bridgeEyebrow}>
-              {clip.sermon.start > 0 ? t('Full sermon · from {time}', { time: clock(clip.sermon.start) }) : t('From the full sermon')}
-            </Text>
-            <Text style={styles.bridgeTitle} numberOfLines={1}>
-              {sermonTitle}
-            </Text>
-          </View>
-          <Icon name="arrow" size={20} color={WHITE} />
-        </Tap>
-      ) : null}
 
       <View style={styles.progressTrack} accessible={false}>
         <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
@@ -570,34 +565,30 @@ const styles = StyleSheet.create({
   railButton: { width: 62, alignItems: 'center', gap: 5 },
   railIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.14)' },
   railText: { fontFamily: Fonts.sansSemiBold, fontSize: 12, color: WHITE },
-  words: { position: 'absolute', left: 18, right: 86, gap: 10 },
-  byline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  avatar: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: GOLD, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: Fonts.display, fontSize: 12, color: GOLD },
-  name: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: WHITE },
+  words: { position: 'absolute', left: 18, right: 86, gap: 8 },
+  byline: { fontFamily: Fonts.sansSemiBold, fontSize: 13, color: 'rgba(255,255,255,0.88)' },
   when: { fontFamily: Fonts.sans, fontSize: 13, color: SOFT },
-  title: { fontFamily: Fonts.displayMedium, fontSize: 32, lineHeight: 34, color: WHITE },
+  title: { fontFamily: Fonts.displayMedium, fontSize: 27, lineHeight: 30, color: WHITE },
   caption: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 20, color: SOFT },
   bridge: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 24,
-    minHeight: 68,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingLeft: 10,
+    gap: 8,
+    paddingLeft: 6,
     paddingRight: 14,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    marginTop: 2,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
-  bridgeArt: { width: 78, height: 46, borderRadius: 10, overflow: 'hidden', backgroundColor: '#2B1F17', alignItems: 'center', justifyContent: 'center' },
-  bridgeEyebrow: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: GOLD },
-  bridgeTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: WHITE },
+  bridgePlay: { width: 28, height: 28, borderRadius: 14, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
+  bridgeTitle: { flexShrink: 1, minWidth: 0, fontFamily: Fonts.sansSemiBold, fontSize: 13, color: WHITE },
+  bridgeSermon: { fontFamily: Fonts.sans, color: 'rgba(255,255,255,0.8)' },
   progressTrack: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, backgroundColor: 'rgba(255,255,255,0.18)' },
   progressFill: { height: 3, backgroundColor: GOLD },
   nudge: { position: 'absolute', left: 14, right: 14, gap: 8, padding: 18, borderRadius: 20, backgroundColor: PAPER },

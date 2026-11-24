@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Eagle } from '@/components/art';
+import { Icon } from '@/components/icon';
 import { SectionHeader, Tap } from '@/components/ui';
 import { Fonts, ScreenPadding } from '@/constants/theme';
 import { t } from '@/i18n';
@@ -10,6 +11,9 @@ import { isNewClip, seedTitle } from '@/lib/clips';
 import { useClips } from '@/state/clips';
 
 const TONES = ['#2B1F17', '#3B2A1D', '#1F1A17', '#4A3322'];
+/** Close to a phone video's shape, and about as tall as the event posters below. */
+const TILE_W = 176;
+const TILE_H = 300;
 
 /** Today's row of seeds: tall cards that open the Seeds tab at that seed. */
 export function SeedsRail() {
@@ -26,7 +30,7 @@ export function SeedsRail() {
         horizontal
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
-        snapToInterval={138 + 10}
+        snapToInterval={TILE_W + 10}
         style={{ marginHorizontal: -ScreenPadding }}
         contentContainerStyle={{ paddingHorizontal: ScreenPadding, gap: 10 }}>
         {shown.map((clip, i) => {
@@ -43,10 +47,13 @@ export function SeedsRail() {
                 <Image source={{ uri: clip.thumbnail }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
               ) : (
                 <View style={styles.art}>
-                  <Eagle height={80} light />
+                  <Eagle height={110} light />
                 </View>
               )}
               <View style={styles.shade} />
+              <View style={styles.play} accessible={false}>
+                <Icon name="play" size={13} color="#FFFFFF" filled />
+              </View>
               {isNewClip(clip) ? <Text style={styles.new}>{t('NEW')}</Text> : <View />}
               <Text style={styles.title} numberOfLines={4}>
                 {title}
@@ -60,7 +67,7 @@ export function SeedsRail() {
 }
 
 const styles = StyleSheet.create({
-  tile: { width: 138, height: 236, borderRadius: 18, overflow: 'hidden', padding: 12, justifyContent: 'space-between' },
+  tile: { width: TILE_W, height: TILE_H, borderRadius: 20, overflow: 'hidden', padding: 12, justifyContent: 'space-between' },
   art: { position: 'absolute', top: 34, left: 0, right: 0, alignItems: 'center', opacity: 0.22 },
   shade: {
     position: 'absolute',
@@ -82,5 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 1,
   },
-  title: { fontFamily: Fonts.sansSemiBold, fontSize: 14, lineHeight: 18, color: '#FFFFFF' },
+  title: { fontFamily: Fonts.sansSemiBold, fontSize: 15, lineHeight: 19, color: '#FFFFFF' },
+  play: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(14,11,9,0.45)', alignItems: 'center', justifyContent: 'center' },
 });

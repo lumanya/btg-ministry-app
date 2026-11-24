@@ -133,7 +133,8 @@ export function ComingUpRail({ events, onOpen, onAll }: { events: MinistryEvent[
   if (!events.length) return null;
   const shown = events.slice(0, 6);
   const single = shown.length === 1;
-  const cardWidth = single ? Math.min(screen - ScreenPadding * 2, 360) : Math.min(screen * 0.74, 300);
+  // A little smaller than the screen, so Seeds above keeps the lead.
+  const cardWidth = single ? Math.min(screen - ScreenPadding * 2, 300) : Math.min(screen * 0.66, 250);
   return (
     <View style={{ gap: 14 }}>
       <SectionHeader title={t('Coming up')} action={events.length > 1 ? t('All events') : undefined} onAction={onAll} />

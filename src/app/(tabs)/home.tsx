@@ -10,7 +10,7 @@ import { FormMessage } from '@/components/form';
 import { Icon, IconName } from '@/components/icon';
 import { Appear, Pop, Skeleton } from '@/components/motion';
 import { SeedsRail } from '@/components/seeds-rail';
-import { Button, IconButton, Screen, SectionHeader, Tap, Title } from '@/components/ui';
+import { Button, IconButton, Screen, SectionHeader, Tap } from '@/components/ui';
 import { UpdateBanner } from '@/components/update-banner';
 import { VideoThumb } from '@/components/video-thumb';
 import { Fonts, Palette } from '@/constants/theme';
@@ -133,25 +133,19 @@ export default function Today() {
 
       <UpdateBanner />
 
-      <Appear style={{ gap: 8, marginTop: -8 }}>
-        <Text style={styles.date}>
-          {dayName(now.getDay())} · {now.getDate()} {monthName(now.getMonth())}
-        </Text>
-        <Title size={44}>
-          {greeting(now)}
-          {firstName ? `, ${firstName}` : ''}.
-        </Title>
-        <Text style={styles.blessing}>{t('Grace and peace to you.')}</Text>
-      </Appear>
-
-      <Appear index={1}>
+      {/* The greeting heads the rhythm card, so the day's three steps start near the top. */}
+      <Appear style={{ marginTop: -14 }}>
         <View style={[styles.rhythm, { borderColor: isDark ? 'rgba(255,255,255,0.10)' : INK }]}>
           <View style={styles.rhythmHead}>
-            <Text style={styles.rhythmTitle} accessibilityRole="header">
-              {t('Today’s rhythm')}
+            <Text style={styles.date}>
+              {dayName(now.getDay())} · {now.getDate()} {monthName(now.getMonth())}
             </Text>
             <Text style={styles.rhythmCount}>{doneCount === 3 ? t('Complete') : t('{n} of 3', { n: doneCount })}</Text>
           </View>
+          <Text style={styles.rhythmTitle} accessibilityRole="header">
+            {greeting(now)}
+            {firstName ? `, ${firstName}` : ''}
+          </Text>
           <Text style={styles.rhythmSub}>{t('Three small steps with the Word.')}</Text>
           <View style={{ marginTop: 10 }}>
             {steps.map((s) => (
@@ -330,12 +324,11 @@ const createStyles = (c: Palette) =>
     brandSmall: { fontFamily: Fonts.sansSemiBold, fontSize: 10, letterSpacing: 2.8, color: c.textMuted, marginTop: 4 },
     avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.brown, alignItems: 'center', justifyContent: 'center' },
     avatarText: { fontFamily: Fonts.display, fontSize: 22, color: c.cream },
-    date: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: c.eyebrow },
-    blessing: { fontFamily: Fonts.displayItalic, fontSize: 21, color: c.textMuted },
+    date: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: GOLD },
 
-    rhythm: { marginHorizontal: -4, backgroundColor: INK, borderRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 22, paddingBottom: 6 },
-    rhythmHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    rhythmTitle: { fontFamily: Fonts.displayMedium, fontSize: 28, color: '#FFFFFF' },
+    rhythm: { marginHorizontal: -4, backgroundColor: INK, borderRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 6 },
+    rhythmHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    rhythmTitle: { fontFamily: Fonts.displayMedium, fontSize: 32, lineHeight: 36, color: '#FFFFFF', marginTop: 6 },
     rhythmCount: { fontFamily: Fonts.sans, fontSize: 13, color: SOFT },
     rhythmSub: { fontFamily: Fonts.sans, fontSize: 14, color: SOFT, marginTop: 4 },
     step: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 62, borderTopWidth: 1, borderTopColor: RULE },
