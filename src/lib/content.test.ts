@@ -99,18 +99,17 @@ test('calendar link carries the title, times and place', () => {
   assert.equal(q.get('location'), 'BTG Temple, Dar es Salaam');
 });
 
-test('one confession and one declaration a day, in turn', () => {
+test('one confession & declaration a day, in turn', () => {
   const list = [
-    mapPrayer({ id: 'c1', kind: 'confession', text: 'C one', text_sw: 'K moja' }),
-    mapPrayer({ id: 'c2', kind: 'confession', text: 'C two' }),
-    mapPrayer({ id: 'd1', kind: 'declaration', text: ' D one ', scripture: 'Romans 10:9' }),
+    mapPrayer({ id: 'p1', kind: 'declaration', text: ' One ', text_sw: 'Moja', scripture: 'Romans 10:9' }),
+    mapPrayer({ id: 'p2', kind: 'declaration', text: 'Two' }),
   ];
   const day = (d: number) => new Date(2026, 10, d, 9);
-  assert.notEqual(prayerOfDay(list, 'confession', day(24))?.id, prayerOfDay(list, 'confession', day(25))?.id);
-  assert.equal(prayerOfDay(list, 'confession', day(24))?.id, prayerOfDay(list, 'confession', day(26))?.id);
-  assert.equal(prayerOfDay(list, 'confession', new Date(2026, 10, 24, 0, 5))?.id, prayerOfDay(list, 'confession', new Date(2026, 10, 24, 23, 55))?.id);
-  assert.equal(prayerOfDay(list, 'declaration', day(24))?.text, 'D one');
-  assert.equal(prayerOfDay([], 'declaration', day(24)), null);
-  assert.equal(mapPrayer({ id: 'x', kind: 'confession', text: 'C', text_sw: 'K' }, 'sw').text, 'K');
-  assert.equal(mapPrayer({ id: 'x', kind: 'confession', text: 'C', text_sw: ' ' }, 'sw').text, 'C');
+  assert.notEqual(prayerOfDay(list, day(24))?.id, prayerOfDay(list, day(25))?.id);
+  assert.equal(prayerOfDay(list, day(24))?.id, prayerOfDay(list, day(26))?.id);
+  assert.equal(prayerOfDay(list, new Date(2026, 10, 24, 0, 5))?.id, prayerOfDay(list, new Date(2026, 10, 24, 23, 55))?.id);
+  assert.equal(prayerOfDay([], day(24)), null);
+  assert.equal(mapPrayer({ id: 'x', kind: 'declaration', text: 'C', text_sw: 'K' }, 'sw').text, 'K');
+  assert.equal(mapPrayer({ id: 'x', kind: 'declaration', text: 'C', text_sw: ' ' }, 'sw').text, 'C');
+  assert.equal(list[0].text, 'One');
 });

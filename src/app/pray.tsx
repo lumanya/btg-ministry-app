@@ -15,7 +15,7 @@ import { useColors, useStyles } from '@/state/theme';
 const INK = '#17120E';
 const GOLD = '#D4AF73';
 
-/** The third step of today's rhythm: today's word, then today's confession and declaration. */
+/** The third step of today's rhythm: today's word, then today's confession & declaration. */
 export default function Pray() {
   const c = useColors();
   const styles = useStyles(createStyles);
@@ -26,7 +26,7 @@ export default function Pray() {
   const rhythm = useRhythm();
   const hasSeeds = useClips().clips.length > 0;
   const today = content.today;
-  const { confession, declaration } = content;
+  const { prayer } = content;
   const bible = today.lang === 'sw' ? 'SUV' : 'KJV';
   const word = today.scripture?.text ?? today.excerpt;
   const source = today.scripture?.text ? `${today.scripture.ref} · ${bible}` : today.title;
@@ -54,7 +54,7 @@ export default function Pray() {
             {t('A minute of prayer')}
           </Text>
           <Text style={styles.lead}>
-            {confession || declaration ? t('Be still. Read today’s word, then say these aloud.') : t('Be still. Bring today’s word before God.')}
+            {prayer ? t('Be still. Read today’s word, then say this aloud.') : t('Be still. Bring today’s word before God.')}
           </Text>
         </View>
 
@@ -63,27 +63,14 @@ export default function Pray() {
           <Text style={styles.verseRef}>{source}</Text>
         </View>
 
-        {confession || declaration ? (
-          // Staff's confession and declaration for today, said aloud.
-          <View style={{ gap: 22 }}>
-            {confession ? (
-              <View style={styles.spoken}>
-                <Text style={styles.spokenLabel}>{t('Confess')}</Text>
-                <Text style={styles.confession} selectable>
-                  {confession.text}
-                </Text>
-                {confession.scripture ? <Text style={styles.spokenRef}>{confession.scripture}</Text> : null}
-              </View>
-            ) : null}
-            {declaration ? (
-              <View style={[styles.spoken, styles.declare]}>
-                <Text style={[styles.spokenLabel, { color: GOLD }]}>{t('Declare')}</Text>
-                <Text style={styles.declaration} selectable>
-                  {declaration.text}
-                </Text>
-                {declaration.scripture ? <Text style={[styles.spokenRef, { color: 'rgba(255,255,255,0.65)' }]}>{declaration.scripture}</Text> : null}
-              </View>
-            ) : null}
+        {prayer ? (
+          // Staff's confession & declaration for today, said aloud.
+          <View style={styles.spoken}>
+            <Text style={styles.spokenLabel}>{t('Confess & declare')}</Text>
+            <Text style={styles.declaration} selectable>
+              {prayer.text}
+            </Text>
+            {prayer.scripture ? <Text style={styles.spokenRef}>{prayer.scripture}</Text> : null}
           </View>
         ) : (
           <View>
@@ -113,12 +100,10 @@ const createStyles = (c: Palette) =>
     verse: { alignItems: 'center', gap: 14, paddingVertical: 24, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.goldLine },
     verseText: { fontFamily: Fonts.displayItalic, fontSize: 24, lineHeight: 30, textAlign: 'center', color: c.text },
     verseRef: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.8, textTransform: 'uppercase', color: c.eyebrow },
-    spoken: { gap: 10, padding: 20, borderRadius: 22, backgroundColor: c.parchment },
-    declare: { backgroundColor: INK },
-    spokenLabel: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: c.eyebrow },
-    confession: { fontFamily: Fonts.sans, fontSize: 17, lineHeight: 26, color: c.text },
-    declaration: { fontFamily: Fonts.displayMedium, fontSize: 23, lineHeight: 30, color: '#FFFFFF' },
-    spokenRef: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1, color: c.textMuted },
+    spoken: { gap: 12, padding: 22, borderRadius: 22, backgroundColor: INK },
+    spokenLabel: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: GOLD },
+    declaration: { fontFamily: Fonts.displayMedium, fontSize: 23, lineHeight: 31, color: '#FFFFFF' },
+    spokenRef: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1, color: 'rgba(255,255,255,0.65)' },
     prompt: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 58, borderTopWidth: 1, borderTopColor: c.line },
     promptNumber: { width: 22, fontFamily: Fonts.display, fontSize: 24, color: c.accent, fontVariant: ['lining-nums'] },
     promptText: { flex: 1, fontFamily: Fonts.sans, fontSize: 16, lineHeight: 22, color: c.text },

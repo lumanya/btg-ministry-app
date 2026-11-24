@@ -585,9 +585,8 @@ const sw: Record<string, string> = {
   'Read more': 'Soma zaidi',
   'Full sermon from {time}': 'Mahubiri kamili kuanzia {time}',
   'Full sermon': 'Mahubiri kamili',
-  Confess: 'Kiri',
-  Declare: 'Tamka',
-  'Be still. Read today’s word, then say these aloud.': 'Tulia. Soma neno la leo, kisha tamka haya kwa sauti.',
+  'Confess & declare': 'Kiri na utamke',
+  'Be still. Read today’s word, then say this aloud.': 'Tulia. Soma neno la leo, kisha tamka haya kwa sauti.',
 };
 
 export default sw;

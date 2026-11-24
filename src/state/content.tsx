@@ -69,9 +69,8 @@ type ContentState = Snapshot & {
   /** Events that haven't finished yet, soonest first. */
   upcoming: MinistryEvent[];
   findEvent: (id: string) => MinistryEvent | undefined;
-  /** Today's confession and declaration for "A minute of prayer", when staff have added some. */
-  confession: Prayer | null;
-  declaration: Prayer | null;
+  /** Today's confession & declaration for "A minute of prayer", when staff have added some. */
+  prayer: Prayer | null;
   /** Sends a prayer request to the ministry. Throws an Error with a message to show. */
   sendPrayer: (input: PrayerInput) => Promise<void>;
 };
@@ -205,8 +204,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       findDevotional: (id) => devotionals.find((d) => d.id === id),
       upcoming: upcomingEvents(snapshot.events),
       findEvent: (id) => snapshot.events.find((e) => e.id === id),
-      confession: prayerOfDay(snapshot.prayers ?? [], 'confession'),
-      declaration: prayerOfDay(snapshot.prayers ?? [], 'declaration'),
+      prayer: prayerOfDay(snapshot.prayers ?? []),
       sendPrayer,
     };
   }, [snapshot, status, refreshing, refresh, sendPrayer]);
