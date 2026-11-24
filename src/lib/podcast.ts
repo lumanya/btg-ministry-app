@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 
+import { seedTitle } from './clips.ts';
+
 /**
  * Reads a standard podcast RSS feed (the kind every podcast host provides,
  * and the same feed Spotify and Apple Podcasts use).
@@ -8,6 +10,8 @@ import { XMLParser } from 'fast-xml-parser';
 export type Episode = {
   id: string;
   title: string;
+  /** The rest of a "Title || Topic" title, e.g. "Interpretation of biblical prophecy". */
+  subtitle?: string | null;
   description: string;
   /** Null for sample episodes that have no recording yet. */
   audioUrl: string | null;
@@ -28,6 +32,30 @@ export type Podcast = {
 };
 
 type Node = Record<string, unknown>;
+
+/** Parts of a YouTube-style title that only repeat the ministry's name. */
+const NAME_ONLY = /^(btg|btg ministry|btg ministries|btg ministry podcast|iman mwakanyamale)$/i;
+
+/**
+ * Episode titles often come from YouTube in capitals with "||" between parts:
+ * "ALIENS OR SPIRITUAL BEINGS || INTERPRETATION OF BIBLICAL PROPHECY || BTG MINISTRY"
+ * -> { title: "Aliens or spiritual beings", subtitle: "Interpretation of biblical prophecy" }.
+ * The ministry's own name is dropped (the whole show is BTG's).
+ */
+export function splitEpisodeTitle(raw: string): { title: string; subtitle: string | null } {
+  const parts = raw
+    .split(/\s*\|+\s*/)
+    .map((p) => p.trim())
+    .filter((p) => p && !NAME_ONLY.test(p));
+  if (!parts.length) return { title: seedTitle(raw.trim()) || raw, subtitle: null };
+  return { title: seedTitle(parts[0]), subtitle: parts.slice(1).map(seedTitle).join(' · ') || null };
+}
+
+/** The same episode with a tidy title (for episodes saved before titles were tidied). */
+export function tidyEpisode(e: Episode): Episode {
+  if (e.subtitle !== undefined) return e;
+  return { ...e, ...splitEpisodeTitle(e.title) };
+}
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -100,7 +128,7 @@ export function parsePodcastRss(xml: string): Podcast {
       const parsedDate = date ? new Date(date) : null;
       return {
         id: guid || audioUrl || `episode-${i}`,
-        title: text(item['itunes:title']) || text(item.title) || 'Untitled episode',
+        ...splitEpisodeTitle(text(item['itunes:title']) || text(item.title) || 'Untitled episode'),
         description: plainText(text(item['content:encoded']) || text(item.description) || text(item['itunes:summary'])),
         audioUrl,
         duration: parseDuration(text(item['itunes:duration'])),

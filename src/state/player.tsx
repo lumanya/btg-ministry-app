@@ -3,7 +3,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { podcast as samplePodcast } from '@/content/sample';
-import { Episode, parsePodcastRss, Podcast } from '@/lib/podcast';
+import { Episode, parsePodcastRss, Podcast, tidyEpisode } from '@/lib/podcast';
 import { downloadedUri, loadDownloads } from '@/state/downloads';
 
 /**
@@ -231,7 +231,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PlayerState>(() => {
     const unavailable = !!episode && !episode.audioUrl;
-    const lastEp = store.lastEpisode ?? podcast.episodes.find((e) => e.id === store.last) ?? null;
+    // Prefer the feed's copy (current title and artwork) over the one saved on the phone.
+    const lastId = store.lastEpisode?.id ?? store.last;
+    const lastEp = podcast.episodes.find((e) => e.id === lastId) ?? (store.lastEpisode ? tidyEpisode(store.lastEpisode) : null);
     const lastSavedPos = lastEp ? store.episodes[lastEp.id] : undefined;
     const isCurrent = !!episode && !!lastEp && episode.id === lastEp.id && !unavailable;
     return {

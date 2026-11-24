@@ -1,14 +1,17 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '@/i18n';
 import { Eagle, useTones } from '@/components/art';
 import { DownloadButton } from '@/components/download-button';
 import { EagleMark } from '@/components/eagle-mark';
 import { Icon } from '@/components/icon';
-import { Body, IconButton, ProgressBar, Screen, Tap, Title, SectionHeader } from '@/components/ui';
+import { IconButton, ProgressBar, Screen, Tap, SectionHeader } from '@/components/ui';
 import { Fonts, Palette, Radius, ScreenPadding } from '@/constants/theme';
 import { ArtTone } from '@/content/sample';
 import { Episode, formatLength } from '@/lib/podcast';
@@ -19,14 +22,39 @@ import { usePlayer } from '@/state/player';
 import { useColors, useStyles } from '@/state/theme';
 
 const SERIES_TONES: ArtTone[] = ['deep', 'sand', 'brown'];
+const INK = '#17120E';
+const GOLD = '#D4AF73';
+const SPOTIFY_URL = process.env.EXPO_PUBLIC_PODCAST_SPOTIFY_URL;
+
+/** Square artwork: the episode's, else the show's, else the gold eagle on ink. */
+function Artwork({ uri, size, radius }: { uri: string | null; size: number; radius: number }) {
+  return (
+    <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: INK, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+      {uri ? (
+        <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
+      ) : (
+        <EagleMark height={size * 0.6} />
+      )}
+    </View>
+  );
+}
 
 export default function PodcastTab() {
   const c = useColors();
   const styles = useStyles(createStyles);
   const toneSet = useTones();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const p = usePlayer();
-  const [following, setFollowing] = useState(false);
+  const [moreAbout, setMoreAbout] = useState(false);
+  // The header is dark: light status bar while this tab is open.
+  const [focused, setFocused] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
+  );
   const [seriesFilter, setSeriesFilter] = useState<string | null>(null);
   const [showDownloads, setShowDownloads] = useState(false);
   const downloads = useDownloads();
@@ -46,36 +74,63 @@ export default function PodcastTab() {
     if (!e.audioUrl) router.push('/player');
   };
 
+  // The big button: resume what was playing, else the newest episode.
+  const resumable = p.resume && !p.saved(p.resume.episode.id)?.finished ? p.resume.episode : null;
+  const latest = resumable ?? p.podcast.episodes[0] ?? null;
+  const mainPlaying = !!latest && p.playing && p.episode?.id === latest.id;
+  const mainLabel = mainPlaying ? t('Pause') : resumable && (p.resume?.position ?? 0) > 5 ? t('Resume') : t('Play latest');
+  const playMain = () => {
+    if (!latest) return;
+    if (p.episode?.id === latest.id) p.toggle();
+    else playEpisode(latest);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: c.ivory }}>
-      <Screen gap={24} refreshing={false} onRefresh={p.status === 'sample' ? undefined : p.refresh}>
-        <Title>{t('Podcast')}</Title>
-
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <View style={[styles.cover, { backgroundColor: '#17120E' }]}>
-            {p.podcast.artwork ? (
-              <Image source={{ uri: p.podcast.artwork }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
-            ) : (
-              <EagleMark height={88} />
-            )}
+      {focused ? <StatusBar style="light" /> : null}
+      <Screen gap={24} refreshing={false} onRefresh={p.status === 'sample' ? undefined : p.refresh} contentStyle={{ paddingTop: 0 }}>
+        <View style={[styles.hero, { paddingTop: insets.top + 28 }]}>
+          <View style={styles.heroCover}>
+            <Artwork uri={p.podcast.artwork} size={196} radius={20} />
           </View>
-          <View style={{ flex: 1, justifyContent: 'space-between', gap: 10 }}>
-            <View style={{ gap: 6 }}>
-              <Title size={26}>{p.podcast.title}</Title>
-              <Body style={{ fontSize: 13, lineHeight: 18 }}>
-                {p.podcast.description.split('\n')[0] || t('Audio teachings from Iman Mwakanyamale')}
-              </Body>
+          <View style={{ alignItems: 'center', gap: 6 }}>
+            <Text style={styles.heroEyebrow}>{t('Podcast')}</Text>
+            <Text style={styles.heroTitle} accessibilityRole="header">
+              {p.podcast.title}
+            </Text>
+            <Text style={styles.heroMeta}>
+              {['Iman Mwakanyamale', p.podcast.episodes.length === 1 ? t('1 episode') : t('{n} episodes', { n: p.podcast.episodes.length })].join(' · ')}
+            </Text>
+          </View>
+          {latest ? (
+            <View style={styles.heroActions}>
+              <Tap haptic="tap" accessibilityRole="button" onPress={playMain} style={styles.playMain}>
+                <Icon name={mainPlaying ? 'pause' : 'play'} size={18} color={INK} filled />
+                <Text style={styles.playMainText}>{mainLabel}</Text>
+              </Tap>
+              {SPOTIFY_URL ? (
+                <Tap
+                  haptic="tap"
+                  accessibilityRole="link"
+                  accessibilityLabel={t('Open in Spotify')}
+                  onPress={() => WebBrowser.openBrowserAsync(SPOTIFY_URL)}
+                  style={styles.spotify}>
+                  <Text style={styles.spotifyText}>Spotify</Text>
+                  <Icon name="arrow" size={16} color={GOLD} />
+                </Tap>
+              ) : null}
             </View>
-            <Tap
-              accessibilityRole="button"
-              accessibilityState={{ selected: following }}
-              onPress={() => setFollowing((f) => !f)}
-              style={[styles.follow, following && { backgroundColor: c.brown }]}>
-              <Icon name={following ? 'check' : 'plus'} size={16} color={following ? c.cream : c.brownDark} />
-              <Text style={[styles.followText, following && { color: c.cream }]}>{following ? t('Following') : t('Follow')}</Text>
-            </Tap>
-          </View>
+          ) : null}
         </View>
+
+        {p.podcast.description ? (
+          <Tap accessibilityRole="button" accessibilityLabel={moreAbout ? t('Show less') : t('Read more')} onPress={() => setMoreAbout((v) => !v)} style={{ gap: 6 }}>
+            <Text style={styles.about} numberOfLines={moreAbout ? undefined : 3}>
+              {p.podcast.description}
+            </Text>
+            <Text style={styles.link}>{moreAbout ? t('Show less') : t('Read more')}</Text>
+          </Tap>
+        ) : null}
 
         {p.status === 'sample' ? (
           <Text style={styles.notice}>{t('Sample episodes. Audio plays here once the podcast feed is connected.')}</Text>
@@ -146,25 +201,44 @@ export default function PodcastTab() {
             const progress = saved && !saved.finished && saved.duration > 0 ? saved.position / saved.duration : 0;
             return (
               <View key={e.id} style={styles.episode}>
-                <View style={{ flex: 1, gap: 4 }}>
-                  {e.series ? <Text style={styles.episodeSeries}>{e.series}</Text> : null}
-                  <Text style={styles.episodeTitle}>{e.title}</Text>
-                  {meta ? <Text style={styles.meta}>{meta}</Text> : null}
-                  {progress > 0.01 ? (
-                    <View style={{ width: 120, paddingTop: 4 }}>
-                      <ProgressBar value={progress} />
-                    </View>
-                  ) : null}
+                <Tap accessibilityRole="button" accessibilityLabel={`${active ? t('Pause') : t('Play')} ${e.title}`} onPress={() => (p.episode?.id === e.id ? p.toggle() : playEpisode(e))} style={styles.episodeMain}>
+                  <View>
+                    <Artwork uri={e.artwork ?? p.podcast.artwork} size={72} radius={12} />
+                    {active ? (
+                      <View style={styles.nowPlaying}>
+                        <Icon name="pause" size={16} color="#FFFFFF" filled />
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    {e.series ? <Text style={styles.episodeSeries}>{e.series}</Text> : null}
+                    <Text style={styles.episodeTitle} numberOfLines={2}>
+                      {e.title}
+                    </Text>
+                    {e.subtitle ? (
+                      <Text style={styles.episodeSubtitle} numberOfLines={1}>
+                        {e.subtitle}
+                      </Text>
+                    ) : null}
+                    {meta ? <Text style={styles.meta}>{meta}</Text> : null}
+                    {progress > 0.01 ? (
+                      <View style={{ paddingTop: 4, paddingRight: 8 }}>
+                        <ProgressBar value={progress} />
+                      </View>
+                    ) : null}
+                  </View>
+                </Tap>
+                <View style={{ alignItems: 'center', gap: 2 }}>
+                  <IconButton
+                    icon={active ? 'pause' : 'play'}
+                    label={`${active ? t('Pause') : t('Play')} ${e.title}`}
+                    variant={active ? 'solid' : 'outline'}
+                    iconSize={18}
+                    onPress={() => (p.episode?.id === e.id ? p.toggle() : playEpisode(e))}
+                    style={!active ? { borderColor: c.accent, backgroundColor: 'transparent' } : undefined}
+                  />
+                  <DownloadButton episode={e} />
                 </View>
-                <DownloadButton episode={e} />
-                <IconButton
-                  icon={active ? 'pause' : 'play'}
-                  label={`${active ? t('Pause') : t('Play')} ${e.title}`}
-                  variant={active ? 'solid' : 'outline'}
-                  iconSize={18}
-                  onPress={() => playEpisode(e)}
-                  style={!active ? { borderColor: c.accent, backgroundColor: 'transparent' } : undefined}
-                />
               </View>
             );
           })}
@@ -177,19 +251,27 @@ export default function PodcastTab() {
 
 const createStyles = (c: Palette) =>
   StyleSheet.create({
-  cover: { width: 132, height: 132, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  follow: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
+  hero: {
+    marginHorizontal: -ScreenPadding,
+    paddingHorizontal: ScreenPadding,
+    paddingBottom: 28,
     alignItems: 'center',
-    gap: 6,
-    height: 44,
-    paddingHorizontal: 18,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: c.accent,
+    gap: 18,
+    backgroundColor: INK,
+    backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(212,175,115,0.22) 0%, rgba(23,18,14,0) 60%)',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  followText: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.brownDark },
+  heroCover: { borderRadius: 20, boxShadow: '0 16px 40px rgba(0,0,0,0.45)' },
+  heroEyebrow: { fontFamily: Fonts.sansBold, fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase', color: GOLD },
+  heroTitle: { fontFamily: Fonts.display, fontSize: 32, lineHeight: 34, color: '#FFFFFF', textAlign: 'center' },
+  heroMeta: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(255,255,255,0.68)', textAlign: 'center' },
+  heroActions: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', justifyContent: 'center' },
+  playMain: { flex: 1, maxWidth: 220, height: 50, borderRadius: Radius.pill, backgroundColor: GOLD, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  playMainText: { fontFamily: Fonts.sansBold, fontSize: 15, color: INK },
+  spotify: { height: 50, paddingHorizontal: 20, borderRadius: Radius.pill, borderWidth: 1, borderColor: 'rgba(212,175,115,0.55)', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  spotifyText: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: GOLD },
+  about: { fontFamily: Fonts.sans, fontSize: 15, lineHeight: 23, color: c.textMuted },
   notice: { fontFamily: Fonts.sans, fontSize: 14, lineHeight: 20, color: c.textMuted, padding: 12, borderRadius: Radius.md, backgroundColor: c.parchment },
   seriesCard: { width: 150, height: 168, borderRadius: Radius.lg, padding: 14, justifyContent: 'space-between' },
   seriesOn: { borderWidth: 3, borderColor: c.gold },
@@ -198,8 +280,11 @@ const createStyles = (c: Palette) =>
   link: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.accent },
   downloads: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: Radius.md, borderWidth: 1, borderColor: c.line, backgroundColor: c.white },
   downloadsTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15, color: c.text },
-  episode: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.line },
+  episode: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.line },
+  episodeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  nowPlaying: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12, backgroundColor: 'rgba(23,18,14,0.55)', alignItems: 'center', justifyContent: 'center' },
+  episodeSubtitle: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
   episodeSeries: { fontFamily: Fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: c.eyebrow },
-  episodeTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 24, color: c.text },
+  episodeTitle: { fontFamily: Fonts.display, fontSize: 20, lineHeight: 22, color: c.text },
   meta: { fontFamily: Fonts.sans, fontSize: 13, color: c.textMuted },
 });

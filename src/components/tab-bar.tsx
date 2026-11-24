@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useEffect } from 'react';
@@ -136,7 +137,11 @@ function MiniPlayer() {
           onPress={() => router.push('/player')}
           style={styles.miniMain}>
           <View style={styles.miniArt}>
-            <EagleMark height={30} />
+            {episode.artwork ?? p.podcast.artwork ? (
+              <Image source={{ uri: (episode.artwork ?? p.podcast.artwork)! }} style={StyleSheet.absoluteFill} contentFit="cover" accessible={false} />
+            ) : (
+              <EagleMark height={30} />
+            )}
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.miniTitle} numberOfLines={1}>
@@ -189,7 +194,7 @@ const createStyles = (c: Palette) =>
       elevation: 6,
     },
     miniMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 },
-    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center' },
+    miniArt: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#17120E', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     miniTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 14, color: c.text },
     miniMeta: { fontFamily: Fonts.sans, fontSize: 12, color: c.textMuted },
     miniTrack: { position: 'absolute', left: 14, right: 14, bottom: 0, height: 2, backgroundColor: c.rail },

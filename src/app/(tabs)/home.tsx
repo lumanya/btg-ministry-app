@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
@@ -263,13 +264,22 @@ export default function Today() {
               onPress={() => router.push('/player')}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={styles.listenArt}>
-                <Text style={styles.listenArtText}>BTG</Text>
+                {listen.artwork ?? player.podcast.artwork ? (
+                  <Image source={{ uri: (listen.artwork ?? player.podcast.artwork)! }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessible={false} />
+                ) : (
+                  <Text style={styles.listenArtText}>BTG</Text>
+                )}
               </View>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={styles.listenLabel}>{resume ? t('Continue listening') : t('Listen')}</Text>
+                <Text style={styles.listenLabel}>{resume ? t('Continue listening') : t('New on the podcast')}</Text>
                 <Text style={styles.listenTitle} numberOfLines={1}>
                   {listen.title}
                 </Text>
+                {listen.subtitle && !(resume && resume.duration > 0) ? (
+                  <Text style={styles.metaText} numberOfLines={1}>
+                    {listen.subtitle}
+                  </Text>
+                ) : null}
                 {resume && resume.duration > 0 ? (
                   <View style={styles.listenTrack}>
                     <View style={[styles.listenFill, { width: `${Math.round((resume.position / resume.duration) * 100)}%` }]} />
@@ -346,7 +356,7 @@ const createStyles = (c: Palette) =>
     serviceTitle: { fontFamily: Fonts.display, fontSize: 27, lineHeight: 29, color: c.text },
 
     listenRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.line },
-    listenArt: { width: 58, height: 58, borderRadius: 12, backgroundColor: INK, alignItems: 'center', justifyContent: 'center' },
+    listenArt: { width: 64, height: 64, borderRadius: 12, backgroundColor: INK, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     listenArtText: { fontFamily: Fonts.display, fontSize: 18, letterSpacing: 1, color: GOLD },
     listenLabel: { fontFamily: Fonts.sansSemiBold, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: c.eyebrow },
     listenTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 16, color: c.text },

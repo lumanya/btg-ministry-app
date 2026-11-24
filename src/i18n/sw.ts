@@ -578,6 +578,11 @@ const sw: Record<string, string> = {
   'in {n} days': 'baada ya siku {n}',
   'Reminder set for {title}': 'Kikumbusho kimewekwa: {title}',
   'Remind me about {title}': 'Nikumbushe kuhusu {title}',
+  'New on the podcast': 'Mpya kwenye podikasti',
+  Resume: 'Endelea',
+  'Play latest': 'Sikiliza kipya',
+  'Open in Spotify': 'Fungua kwenye Spotify',
+  'Read more': 'Soma zaidi',
 };
 
 export default sw;

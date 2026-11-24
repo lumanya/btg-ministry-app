@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { formatClock, formatLength, parseDuration, parsePodcastRss, plainText } from './podcast.ts';
+import { formatClock, formatLength, parseDuration, parsePodcastRss, plainText, splitEpisodeTitle } from './podcast.ts';
 
 const RSS = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -111,4 +111,13 @@ test('reads a Spotify for Creators (anchor.fm) feed with one episode', () => {
   assert.match(e.audioUrl ?? '', /^https:\/\/anchor\.fm\//);
   assert.equal(e.artwork, 'https://d3t3ozftmdmh3i.cloudfront.net/show.jpg');
   assert.equal(e.series, null);
+  assert.equal(e.title, 'Aliens or spiritual beings');
+  assert.equal(e.subtitle, 'Interprettion of biblical prophecy');
+});
+
+test('tidies YouTube-style episode titles', () => {
+  assert.deepEqual(splitEpisodeTitle('THE SOUL || CONSCIOUSNESS || BTG MINISTRY'), { title: 'The soul', subtitle: 'Consciousness' });
+  assert.deepEqual(splitEpisodeTitle('Knowing God | Part 2'), { title: 'Knowing God', subtitle: 'Part 2' });
+  assert.deepEqual(splitEpisodeTitle('A plain title'), { title: 'A plain title', subtitle: null });
+  assert.deepEqual(splitEpisodeTitle('BTG MINISTRY'), { title: 'BTG ministry', subtitle: null });
 });
