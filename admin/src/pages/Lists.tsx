@@ -66,7 +66,10 @@ function TableEditor({ config, tabs }: { config: Config; tabs?: ReactNode }) {
       void _;
       return rest;
     });
-    toast('Saved.');
+    // A row saved with its show/active box unticked stays out of the app: say so.
+    const shown = config.columns.find((c) => c.key === 'active');
+    if (shown && draft.active === false) toast(`Saved, but hidden: tick “${shown.label}” and save to show it in the app.`, 'error');
+    else toast('Saved.');
   };
 
   const add = async () => {
