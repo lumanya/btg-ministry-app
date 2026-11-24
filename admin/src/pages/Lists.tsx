@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { friendlyError, WEEKDAYS } from '../lib';
 import { db } from '../supabase';
-import { Button, ConfirmButton, Loading, PageHead, useToast } from '../ui';
+import { Button, ConfirmButton, Loading, PageHead, Segment, useToast } from '../ui';
 
 /**
  * A small spreadsheet-style editor for the simple lists: services, giving details,
@@ -22,9 +22,11 @@ type Config = {
   order: string;
   addLabel: string;
   newRow: () => Omit<Row, 'id'>;
+  /** Only rows matching these values (e.g. one kind in a shared table). */
+  filter?: Record<string, string>;
 };
 
-function TableEditor({ config }: { config: Config }) {
+function TableEditor({ config, tabs }: { config: Config; tabs?: ReactNode }) {
   const toast = useToast();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Row>>({});
@@ -34,6 +36,7 @@ function TableEditor({ config }: { config: Config }) {
     db()
       .from(config.table)
       .select(['id', ...config.columns.map((c) => c.key)].join(','))
+      .match(config.filter ?? {})
       .order(config.order)
       .then(({ data, error }) => {
         if (error) toast(friendlyError(error), 'error');
@@ -137,6 +140,7 @@ function TableEditor({ config }: { config: Config }) {
           </Button>
         }
       />
+      {tabs}
       {!rows ? (
         <Loading />
       ) : (
@@ -259,3 +263,53 @@ export const ServicesPage = () => <TableEditor config={services} />;
 export const GivingPage = () => <TableEditor config={giving} />;
 export const SeriesPage = () => <TableEditor config={seriesConfig} />;
 export const QuotesPage = () => <TableEditor config={quotes} />;
+
+const prayerColumns: Column[] = [
+  { key: 'text', label: 'Text', kind: 'longtext', required: true },
+  { key: 'text_sw', label: 'In Kiswahili', kind: 'longtext' },
+  { key: 'scripture', label: 'Scripture', kind: 'text', width: 150, placeholder: 'e.g. Romans 10:9' },
+  { key: 'sort', label: 'Order', kind: 'number' },
+  { key: 'active', label: 'Shown', kind: 'bool' },
+];
+
+const confessions: Config = {
+  table: 'prayers',
+  filter: { kind: 'confession' },
+  eyebrow: 'A minute of prayer',
+  title: 'Confessions',
+  intro:
+    'Members say one confession a day in “A minute of prayer”, the third step of Today’s rhythm. The app takes the shown ones in turn, a new one each day, in Kiswahili where you add it. Lower “Order” comes first.',
+  columns: prayerColumns,
+  order: 'sort',
+  addLabel: 'Add a confession',
+  newRow: () => ({ kind: 'confession', text: 'New confession', text_sw: null, scripture: null, sort: 99, active: false }),
+};
+
+const declarations: Config = {
+  ...confessions,
+  filter: { kind: 'declaration' },
+  title: 'Declarations',
+  intro:
+    'Members speak one declaration a day in “A minute of prayer”, after the confession. The app takes the shown ones in turn, a new one each day, in Kiswahili where you add it. Lower “Order” comes first.',
+  addLabel: 'Add a declaration',
+  newRow: () => ({ kind: 'declaration', text: 'New declaration', text_sw: null, scripture: null, sort: 99, active: false }),
+};
+
+/** Confessions and declarations for “A minute of prayer”, one tab each. */
+export function PrayersPage() {
+  const [kind, setKind] = useState<'confession' | 'declaration'>('confession');
+  const tabs = (
+    <div style={{ marginBottom: 16 }}>
+      <Segment
+        label="Show"
+        value={kind}
+        onChange={setKind}
+        options={[
+          { value: 'confession', label: 'Confessions' },
+          { value: 'declaration', label: 'Declarations' },
+        ]}
+      />
+    </div>
+  );
+  return <TableEditor key={kind} config={kind === 'confession' ? confessions : declarations} tabs={tabs} />;
+}

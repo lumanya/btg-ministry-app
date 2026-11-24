@@ -112,6 +112,15 @@ describe('content', () => {
     assert.equal((await rows(null, 'select * from public.quotes')).length, 3);
   });
 
+  test('confessions and declarations: staff manage them, everyone reads the active ones', async () => {
+    await rows(EDITOR, `insert into public.prayers (kind, text, active) values ('confession', 'I confess…', true), ('declaration', 'I declare…', true), ('declaration', 'Draft', false)`);
+    assert.equal((await rows(null, 'select * from public.prayers')).length, 2);
+    assert.equal((await rows(EDITOR, 'select * from public.prayers')).length, 3);
+    await fails(MEMBER, `insert into public.prayers (kind, text) values ('declaration', 'X')`, [], /row-level security/);
+    await fails(EDITOR, `insert into public.prayers (kind, text) values ('song', 'X')`, [], /check constraint/);
+    assert.equal((await rows(MEMBER, `update public.prayers set text = 'changed' returning id`)).length, 0);
+  });
+
   test('guests and members cannot change content', async () => {
     await fails(null, `insert into public.devotionals (slug, title) values ('x', 'X')`, [], /row-level security|permission denied/);
     await fails(MEMBER, `insert into public.devotionals (slug, title) values ('x', 'X')`, [], /row-level security/);

@@ -268,6 +268,8 @@ In code and the database these are still called clips (`clips` table, `instagram
 - **Reflect.** Each devotional has a private reflection box. Reflections are saved on the phone only and never sent anywhere.
 - **Share to Status** on Today's quote opens the share card in Status shape on the new Ink colour.
 
+**Confessions and declarations.** "A minute of prayer" shows today's word, then one confession and one declaration, in turn a new one each day (`public.prayers`). Staff add them on the dashboard's **Confessions & declarations** page, with Kiswahili and a scripture reference if they like; untick *Shown* to keep one as a draft. With none added, the screen shows three short prayer prompts instead.
+
 ## Look and brand (version 1.1)
 
 - **Eagle mark.** `src/components/eagle-mark.tsx` is the eagle traced into one clean vector shape: gold on ink, brown on paper, sharp at any size. The app icon, Android adaptive icon, splash screen and favicon in `assets/images/` are made from it (gold eagle on ink `#17120E`).

@@ -11,7 +11,7 @@ import Playlists from './pages/Playlists';
 import Clips from './pages/Clips';
 import Prayer from './pages/Prayer';
 import Staff from './pages/Staff';
-import { GivingPage, QuotesPage, SeriesPage, ServicesPage } from './pages/Lists';
+import { GivingPage, PrayersPage, QuotesPage, SeriesPage, ServicesPage } from './pages/Lists';
 import { db, StaffRole, supabase } from './supabase';
 import { Button, Field, Loading, LOGO } from './ui';
 
@@ -83,6 +83,7 @@ const NAV: { to: string; label: string; adminOnly?: boolean }[] = [
   { to: 'events', label: 'Events' },
   { to: 'notifications', label: 'Notifications' },
   { to: 'prayer', label: 'Prayer requests' },
+  { to: 'confessions', label: 'Confessions & declarations' },
   { to: 'playlists', label: 'Sermon series' },
   { to: 'clips', label: 'Seeds' },
   { to: 'services', label: 'Services' },
@@ -124,6 +125,7 @@ function Shell({ role, email }: { role: StaffRole; email: string }) {
   else if (section === 'giving') page = <GivingPage />;
   else if (section === 'series') page = <SeriesPage />;
   else if (section === 'quotes') page = <QuotesPage />;
+  else if (section === 'confessions') page = <PrayersPage />;
   else if (section === 'staff') page = <Staff role={role} />;
   else page = <Overview />;
 

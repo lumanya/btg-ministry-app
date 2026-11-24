@@ -264,3 +264,29 @@ export function arrangePlaylists<P extends { id: string; title: string }>(lists:
     .sort((a, b) => (a.s?.sort ?? 1000 + a.i) - (b.s?.sort ?? 1000 + b.i))
     .map(({ p, s }) => (s?.title ? { ...p, title: s.title } : p));
 }
+
+/** A confession or declaration for "A minute of prayer". */
+export type Prayer = { id: string; kind: 'confession' | 'declaration'; text: string; scripture: string | null };
+export type PrayerRow = { id: string; kind: string; text: string; text_sw?: string | null; scripture?: string | null };
+
+export function mapPrayer(r: PrayerRow, lang: 'en' | 'sw' = 'en'): Prayer {
+  return {
+    id: r.id,
+    kind: r.kind === 'declaration' ? 'declaration' : 'confession',
+    text: (lang === 'sw' && r.text_sw?.trim() ? r.text_sw : r.text).trim(),
+    scripture: r.scripture?.trim() || null,
+  };
+}
+
+/** Whole days since 1 January 2026 in the phone's time zone: the same all day, one more tomorrow. */
+function dayNumber(d: Date) {
+  return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 0, 1)) / 86_400_000);
+}
+
+/** Today's confession or declaration: the list (in the staff's order) taken in turn, one a day. */
+export function prayerOfDay(list: Prayer[], kind: Prayer['kind'], now: Date = new Date()): Prayer | null {
+  const mine = list.filter((p) => p.kind === kind);
+  if (!mine.length) return null;
+  const n = dayNumber(now);
+  return mine[((n % mine.length) + mine.length) % mine.length];
+}

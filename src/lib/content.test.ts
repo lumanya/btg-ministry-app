@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { arrangePlaylists, calendarLink, daysUntil, eventWhen, formatTime, mapDevotional, mapService, paragraphs, upcomingEvents } from './content.ts';
+import { arrangePlaylists, calendarLink, mapPrayer, prayerOfDay, daysUntil, eventWhen, formatTime, mapDevotional, mapService, paragraphs, upcomingEvents } from './content.ts';
 
 test('maps a devotional row for the app', () => {
   const d = mapDevotional({
@@ -97,4 +97,20 @@ test('calendar link carries the title, times and place', () => {
   assert.equal(q.get('text'), 'End Time Awakening');
   assert.equal(q.get('dates'), '20261206T130000Z/20261206T150000Z');
   assert.equal(q.get('location'), 'BTG Temple, Dar es Salaam');
+});
+
+test('one confession and one declaration a day, in turn', () => {
+  const list = [
+    mapPrayer({ id: 'c1', kind: 'confession', text: 'C one', text_sw: 'K moja' }),
+    mapPrayer({ id: 'c2', kind: 'confession', text: 'C two' }),
+    mapPrayer({ id: 'd1', kind: 'declaration', text: ' D one ', scripture: 'Romans 10:9' }),
+  ];
+  const day = (d: number) => new Date(2026, 10, d, 9);
+  assert.notEqual(prayerOfDay(list, 'confession', day(24))?.id, prayerOfDay(list, 'confession', day(25))?.id);
+  assert.equal(prayerOfDay(list, 'confession', day(24))?.id, prayerOfDay(list, 'confession', day(26))?.id);
+  assert.equal(prayerOfDay(list, 'confession', new Date(2026, 10, 24, 0, 5))?.id, prayerOfDay(list, 'confession', new Date(2026, 10, 24, 23, 55))?.id);
+  assert.equal(prayerOfDay(list, 'declaration', day(24))?.text, 'D one');
+  assert.equal(prayerOfDay([], 'declaration', day(24)), null);
+  assert.equal(mapPrayer({ id: 'x', kind: 'confession', text: 'C', text_sw: 'K' }, 'sw').text, 'K');
+  assert.equal(mapPrayer({ id: 'x', kind: 'confession', text: 'C', text_sw: ' ' }, 'sw').text, 'C');
 });
