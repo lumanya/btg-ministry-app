@@ -3,6 +3,7 @@
  * Kept free of React Native so it can be tested with plain Node.
  */
 import type { ArtTone, Devotional } from '../content/sample';
+import { calmCaps } from './clips.ts';
 
 export type Series = { name: string; tone: ArtTone };
 export type Service = {
@@ -273,7 +274,8 @@ export function mapPrayer(r: PrayerRow, lang: 'en' | 'sw' = 'en'): Prayer {
   return {
     id: r.id,
     kind: r.kind === 'declaration' ? 'declaration' : 'confession',
-    text: (lang === 'sw' && r.text_sw?.trim() ? r.text_sw : r.text).trim(),
+    // Staff sometimes type in capitals; shown large, sentence case reads calmer.
+    text: calmCaps((lang === 'sw' && r.text_sw?.trim() ? r.text_sw : r.text).trim()),
     scripture: r.scripture?.trim() || null,
   };
 }

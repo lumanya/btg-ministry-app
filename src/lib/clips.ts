@@ -30,3 +30,14 @@ export function seedTitle(title: string) {
   const lower = title.toLowerCase().replace(/\p{L}+/gu, (w) => PROPER_MAP.get(w) ?? w);
   return lower.replace(/^(\P{L}*)(\p{L})/u, (_, lead: string, first: string) => lead + first.toUpperCase());
 }
+
+/**
+ * Longer text typed in capitals ("LIGHT FROM LIGHT. LIFE FROM LIFE") reads calmer
+ * in sentence case: each sentence and line starts with a capital, names of God stay
+ * capitalised. Text that already uses lower case is left as written.
+ */
+export function calmCaps(text: string) {
+  if (/\p{Ll}/u.test(text) || !/\p{Lu}/u.test(text)) return text;
+  const lower = text.toLowerCase().replace(/\p{L}+/gu, (w) => PROPER_MAP.get(w) ?? w);
+  return lower.replace(/(^|[.!?]\s+|\n\s*)(\P{L}*)(\p{L})/gu, (_, start: string, lead: string, first: string) => start + lead + first.toUpperCase());
+}
